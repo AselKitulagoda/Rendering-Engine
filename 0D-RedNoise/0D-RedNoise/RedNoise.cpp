@@ -14,6 +14,7 @@ using namespace glm;
 
 void drawRedNoise();
 void drawGradient();
+void drawRainbow();
 void update();
 void handleEvent(SDL_Event event);
 std::vector<float> interpolate(float from, float to, int numberOfValues);
@@ -35,7 +36,8 @@ int main(int argc, char* argv[])
     if(window.pollForInputEvents(&event)) handleEvent(event);
     update();
     // drawRedNoise();
-    drawGradient();
+    // drawGradient();
+    drawRainbow();
     // Need to render the frame at the end, or nothing actually gets shown on the screen !
     window.renderFrame();
   }
@@ -63,6 +65,54 @@ void drawGradient()
     for(int x=0; x<window.width ;x++) {
       uint32_t colour = (255<<24) + (int(255 - pixelVals.at(x))<<16) + (int(255 - pixelVals.at(x))<<8) + int(255 - pixelVals.at(x));
       // uint32_t colour = pixelVals.at(y + x * HEIGHT);
+      window.setPixelColour(x, y, colour);
+    }
+  }
+}
+
+void drawRainbow()
+{
+  vec3 red = vec3(255, 0, 0);
+  vec3 green = vec3(0, 255, 0);
+  vec3 blue = vec3(0, 0, 255);
+  vec3 yellow = vec3(255, 255, 0);
+
+  vector<vec3> redToYellow = interpolateVec3(red, yellow, HEIGHT);
+  for(int y=0; y<window.height ;y++)
+  {
+    for(int x=0; x<window.width ;x++)
+    {
+      uint32_t colour = (255<<24) + (int(redToYellow[y].x)<<16) + (int(redToYellow[y].y)<<8) + int(redToYellow[y].z);
+      window.setPixelColour(x, y, colour);
+    }
+  }
+
+  vector<vec3> redToBlue = interpolateVec3(red, blue, WIDTH);
+  for(int y=0; y<window.height ;y++)
+  {
+    for(int x=0; x<window.width ;x++)
+    {
+      uint32_t colour = (255<<24) + (int(redToBlue[x].x)<<16) + (int(redToBlue[x].y)<<8) + int(redToBlue[x].z);
+      window.setPixelColour(x, y, colour);
+    }
+  }
+
+  vector<vec3> blueToGreen = interpolateVec3(blue, green, HEIGHT);
+  for(int y=0; y<window.height ;y++)
+  {
+    for(int x=0; x<window.width ;x++)
+    {
+      uint32_t colour = (255<<24) + (int(blueToGreen[y].x)<<16) + (int(blueToGreen[y].y)<<8) + int(blueToGreen[y].z);
+      window.setPixelColour(x, y, colour);
+    }
+  }
+
+  vector<vec3> greenToYellow = interpolateVec3(green, yellow, WIDTH); 
+  for(int y=0; y<window.height ;y++)
+  {
+    for(int x=0; x<window.width ;x++)
+    {
+      uint32_t colour = (255<<24) + (int(greenToYellow[x].x)<<16) + (int(greenToYellow[x].y)<<8) + int(greenToYellow[x].z);
       window.setPixelColour(x, y, colour);
     }
   }
