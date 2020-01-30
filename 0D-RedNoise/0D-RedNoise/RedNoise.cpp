@@ -64,7 +64,6 @@ void drawGradient()
   for(int y=0; y<window.height ;y++) {
     for(int x=0; x<window.width ;x++) {
       uint32_t colour = (255<<24) + (int(255 - pixelVals.at(x))<<16) + (int(255 - pixelVals.at(x))<<8) + int(255 - pixelVals.at(x));
-      // uint32_t colour = pixelVals.at(y + x * HEIGHT);
       window.setPixelColour(x, y, colour);
     }
   }
@@ -77,42 +76,17 @@ void drawRainbow()
   vec3 blue = vec3(0, 0, 255);
   vec3 yellow = vec3(255, 255, 0);
 
-  vector<vec3> redToYellow = interpolateVec3(red, yellow, HEIGHT);
-  for(int y=0; y<window.height ;y++)
-  {
-    for(int x=0; x<window.width ;x++)
-    {
-      uint32_t colour = (255<<24) + (int(redToYellow[y].x)<<16) + (int(redToYellow[y].y)<<8) + int(redToYellow[y].z);
-      window.setPixelColour(x, y, colour);
-    }
-  }
-
   vector<vec3> redToBlue = interpolateVec3(red, blue, WIDTH);
-  for(int y=0; y<window.height ;y++)
-  {
-    for(int x=0; x<window.width ;x++)
-    {
-      uint32_t colour = (255<<24) + (int(redToBlue[x].x)<<16) + (int(redToBlue[x].y)<<8) + int(redToBlue[x].z);
-      window.setPixelColour(x, y, colour);
-    }
-  }
+  vector<vec3> yellowToGreen = interpolateVec3(yellow, green, WIDTH);
 
-  vector<vec3> blueToGreen = interpolateVec3(blue, green, HEIGHT);
-  for(int y=0; y<window.height ;y++)
-  {
-    for(int x=0; x<window.width ;x++)
-    {
-      uint32_t colour = (255<<24) + (int(blueToGreen[y].x)<<16) + (int(blueToGreen[y].y)<<8) + int(blueToGreen[y].z);
-      window.setPixelColour(x, y, colour);
-    }
-  }
+  window.clearPixels();
 
-  vector<vec3> greenToYellow = interpolateVec3(green, yellow, WIDTH); 
-  for(int y=0; y<window.height ;y++)
+  for(int y = 0; y < HEIGHT; y++)
   {
-    for(int x=0; x<window.width ;x++)
-    {
-      uint32_t colour = (255<<24) + (int(greenToYellow[x].x)<<16) + (int(greenToYellow[x].y)<<8) + int(greenToYellow[x].z);
+    for(int x = 0; x < WIDTH; x++)
+    { 
+      vector<vec3> interpolation = interpolateVec3(redToBlue.at(x), yellowToGreen.at(x), WIDTH);
+      uint32_t colour = (255<<24) + (int(interpolation.at(y).x)<<16) + (int(interpolation.at(y).y)<<8) + int(interpolation.at(y).z);
       window.setPixelColour(x, y, colour);
     }
   }
