@@ -153,7 +153,7 @@ void loadImage()
   int height = stoi(dimensions.substr(whiteSpacePos, newLinePos));
 
   vector<Colour> pixelVals;
-  for(size_t i = 0; i < (width * height); i++)
+  for(int i = 0; i < (width * height); i++)
   {
     Colour c;
     c.red = fp.get();
