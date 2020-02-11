@@ -16,6 +16,7 @@ void drawLine(CanvasPoint p1, CanvasPoint p2, Colour c);
 void drawStroke(CanvasTriangle t, Colour c);
 void drawFilled(CanvasTriangle f, Colour c);
 void loadImage();
+void drawTextureMap();
 
 void update();
 void handleEvent(SDL_Event event);
@@ -179,6 +180,129 @@ void loadImage()
   }
 }
 
+vec2 getExtraTexturePoint(CanvasPoint max, CanvasPoint midd, CanvasPoint min, CanvasPoint extra, TexturePoint t1, TexturePoint t2, TexturePoint t3)
+{ 
+
+  // texture points
+  vec2 tex1 = vec2(t1.x, t1.y);
+  vec2 tex2 = vec2(t2.x, t2.y);
+  vec2 tex3 = vec2(t3.x, t3.y);
+
+  vector<vec2> points;
+  points.push_back(tex1);
+  points.push_back(tex2);
+  points.push_back(tex3);
+
+  // Sorting the points wrt y coords
+  for(int i = 0; i < 2; i++)
+  {
+    vec2 p1 = points[i];
+    vec2 p2 = points[i+1];
+    if(p1.y > p2.y)
+    {
+      points[i+1] = p1;
+      points[i] = p2;
+    }
+  }
+
+  vec2 p1 = points[0];
+  vec2 p2 = points[1];
+  if(p1.y > p2.y)
+  {
+    points[0] = p2;
+    points[1] = p1;
+  }
+
+  vec2 tex_top, tex_mid, tex_bot;
+  tex_top = points[0];
+  tex_mid = points[1];
+  tex_bot = points[2];
+
+  // canvas points
+  vec2 top = vec2(max.x, max.y);
+  vec2 mid = vec2(midd.x, midd.y);
+  vec2 bot = vec2(min.x, min.y);
+  vec2 ext = vec2(extra.x, extra.y);
+
+  float a = ext.x - bot.x;
+  float A = top.x - bot.x;
+  float ratio_x = A/a;
+
+  float b = ext.y - bot.y;
+  float B = top.y - bot.y;
+  float ratio_y = B/b;
+
+  float tex_A = tex_top.x - tex_bot.x;
+  float tex_ext_a = tex_A * ratio_x;
+
+  float tex_B = tex_top.y - tex_bot.y;
+  float tex_ext_b = tex_B * ratio_y;
+
+  vec2 tex_extra = vec2(tex_bot.x + round(tex_ext_a), tex_bot.y + round(tex_ext_b));
+  return tex_extra;
+}
+
+void drawTextureMap()
+{ 
+  CanvasPoint P1; P1.x = 160; P1.y = 10; P1.texturePoint = TexturePoint(195, 5);
+  CanvasPoint P2; P2.x = 300; P2.y = 230; P2.texturePoint = TexturePoint(395, 380);
+  CanvasPoint P3; P3.x = 10; P3.y = 150; P3.texturePoint = TexturePoint(65, 330);
+
+  CanvasTriangle t;
+  t.vertices[0] = P1; t.vertices[1] = P2; t.vertices[2] = P3;
+
+  Colour c;
+  c.red = rand()%255; c.blue = rand()%255; c.green = rand()%255;
+
+  // drawStroke(t, c);
+  CanvasTriangle x = CanvasTriangle(CanvasPoint(P1.texturePoint.x, P1.texturePoint.y), CanvasPoint(P2.texturePoint.x, P2.texturePoint.y), CanvasPoint(P3.texturePoint.x, P3.texturePoint.y));
+  drawStroke(x, c);
+
+  vector<CanvasPoint> points;
+  points.push_back(t.vertices[0]);
+  points.push_back(t.vertices[1]);
+  points.push_back(t.vertices[2]);
+
+  // Sorting the points wrt y coords
+  for(int i = 0; i < 2; i++)
+  {
+    CanvasPoint p1 = points[i];
+    CanvasPoint p2 = points[i+1];
+    if(p1.y > p2.y)
+    {
+      points[i+1] = p1;
+      points[i] = p2;
+    }
+  }
+
+  CanvasPoint p1 = points[0];
+  CanvasPoint p2 = points[1];
+  if(p1.y > p2.y)
+  {
+    points[0] = p2;
+    points[1] = p1;
+  }
+
+  CanvasPoint top, mid, bot;
+  top = points[0];
+  mid = points[1];
+  bot = points[2];
+
+  // Interpolating to find the extra point
+  float dy = mid.y - top.y;
+  float dxMax = bot.x - top.x;
+  float dyMax = bot.y - top.y;
+  float yChange = dy/dyMax;
+  float dx = top.x + (yChange * dxMax);
+
+  CanvasPoint extraPoint;
+  extraPoint.x = dx; extraPoint.y = top.y + dy;
+
+  vec2 textureExtraPoint = getExtraTexturePoint(top, mid, bot, extraPoint, top.texturePoint, mid.texturePoint, bot.texturePoint);
+  CanvasPoint test = CanvasPoint(textureExtraPoint.x, textureExtraPoint.y);
+  drawLine(mid, test, c);
+}
+
 void update()
 {
   // Function for performing animation (shifting artifacts or moving the camera)
@@ -222,6 +346,10 @@ void handleEvent(SDL_Event event)
       c.red = rand()%255; c.blue = rand()%255; c.green = rand()%255;
 
       drawFilled(t, c);
+    }
+    else if(event.key.keysym.sym == SDLK_m)
+    {
+      drawTextureMap();
     }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
