@@ -15,6 +15,7 @@ using namespace glm;
 void drawLine(CanvasPoint p1, CanvasPoint p2, Colour c);
 void drawStroke(CanvasTriangle t, Colour c);
 void drawFilled(CanvasTriangle f, Colour c);
+void loadImage();
 
 void update();
 void handleEvent(SDL_Event event);
@@ -24,6 +25,7 @@ DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 int main(int argc, char* argv[])
 { 
   SDL_Event event;
+  loadImage();
   while(true)
   {
     // We MUST poll for events - otherwise the window will freeze !
@@ -130,6 +132,50 @@ void drawFilled(CanvasTriangle f, Colour c)
     end.x = round(min.x - (diff * maxDiff2)); end.y = extraPoint.y + i;
 
     drawLine(start, end, c);
+  }
+}
+
+void loadImage()
+{
+  ifstream fp;
+  fp.open("texture.ppm");
+
+  string magicNum, comment, dimensions, byteSize;
+  getline(fp, magicNum);
+  getline(fp, comment);
+  getline(fp, dimensions);
+  getline(fp, byteSize);
+
+  int whiteSpacePos = dimensions.find(" ");
+  int newLinePos = dimensions.find('\n');
+
+  int width = stoi(dimensions.substr(0, whiteSpacePos));
+  int height = stoi(dimensions.substr(whiteSpacePos, newLinePos));
+
+  vector<Colour> pixelVals;
+  for(size_t i = 0; i < (width * height); i++)
+  {
+    Colour c;
+    c.red = fp.get();
+    c.green = fp.get();
+    c.blue = fp.get();
+    pixelVals.push_back(c);
+  }
+
+  vector<uint32_t> converted;
+  for(size_t i = 0; i < pixelVals.size(); i++)
+  { 
+    Colour c = pixelVals[i];
+    uint32_t colour = (255<<24) + (int(c.red)<<16) + (int(c.green)<<8) + int(c.blue);
+    converted.push_back(colour);
+  }
+
+  for(int x = 0; x < width; x++)
+  {
+    for(int y = 0; y < height; y++)
+    {
+      window.setPixelColour(x, y, converted[x+y*width]);
+    }
   }
 }
 
