@@ -14,6 +14,8 @@ using namespace glm;
 
 vector<ModelTriangle> readObj();
 vector<Colour> readMaterial(string fname);
+CanvasTriangle modelToCanvas(ModelTriangle t);
+void drawLine(CanvasPoint p1, CanvasPoint p2, Colour c);
 void update();
 void handleEvent(SDL_Event event);
 vector <ModelTriangle> tris;
@@ -62,6 +64,24 @@ int main(int argc, char* argv[])
 void update()
 {
   // Function for performing animation (shifting artifacts or moving the camera)
+}
+
+void drawLine(CanvasPoint p1, CanvasPoint p2, Colour c)
+{ 
+  float dx = p2.x - p1.x;
+  float dy = p2.y - p1.y;
+  float numberOfValues = std::max(abs(dx), abs(dy));
+
+  float xChange = dx/(numberOfValues);
+  float yChange = dy/(numberOfValues);
+
+  for(float i = 0; i < numberOfValues; i++)
+  {
+    float x = p1.x + (xChange * i);
+    float y = p1.y + (yChange * i);
+    uint32_t colour = (255<<24) + (int(c.red)<<16) + (int(c.green)<<8) + int(c.blue);
+    window.setPixelColour(round(x), round(y), colour);
+  }
 }
 
 vector<Colour> readMaterial(string fname)
@@ -188,6 +208,27 @@ vector<ModelTriangle> readObj()
   fs.close();
 
 return tris;
+}
+
+CanvasTriangle modelToCanvas(ModelTriangle t)
+{
+  float f; /* camera distance, some negative val */
+
+  CanvasPoint a, b, c;
+  float x_a = (f * t.vertices[0].x)/(t.vertices[0].z);
+  float y_a = (f * t.vertices[0].y)/(t.vertices[0].z);
+  a.x = x_a + (WIDTH/2); a.y = y_a + (HEIGHT/2);
+
+  float x_b = (f * t.vertices[1].x)/(t.vertices[1].z);
+  float y_b = (f * t.vertices[1].y)/(t.vertices[1].z);
+  b.x = x_b + (WIDTH/2); b.y = y_b +(HEIGHT/2);
+
+  float x_c = (f * t.vertices[2].x)/(t.vertices[2].z);
+  float y_c = (f * t.vertices[2].y)/(t.vertices[2].z);
+  c.x = x_c + (WIDTH/2); c.y = y_c +(HEIGHT/2);
+
+  CanvasTriangle canvasTriangle = CanvasTriangle(a, b, c);
+  return canvasTriangle;
 }
 
 void handleEvent(SDL_Event event)
