@@ -16,11 +16,7 @@ vector<ModelTriangle> readObj();
 vector<Colour> readMaterial(string fname);
 void update();
 void handleEvent(SDL_Event event);
-  
 vector <ModelTriangle> tris;
-
-
-
 
 Colour getColourFromName(string mat, vector<Colour> colours)
 { 
@@ -63,62 +59,9 @@ int main(int argc, char* argv[])
   }
 }
 
-
- 
-
-
 void update()
 {
   // Function for performing animation (shifting artifacts or moving the camera)
-}
-
-void handleEvent(SDL_Event event)
-{
-  if(event.type == SDL_KEYDOWN) {
-    if(event.key.keysym.sym == SDLK_LEFT) cout << "LEFT" << endl;
-    else if(event.key.keysym.sym == SDLK_RIGHT) cout << "RIGHT" << endl;
-    else if(event.key.keysym.sym == SDLK_UP) cout << "UP" << endl;
-    else if(event.key.keysym.sym == SDLK_DOWN) cout << "DOWN" << endl;
-    // else if(event.key.keysym.sym == SDLK_u)
-    // {
-    //   cout << "DRAWING TRIANGLE" << endl;
-    //   CanvasPoint p1, p2, p3;
-    //   p1.x = rand()%(WIDTH); p1.y = rand()%(HEIGHT); 
-    //   p2.x = rand()%(WIDTH); p2.y = rand()%(HEIGHT);
-    //   p3.x = rand()%(WIDTH); p3.y = rand()%(HEIGHT);
-
-    //   CanvasTriangle t;
-    //   t.vertices[0] = p1; t.vertices[1] = p2; t.vertices[2] = p3;
-
-    //   Colour c;
-    //   c.red = rand()%255; c.blue = rand()%255; c.green = rand()%255;
-
-    //   // drawStroke(t, c);
-    // }
-    // else if(event.key.keysym.sym == SDLK_f)
-    // {
-    //   cout << "FILLING TRIANGLE" << endl;
-    //   CanvasPoint p1, p2, p3;
-    //   p1.x = rand()%(WIDTH); p1.y = rand()%(HEIGHT); 
-    //   p2.x = rand()%(WIDTH); p2.y = rand()%(HEIGHT);
-    //   p3.x = rand()%(WIDTH); p3.y = rand()%(HEIGHT);
-
-    //   CanvasTriangle t;
-    //   t.vertices[0] = p1; t.vertices[1] = p2; t.vertices[2] = p3;
-
-    //   Colour c;
-    //   c.red = rand()%255; c.blue = rand()%255; c.green = rand()%255;
-
-    //   // drawFilled(t, c);
-    // }
-    // else if(event.key.keysym.sym == SDLK_m)
-    // {
-    //   // drawTextureMap();
-    // }  //loadImage();
-
-  }
-  else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;  //loadImage();
-
 }
 
 vector<Colour> readMaterial(string fname)
@@ -149,96 +92,111 @@ vector<Colour> readMaterial(string fname)
   return colours;
 }
 
-
-vector<ModelTriangle> readObj(){
+vector<ModelTriangle> readObj()
+{
   ifstream fp;
-  cout<<"made it"<<endl;
-  vector <Colour> colours = readMaterial("/home/ak17520/Documents/ComputerGraphics/Lab3/cornell-box/cornell-box/cornell-box.mtl");
-  vector <vec3> vertic;
+  vector<Colour> colours = readMaterial("/home/ak17520/Documents/ComputerGraphics/Lab3/cornell-box/cornell-box/cornell-box.mtl");
+  vector<vec3> vertic;
   fp.open("/home/ak17520/Documents/ComputerGraphics/Lab3/cornell-box/cornell-box/cornell-box.obj");
-    if(fp.fail())
-        cout << "fails" << endl;
-    // vector<vec3<int>> colours;    
-      string newline;
-      getline(fp,newline);
-      getline(fp,newline);
-    while(!fp.eof()){
-      string light;
-      string comment;
-      string mat;
-      getline(fp,comment);
-      if (!comment.empty()){
-      string *splitcomment = split(comment,' ');
-      if (splitcomment[0] == "usemtl"){
-        mat = splitcomment[1];
-            while (true){
-      getline(fp,comment);
-      if (!comment.empty()){
-      string *splitcomment = split(comment,' ');
-      if (splitcomment[0]=="v"){
-
-      float x = stof(splitcomment[1]);
-      float y = stof(splitcomment[2]);
-      float z = stof(splitcomment[3]);
-      vec3 verts = vec3(x,y,z);
-      vertic.push_back(verts);
+    
+  if(fp.fail())
+    cout << "fails" << endl;  
   
+  string newline;
+  getline(fp,newline);
+  getline(fp,newline);
 
-      }
-      else {break;}
-      }
+  while(!fp.eof())
+  {
+    string light;
+    string comment;
+    string mat;
+    getline(fp, comment);
 
-      }
-      }
-      }
-
-                                                                                                                                                                                                                                                                                                                                                      
-
-    }
-    fp.close();
-    ifstream fs;
-    fs.open("/home/ak17520/Documents/ComputerGraphics/Lab3/cornell-box/cornell-box/cornell-box.obj");
-    if(fs.fail())
-    cout << "fails" << endl;
-      getline(fs,newline);
-      getline(fs,newline);
-      while(!fs.eof()){
-      string light;
-      string comment;
-      string mat;
-      // getline(fp,comment);
-      // string *splitName = split(comment,' ');
-      // mat = splitName[1];
-      getline(fs,comment);
-      if (!comment.empty()){
+    if (!comment.empty())
+    {
       string *splitcomment = split(comment,' ');
-      if (splitcomment[0] == "usemtl"){
+      if (splitcomment[0] == "usemtl")
+      {
+        mat = splitcomment[1];
+        while(true)
+        {
+          getline(fp,comment);
+          if (!comment.empty())
+          {
+            string *splitcomment = split(comment,' ');
+            if (splitcomment[0]=="v")
+            {
+              float x = stof(splitcomment[1]);
+              float y = stof(splitcomment[2]);
+              float z = stof(splitcomment[3]);
+              vec3 verts = vec3(x,y,z);
+              vertic.push_back(verts);
+            }
+            else 
+            {
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+  fp.close();
+
+  ifstream fs;
+  fs.open("/home/ak17520/Documents/ComputerGraphics/Lab3/cornell-box/cornell-box/cornell-box.obj");
+  if(fs.fail())
+    cout << "fails" << endl;
+
+  getline(fs,newline);
+  getline(fs,newline);
+
+  while(!fs.eof())
+  {
+    string light;
+    string comment;
+    string mat;
+    getline(fs,comment);
+    if (!comment.empty())
+    {
+      string *splitcomment = split(comment,' ');
+      if (splitcomment[0] == "usemtl")
+      {
         mat = splitcomment[1];
         Colour tricolour = getColourFromName(mat,colours);
-              while (true){
-                getline(fs,comment);
-      if (!comment.empty()){
-      string *splitcomment = split(comment,' ');
-      if (splitcomment[0]=="f"){
-        int first_vert = stoi(splitcomment[1].substr(0, splitcomment[1].size()-1));
-        int second_vert = stoi(splitcomment[2].substr(0, splitcomment[2].size()-1));
-        int third_vert = stoi(splitcomment[3].substr(0, splitcomment[3].size()-1));
 
-        tris.push_back(ModelTriangle(vertic[first_vert-1],vertic[second_vert-1],vertic[third_vert-1],tricolour));
-        // cout << tris.size() <<endl;
-        
+        while (true)
+        {
+          getline(fs,comment);
+          if (!comment.empty())
+          {
+            string *splitcomment = split(comment,' ');
+            if (splitcomment[0]=="f")
+            {
+              int first_vert = stoi(splitcomment[1].substr(0, splitcomment[1].size()-1));
+              int second_vert = stoi(splitcomment[2].substr(0, splitcomment[2].size()-1));
+              int third_vert = stoi(splitcomment[3].substr(0, splitcomment[3].size()-1));
 
+              tris.push_back(ModelTriangle(vertic[first_vert-1],vertic[second_vert-1],vertic[third_vert-1],tricolour));
+            }
+          }
+        }
       }
-
-              }
-      }
-
-      }
-      }
-
-}
-fs.close();
+    }
+  }
+  fs.close();
 
 return tris;
+}
 
+void handleEvent(SDL_Event event)
+{
+  if(event.type == SDL_KEYDOWN) {
+    if(event.key.keysym.sym == SDLK_LEFT) cout << "LEFT" << endl;
+    else if(event.key.keysym.sym == SDLK_RIGHT) cout << "RIGHT" << endl;
+    else if(event.key.keysym.sym == SDLK_UP) cout << "UP" << endl;
+    else if(event.key.keysym.sym == SDLK_DOWN) cout << "DOWN" << endl;
+  }
+  else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
 }
