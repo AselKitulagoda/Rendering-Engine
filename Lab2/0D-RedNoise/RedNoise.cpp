@@ -9,8 +9,8 @@
 using namespace std;
 using namespace glm;
 
-#define WIDTH 500
-#define HEIGHT 500
+#define WIDTH 480
+#define HEIGHT 395
 
 void drawLine(CanvasPoint p1, CanvasPoint p2, Colour c);
 void drawStroke(CanvasTriangle t, Colour c);
@@ -168,6 +168,7 @@ vector<uint32_t> loadImage()
     uint32_t colour = (255<<24) + (int(c.red)<<16) + (int(c.green)<<8) + int(c.blue);
     converted.push_back(colour);
   }
+
   return converted;
 }
 
@@ -179,7 +180,7 @@ void drawTextureLine(CanvasPoint p1, CanvasPoint p2, vector<uint32_t> pixelColou
 
   vector<float> xs = interpolation(p1.x, p2.x, numberOfValues);
   vector<float> ys = interpolation(p1.y, p2.y, numberOfValues);
-
+  
   TexturePoint numberOfTextureValues;
   numberOfTextureValues.x = p1.texturePoint.x - p2.texturePoint.x;
   numberOfTextureValues.y = p1.texturePoint.y - p2.texturePoint.y;
@@ -242,7 +243,8 @@ void drawTextureMap()
 
   for(int i = 0; i <= numberOfValuesBot; i++)
   {
-    drawTextureLine(p3_extraPoint[i], p3_p2[i], pixelColours);
+    // drawTextureLine(p3_extraPoint[i], p3_p2[i], pixelColours);
+    drawTextureLine(p3_p2[i], p3_extraPoint[i], pixelColours);
   }
 }
 
