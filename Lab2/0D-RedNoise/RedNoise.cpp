@@ -40,40 +40,40 @@ int main(int argc, char* argv[])
   }
 }
 
-vector<CanvasPoint> interpolate(CanvasPoint p1, CanvasPoint p2, int numberOfValues)
+vector<CanvasPoint> interpolate(CanvasPoint from, CanvasPoint to, int numberOfValues)
 {
   vector<CanvasPoint> vals;
-  for(int i = 0; i < numberOfValues + 1; i++)
+  for(int i = 0; i <= numberOfValues; i++)
   {
     CanvasPoint p;
-    p.x = p1.x + (i * (p2.x - p1.x)/numberOfValues);
-    p.y = p1.y + (i * (p2.y - p1.y)/numberOfValues);
-    p.texturePoint.x = p1.texturePoint.x + (i * (p2.texturePoint.x - p1.texturePoint.x)/numberOfValues);
-    p.texturePoint.y = p1.texturePoint.y + (i * (p2.texturePoint.y - p1.texturePoint.y)/numberOfValues);
+    p.x = from.x + (i * (to.x - from.x)/numberOfValues);
+    p.y = from.y + (i * (to.y - from.y)/numberOfValues);
+    p.texturePoint.x = from.texturePoint.x + (i * (to.texturePoint.x - from.texturePoint.x)/numberOfValues);
+    p.texturePoint.y = from.texturePoint.y + (i * (to.texturePoint.y - from.texturePoint.y)/numberOfValues);
     vals.push_back(p);
   }
   return vals;
 }
 
-vector<float> interpolation(float f1, float f2, int numberOfValues)
+vector<float> interpolation(float from, float to, int numberOfValues)
 {
   vector<float> vals;
   for(int i = 0; i < numberOfValues + 1; i++)
   {
-    float calc = f1 + (i * (f2 - f1)/numberOfValues);
+    float calc = from + (i * (to - from)/numberOfValues);
     vals.push_back(calc);
   }
   return vals;
 }
 
-void drawLine(CanvasPoint p1, CanvasPoint p2, Colour c)
+void drawLine(CanvasPoint to, CanvasPoint from, Colour c)
 { 
-  float dx = p1.x - p2.x;
-  float dy = p1.y - p2.y;
+  float dx = to.x - from.x;
+  float dy = to.y - from.y;
   float numberOfValues = ceil(std::max(abs(dx), abs(dy)));
 
-  vector<float> xs = interpolation(p1.x, p2.x, numberOfValues);
-  vector<float> ys = interpolation(p1.y, p2.y, numberOfValues);
+  vector<float> xs = interpolation(from.x, to.x, numberOfValues);
+  vector<float> ys = interpolation(from.y, to.y, numberOfValues);
 
   for(float i = 0; i < numberOfValues; i++)
   {
@@ -107,6 +107,8 @@ void drawFilled(CanvasTriangle f, Colour c)
   {
     std::swap(p2, p3);
   }
+  
+  // p1 = top, p2 = mid, p3 = bot
 
   float ratio = (p1.y - p2.y)/(p1.y - p3.y);
   CanvasPoint extraPoint;
@@ -172,24 +174,24 @@ vector<uint32_t> loadImage()
   return converted;
 }
 
-void drawTextureLine(CanvasPoint p1, CanvasPoint p2, vector<uint32_t> pixelColours)
+void drawTextureLine(CanvasPoint to, CanvasPoint from, vector<uint32_t> pixelColours)
 {
-  float dx = p1.x - p2.x;
-  float dy = p1.y - p2.y;
+  float dx = to.x - from.x;
+  float dy = to.y - from.y;
   float numberOfValues = ceil(std::max(abs(dx), abs(dy)));
 
-  vector<float> xs = interpolation(p1.x, p2.x, numberOfValues);
-  vector<float> ys = interpolation(p1.y, p2.y, numberOfValues);
+  vector<float> xs = interpolation(from.x, to.x, numberOfValues);
+  vector<float> ys = interpolation(from.y, to.y, numberOfValues);
   
   TexturePoint numberOfTextureValues;
-  numberOfTextureValues.x = p1.texturePoint.x - p2.texturePoint.x;
-  numberOfTextureValues.y = p1.texturePoint.y - p2.texturePoint.y;
+  numberOfTextureValues.x = to.texturePoint.x - from.texturePoint.x;
+  numberOfTextureValues.y = to.texturePoint.y - from.texturePoint.y;
 
   for(float i = 0; i < numberOfValues; i++)
   {
     TexturePoint tp;
-    tp.x = p2.texturePoint.x + (i * numberOfTextureValues.x/numberOfValues);
-    tp.y = p2.texturePoint.y + (i * numberOfTextureValues.y/numberOfValues);
+    tp.x = from.texturePoint.x + (i * numberOfTextureValues.x/numberOfValues);
+    tp.y = from.texturePoint.y + (i * numberOfTextureValues.y/numberOfValues);
     cout << tp << endl;
     window.setPixelColour(xs[i], ys[i], pixelColours[round(tp.x) + round(tp.y) * WIDTH]);
   }
@@ -199,54 +201,54 @@ void drawTextureMap()
 { 
   vector<uint32_t> pixelColours = loadImage();
 
-  CanvasPoint p1; p1.x = 160; p1.y = 10; p1.texturePoint = TexturePoint(195, 5);
-  CanvasPoint p2; p2.x = 300; p2.y = 230; p2.texturePoint = TexturePoint(395, 380);
-  CanvasPoint p3; p3.x = 10; p3.y = 150; p3.texturePoint = TexturePoint(65, 330);
+  CanvasPoint largest; largest.x = 160; largest.y = 10; largest.texturePoint = TexturePoint(195, 5);
+  CanvasPoint middle; middle.x = 300; middle.y = 230; middle.texturePoint = TexturePoint(395, 380);
+  CanvasPoint smallest; smallest.x = 10; smallest.y = 150; smallest.texturePoint = TexturePoint(65, 330);
+  
+  if(largest.y < middle.y)
+  {
+    std::swap(largest, middle);
+  }
+  if(largest.y < smallest.y)
+  {
+    std::swap(largest, smallest);
+  }
+  if(middle.y < smallest.y)
+  {
+    std::swap(middle, smallest);
+  }
 
-  if(p1.y < p2.y)
-  {
-    std::swap(p1, p2);
-  }
-  if(p1.y < p3.y)
-  {
-    std::swap(p1, p3);
-  }
-  if(p2.y < p3.y)
-  {
-    std::swap(p2, p3);
-  }
-
-  float ratio = (p1.y - p2.y)/(p1.y - p3.y);
+  float ratio = (largest.y - middle.y)/(largest.y - smallest.y);
   CanvasPoint extraPoint;
-  extraPoint.x = p1.x - ratio*(p1.x - p3.x);
-  extraPoint.y = p1.y - ratio*(p1.y - p3.y);
+  extraPoint.x = largest.x - ratio*(largest.x - smallest.x);
+  extraPoint.y = largest.y - ratio*(largest.y - smallest.y);
 
   TexturePoint extraTex;
-  extraTex.x = p1.texturePoint.x - ratio*(p1.texturePoint.x - p3.texturePoint.x);
-  extraTex.y = p1.texturePoint.y - ratio*(p1.texturePoint.y - p3.texturePoint.y);
+  extraTex.x = largest.texturePoint.x - ratio*(largest.texturePoint.x - smallest.texturePoint.x);
+  extraTex.y = largest.texturePoint.y - ratio*(largest.texturePoint.y - smallest.texturePoint.y);
   
   extraPoint.texturePoint = extraTex;
 
   // Interpolation 
-  int numberOfValuesTop = (p1.y - p2.y);
-  int numberOfValuesBot = (p2.y - p3.y);
+  int numberOfValuesTop = (largest.y - middle.y);
+  int numberOfValuesBot = (middle.y - smallest.y);
 
-  vector<CanvasPoint> p1_extraPoint = interpolate(p1, extraPoint, ceil(numberOfValuesTop)+1);
-  vector<CanvasPoint> p1_p2 = interpolate(p1, p2, ceil(numberOfValuesTop)+1);
-  vector<CanvasPoint> p3_extraPoint = interpolate(p3, extraPoint, ceil(numberOfValuesBot)+1);
-  vector<CanvasPoint> p3_p2 = interpolate(p3, p2, ceil(numberOfValuesBot)+1);
+  vector<CanvasPoint> largest_extraPoint = interpolate(largest, extraPoint, ceil(numberOfValuesTop)+1);
+  vector<CanvasPoint> largest_middle = interpolate(largest, middle, ceil(numberOfValuesTop)+1);
+  vector<CanvasPoint> smallest_extraPoint = interpolate(smallest, extraPoint, ceil(numberOfValuesBot)+1);
+  vector<CanvasPoint> smallest_middle = interpolate(smallest, middle, ceil(numberOfValuesBot)+1);
 
   for(int i = 0; i <= numberOfValuesTop; i++)
   {
-    drawTextureLine(p1_extraPoint[i], p1_p2[i], pixelColours);
+    drawTextureLine(largest_extraPoint[i], largest_middle[i], pixelColours);
   }
 
   for(int i = 0; i <= numberOfValuesBot; i++)
   {
-    // drawTextureLine(p3_extraPoint[i], p3_p2[i], pixelColours);
-    drawTextureLine(p3_p2[i], p3_extraPoint[i], pixelColours);
+    drawTextureLine(smallest_extraPoint[i], smallest_middle[i], pixelColours);
   }
 }
+
 
 void update()
 {
