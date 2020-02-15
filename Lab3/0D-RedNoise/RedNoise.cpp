@@ -255,7 +255,7 @@ CanvasTriangle modelToCanvas(ModelTriangle t)
 }
 
 void Wireframe(vector <ModelTriangle> tris){
-  for (size_t i=0;i<tris.size()-1;i++){
+  for (size_t i=0;i<tris.size();i++){
     cout << i << endl;
     CanvasTriangle new_tri = modelToCanvas(tris[i]);
     drawStroke(new_tri,Colour(255,255,255));
