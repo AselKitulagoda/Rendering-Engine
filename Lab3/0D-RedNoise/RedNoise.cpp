@@ -11,6 +11,8 @@ using namespace glm;
 
 #define WIDTH 320
 #define HEIGHT 240
+#define MTLPATH "/home/asel/Documents/ComputerGraphics/Lab3/cornell-box.mtl"
+#define OBJPATH "/home/asel/Documents/ComputerGraphics/Lab3/cornell-box.obj"
 
 vector<ModelTriangle> readObj();
 vector<Colour> readMaterial(string fname);
@@ -18,7 +20,8 @@ CanvasTriangle modelToCanvas(ModelTriangle t);
 void drawLine(CanvasPoint p1, CanvasPoint p2, Colour c);
 void update();
 void handleEvent(SDL_Event event);
-vector <ModelTriangle> tris;
+void Wireframe();
+void drawStroke(CanvasTriangle t, Colour c);
 
 Colour getColourFromName(string mat, vector<Colour> colours)
 { 
@@ -44,12 +47,8 @@ int main(int argc, char* argv[])
   vector <ModelTriangle> triangl;
   vector <Colour> colours;
   triangl = readObj();
-  colours = readMaterial("/home/ak17520/Documents/ComputerGraphics/Lab3/cornell-box/cornell-box/cornell-box.mtl");
-  
-  cout << colours.size()<< endl;
-  for (size_t t = 0;t<tris.size();t++){
-    cout << tris[(int)t]<< endl ;
-  }
+  colours = readMaterial(MTLPATH);
+
   while(true)
   {
     // We MUST poll for events - otherwise the window will freeze !
@@ -83,6 +82,12 @@ void drawLine(CanvasPoint p1, CanvasPoint p2, Colour c)
     window.setPixelColour(round(x), round(y), colour);
   }
 }
+void drawStroke(CanvasTriangle t, Colour c)
+{
+  drawLine(t.vertices[0], t.vertices[1], c);
+  drawLine(t.vertices[1], t.vertices[2], c);
+  drawLine(t.vertices[2], t.vertices[0], c);
+}
 
 vector<Colour> readMaterial(string fname)
 {
@@ -109,15 +114,17 @@ vector<Colour> readMaterial(string fname)
     colours.push_back(c);
   }                                                                                                                                                                         
   fp.close();
+    cout << "finished mat"<<endl;
   return colours;
 }
 
 vector<ModelTriangle> readObj()
 {
+  vector <ModelTriangle> tris;
   ifstream fp;
-  vector<Colour> colours = readMaterial("/home/ak17520/Documents/ComputerGraphics/Lab3/cornell-box/cornell-box/cornell-box.mtl");
+  vector<Colour> colours = readMaterial(MTLPATH);
   vector<vec3> vertic;
-  fp.open("/home/ak17520/Documents/ComputerGraphics/Lab3/cornell-box/cornell-box/cornell-box.obj");
+  fp.open(OBJPATH);
     
   if(fp.fail())
     cout << "fails" << endl;  
@@ -162,36 +169,44 @@ vector<ModelTriangle> readObj()
       }
     }
   }
-  fp.close();
+  cout<<vertic.size()<<endl;
+  cout << "vertices pass done" << endl;
 
-  ifstream fs;
-  fs.open("/home/ak17520/Documents/ComputerGraphics/Lab3/cornell-box/cornell-box/cornell-box.obj");
-  if(fs.fail())
+  fp.clear();
+  fp.seekg(0,ios::beg);
+  if(fp.fail())
     cout << "fails" << endl;
+  cout << "stream open" <<endl;
+  getline(fp,newline);
+  getline(fp,newline);
 
-  getline(fs,newline);
-  getline(fs,newline);
-
-  while(!fs.eof())
+  while(!fp.eof())
   {
-    string light;
-    string comment;
+    // string light;
+    string comment_new;
     string mat;
-    getline(fs,comment);
-    if (!comment.empty())
+    getline(fp,comment_new);
+    if (!comment_new.empty())
     {
-      string *splitcomment = split(comment,' ');
+      string *splitcomment = split(comment_new,' ');
       if (splitcomment[0] == "usemtl")
       {
         mat = splitcomment[1];
         Colour tricolour = getColourFromName(mat,colours);
 
-        while (true)
+        while(true){
+          getline(fp,comment_new);
+          splitcomment = split(comment_new,' ');
+          if (splitcomment[0] == "f" && !comment_new.empty()){break;}
+        }
+
+      bool not_reach = true;
+        while (not_reach)
         {
-          getline(fs,comment);
-          if (!comment.empty())
+          // cout << "this is a comment"<<comment_new << endl;
+          if (!comment_new.empty())
           {
-            string *splitcomment = split(comment,' ');
+            splitcomment = split(comment_new,' ');
             if (splitcomment[0]=="f")
             {
               int first_vert = stoi(splitcomment[1].substr(0, splitcomment[1].size()-1));
@@ -200,19 +215,26 @@ vector<ModelTriangle> readObj()
 
               tris.push_back(ModelTriangle(vertic[first_vert-1],vertic[second_vert-1],vertic[third_vert-1],tricolour));
             }
+            else{break;}
+
           }
+          if (!fp.eof()){
+          getline(fp,comment_new);
+          }
+          else{not_reach=false;}
+
         }
       }
     }
   }
-  fs.close();
-
+  fp.close();
+cout << "finished Reading OBJ" << endl;
 return tris;
 }
 
 CanvasTriangle modelToCanvas(ModelTriangle t)
 {
-  float f; /* camera distance, some negative val */
+  float f=-5; /* camera distance, some negative val */
 
   CanvasPoint a, b, c;
   float x_a = (f * t.vertices[0].x)/(t.vertices[0].z);
@@ -231,6 +253,14 @@ CanvasTriangle modelToCanvas(ModelTriangle t)
   return canvasTriangle;
 }
 
+void Wireframe(vector <ModelTriangle> tris){
+  for (size_t i=0;i<tris.size()-1;i++){
+    cout << i << endl;
+    CanvasTriangle new_tri = modelToCanvas(tris[i]);
+    drawStroke(new_tri,Colour(255,255,255));
+
+  }
+}
 void handleEvent(SDL_Event event)
 {
   if(event.type == SDL_KEYDOWN) {
