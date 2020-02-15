@@ -20,7 +20,7 @@ CanvasTriangle modelToCanvas(ModelTriangle t);
 void drawLine(CanvasPoint p1, CanvasPoint p2, Colour c);
 void update();
 void handleEvent(SDL_Event event);
-void Wireframe();
+void Wireframe(vector <ModelTriangle> tris);
 void drawStroke(CanvasTriangle t, Colour c);
 
 Colour getColourFromName(string mat, vector<Colour> colours)
@@ -48,6 +48,7 @@ int main(int argc, char* argv[])
   vector <Colour> colours;
   triangl = readObj();
   colours = readMaterial(MTLPATH);
+  Wireframe(triangl);
 
   while(true)
   {
