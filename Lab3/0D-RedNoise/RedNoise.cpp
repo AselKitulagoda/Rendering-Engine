@@ -64,6 +64,21 @@ int main(int argc, char* argv[])
   }
 }
 
+vector<CanvasPoint> interpolate(CanvasPoint from, CanvasPoint to, int numberOfValues)
+{
+  vector<CanvasPoint> vals;
+  for(int i = 0; i <= numberOfValues; i++)
+  {
+    CanvasPoint p;
+    p.x = from.x + (i * (to.x - from.x)/numberOfValues);
+    p.y = from.y + (i * (to.y - from.y)/numberOfValues);
+    p.texturePoint.x = from.texturePoint.x + (i * (to.texturePoint.x - from.texturePoint.x)/numberOfValues);
+    p.texturePoint.y = from.texturePoint.y + (i * (to.texturePoint.y - from.texturePoint.y)/numberOfValues);
+    vals.push_back(p);
+  }
+  return vals;
+}
+
 void update()
 {
   // Function for performing animation (shifting artifacts or moving the camera)
@@ -91,6 +106,53 @@ void drawStroke(CanvasTriangle t, Colour c)
   drawLine(t.vertices[0], t.vertices[1], c);
   drawLine(t.vertices[1], t.vertices[2], c);
   drawLine(t.vertices[2], t.vertices[0], c);
+}
+
+void drawFilled(CanvasTriangle f, Colour c)
+{
+  CanvasPoint p1 = f.vertices[0];
+  CanvasPoint p2 = f.vertices[1];
+  CanvasPoint p3 = f.vertices[2];
+
+  if(p1.y < p2.y)
+  {
+    std::swap(p1, p2);
+  }
+  if(p1.y < p3.y)
+  {
+    std::swap(p1, p3);
+  }
+  if(p2.y < p3.y)
+  {
+    std::swap(p2, p3);
+  }
+  
+  // p1 = top, p2 = mid, p3 = bot
+
+  float ratio = (p1.y - p2.y)/(p1.y - p3.y);
+  CanvasPoint extraPoint;
+  extraPoint.x = p1.x - ratio*(p1.x - p3.x);
+  extraPoint.y = p1.y - ratio*(p1.y - p3.y);
+
+  // Interpolation 
+  int numberOfValuesTop = (p1.y - p2.y);
+  int numberOfValuesBot = (p2.y - p3.y);
+
+  vector<CanvasPoint> p1_extraPoint = interpolate(p1, extraPoint, ceil(numberOfValuesTop)+1);
+  vector<CanvasPoint> p1_p2 = interpolate(p1, p2, ceil(numberOfValuesTop)+1);
+  vector<CanvasPoint> p3_extraPoint = interpolate(p3, extraPoint, ceil(numberOfValuesBot)+1);
+  vector<CanvasPoint> p3_p2 = interpolate(p3, p2, ceil(numberOfValuesBot)+1);
+
+  for(int i = 0; i <= numberOfValuesTop; i++)
+  {
+    drawLine(p1_extraPoint[i], p1_p2[i], c);
+  }
+
+  for(int i = 0; i <= numberOfValuesBot; i++)
+  {
+    drawLine(p3_extraPoint[i], p3_p2[i], c);
+  }
+  drawStroke(f, c);
 }
 
 vector<Colour> readMaterial(string fname)
@@ -236,6 +298,17 @@ cout << "finished Reading OBJ" << endl;
 return tris;
 }
 
+// // Function to sort the model triangles as per distance from camera
+// vector<ModelTriangle> sortModelTriangles(vector<ModelTriangle> tris)
+// {
+//   vector<tuple<float, int> zs;
+//   for(int i = 0; i < tris.size(); i++)
+//   {
+//     zs.push_back()
+//   }
+
+// }
+
 CanvasTriangle modelToCanvas(ModelTriangle t)
 { 
   vec3 camera(0, 0, CAMERA_Z);
@@ -262,7 +335,7 @@ void Wireframe(vector <ModelTriangle> tris){
   for (size_t i=0;i<tris.size();i++){
     cout << i << endl;
     CanvasTriangle new_tri = modelToCanvas(tris[i]);
-    drawStroke(new_tri,Colour(255,255,255));
+    drawFilled(new_tri, tris[i].colour);
   }
 }
 
