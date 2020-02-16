@@ -129,7 +129,7 @@ void drawFilled(CanvasTriangle f, Colour c)
     drawLine(p1_extraPoint[i], p1_p2[i], c);
   }
 
-  for(int i = 0; i <= numberOfValuesBot; i++)
+  for(int i = 0; i <= numberOfValuesBot+1; i++)
   {
     drawLine(p3_extraPoint[i], p3_p2[i], c);
   }
@@ -201,9 +201,9 @@ void drawTextureMap()
 { 
   vector<uint32_t> pixelColours = loadImage();
 
-  CanvasPoint largest; largest.x = 160; largest.y = 10; largest.texturePoint = TexturePoint(195, 5);
-  CanvasPoint middle; middle.x = 300; middle.y = 230; middle.texturePoint = TexturePoint(395, 380);
-  CanvasPoint smallest; smallest.x = 10; smallest.y = 150; smallest.texturePoint = TexturePoint(65, 330);
+  CanvasPoint largest; largest.x = rand()%WIDTH; largest.y = rand()%HEIGHT; largest.texturePoint = TexturePoint(195, 5);
+  CanvasPoint middle; middle.x = rand()%WIDTH; middle.y = rand()%HEIGHT; middle.texturePoint = TexturePoint(395, 380);
+  CanvasPoint smallest; smallest.x = rand()%WIDTH; smallest.y = rand()%HEIGHT; smallest.texturePoint = TexturePoint(65, 330);
   
   if(largest.y < middle.y)
   {
@@ -243,7 +243,7 @@ void drawTextureMap()
     drawTextureLine(largest_extraPoint[i], largest_middle[i], pixelColours);
   }
 
-  for(int i = 0; i <= numberOfValuesBot; i++)
+  for(int i = 0; i <= numberOfValuesBot+1; i++)
   {
     drawTextureLine(smallest_extraPoint[i], smallest_middle[i], pixelColours);
   }

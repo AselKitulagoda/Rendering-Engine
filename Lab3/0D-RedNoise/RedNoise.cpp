@@ -15,6 +15,8 @@ using namespace glm;
 // #define OBJPATH "/home/asel/Documents/ComputerGraphics/Lab3/cornell-box.obj"
 #define MTLPATH "/home/ks17226/Documents/ComputerGraphics/Lab3/cornell-box.mtl"
 #define OBJPATH "/home/ks17226/Documents/ComputerGraphics/Lab3/cornell-box.obj"
+// #define MTLPATH "/home/ak17520/Documents/ComputerGraphics/Lab3/cornell-box.mtl"
+// #define OBJPATH "/home/ak17520/Documents/ComputerGraphics/Lab3/cornell-box.obj"
 #define CAMERA_Z 8
 
 vector<ModelTriangle> readObj();
