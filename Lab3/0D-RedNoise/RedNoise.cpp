@@ -9,13 +9,13 @@
 using namespace std;
 using namespace glm;
 
-#define WIDTH 320
-#define HEIGHT 240
+#define WIDTH 500
+#define HEIGHT 500
 // #define MTLPATH "/home/asel/Documents/ComputerGraphics/Lab3/cornell-box.mtl"
 // #define OBJPATH "/home/asel/Documents/ComputerGraphics/Lab3/cornell-box.obj"
 #define MTLPATH "/home/ks17226/Documents/ComputerGraphics/Lab3/cornell-box.mtl"
 #define OBJPATH "/home/ks17226/Documents/ComputerGraphics/Lab3/cornell-box.obj"
-#define CAMERA_Z 20
+#define CAMERA_Z 8
 
 vector<ModelTriangle> readObj();
 vector<Colour> readMaterial(string fname);
@@ -23,7 +23,7 @@ CanvasTriangle modelToCanvas(ModelTriangle t);
 void drawLine(CanvasPoint p1, CanvasPoint p2, Colour c);
 void update();
 void handleEvent(SDL_Event event);
-void Wireframe(vector <ModelTriangle> tris);
+void drawFilledWireframe(vector<ModelTriangle> tris);
 void drawStroke(CanvasTriangle t, Colour c);
 
 Colour getColourFromName(string mat, vector<Colour> colours)
@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
   vector <Colour> colours;
   triangl = readObj();
   colours = readMaterial(MTLPATH);
-  Wireframe(triangl);
+  drawFilledWireframe(triangl);
 
   while(true)
   {
@@ -148,7 +148,7 @@ void drawFilled(CanvasTriangle f, Colour c)
     drawLine(p1_extraPoint[i], p1_p2[i], c);
   }
 
-  for(int i = 0; i <= numberOfValuesBot; i++)
+  for(int i = 0; i <= numberOfValuesBot+1; i++)
   {
     drawLine(p3_extraPoint[i], p3_p2[i], c);
   }
@@ -298,17 +298,6 @@ cout << "finished Reading OBJ" << endl;
 return tris;
 }
 
-// // Function to sort the model triangles as per distance from camera
-// vector<ModelTriangle> sortModelTriangles(vector<ModelTriangle> tris)
-// {
-//   vector<tuple<float, int> zs;
-//   for(int i = 0; i < tris.size(); i++)
-//   {
-//     zs.push_back()
-//   }
-
-// }
-
 CanvasTriangle modelToCanvas(ModelTriangle t)
 { 
   vec3 camera(0, 0, CAMERA_Z);
@@ -331,7 +320,7 @@ CanvasTriangle modelToCanvas(ModelTriangle t)
   return triangle;
 }
 
-void Wireframe(vector <ModelTriangle> tris){
+void drawFilledWireframe(vector <ModelTriangle> tris){
   for (size_t i=0;i<tris.size();i++){
     cout << i << endl;
     CanvasTriangle new_tri = modelToCanvas(tris[i]);
