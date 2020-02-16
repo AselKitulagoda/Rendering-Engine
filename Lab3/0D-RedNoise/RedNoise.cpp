@@ -330,6 +330,85 @@ void drawFilledWireframe(vector <ModelTriangle> tris){
   }
 }
 
+CanvasPoint getMinMaxX(CanvasTriangle t)
+{
+  CanvasPoint largest = t.vertices[0];
+  CanvasPoint middle = t.vertices[1];
+  CanvasPoint smallest = t.vertices[2];
+
+  if(largest.x < middle.x)
+  {
+    std::swap(largest, middle);
+  }
+  if(largest.x < smallest.x)
+  {
+    std::swap(largest, smallest);
+  }
+  if(middle.x < smallest.x)
+  {
+    std::swap(middle, smallest);
+  }
+  CanvasPoint minMax = CanvasPoint(smallest.x, largest.x);
+  return minMax;
+}
+
+CanvasPoint getMinMaxY(CanvasTriangle t)
+{
+  CanvasPoint largest = t.vertices[0];
+  CanvasPoint middle = t.vertices[1];
+  CanvasPoint smallest = t.vertices[2];
+
+  if(largest.y < middle.y)
+  {
+    std::swap(largest, middle);
+  }
+  if(largest.y < smallest.y)
+  {
+    std::swap(largest, smallest);
+  }
+  if(middle.y < smallest.y)
+  {
+    std::swap(middle, smallest);
+  }
+  CanvasPoint minMax = CanvasPoint(smallest.y, largest.y);
+  return minMax;
+}
+
+float computeDepth(uint32_t x, uint32_t y)
+{
+  
+}
+
+void depthBuffer(vector<ModelTriangle> tris)
+{
+  float *depthBuffer = new float [WIDTH * HEIGHT];
+  for(uint32_t y = 0; y < HEIGHT; y++)
+  {
+    for(uint32_t x = 0; x < WIDTH; x++)
+    {
+      depthBuffer[y][x] = std::numeric_limits<float>::infinity();
+    }
+  }
+
+  for(ModelTriangle t : tris)
+  {
+    CanvasTriangle projection = modelToCanvas(t);
+    CanvasPoint minMax_x = getMinMaxX(projection);
+    CanvasPoint minMax_y = getMinMaxY(projection);
+
+    CanvasPoint minPoint = CanvasPoint(minMax_x.x, minMax_y.x);
+    CanvasPoint maxPoint = CanvasPoint(minMax_x.y, minMax_y.y);
+
+    for(uint32_t y = minPoint.y; y <= maxPoint.y; y++)
+    {
+      for(uint32_t x = minPoint.x; x <= minPoint.x; x++)
+      {
+        float z = computeDepth(x, y);
+      }
+    }
+  }
+}
+
 void handleEvent(SDL_Event event)
 {
   if(event.type == SDL_KEYDOWN) {
