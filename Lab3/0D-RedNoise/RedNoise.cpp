@@ -11,8 +11,11 @@ using namespace glm;
 
 #define WIDTH 320
 #define HEIGHT 240
-#define MTLPATH "/home/asel/Documents/ComputerGraphics/Lab3/cornell-box.mtl"
-#define OBJPATH "/home/asel/Documents/ComputerGraphics/Lab3/cornell-box.obj"
+// #define MTLPATH "/home/asel/Documents/ComputerGraphics/Lab3/cornell-box.mtl"
+// #define OBJPATH "/home/asel/Documents/ComputerGraphics/Lab3/cornell-box.obj"
+#define MTLPATH "/home/ks17226/Documents/ComputerGraphics/Lab3/cornell-box.mtl"
+#define OBJPATH "/home/ks17226/Documents/ComputerGraphics/Lab3/cornell-box.obj"
+#define CAMERA_Z 20
 
 vector<ModelTriangle> readObj();
 vector<Colour> readMaterial(string fname);
@@ -234,24 +237,25 @@ return tris;
 }
 
 CanvasTriangle modelToCanvas(ModelTriangle t)
-{
-  float f=-5; /* camera distance, some negative val */
+{ 
+  vec3 camera(0, 0, CAMERA_Z);
+  float f=450; /* camera distance, some negative val */
+  CanvasTriangle triangle;
+  for(int i = 0; i < 3; i++)
+  {
+    vec3 pWorld = t.vertices[i];
+    float xCamera = pWorld.x - camera.x;
+    float yCamera = pWorld.y - camera.y;
+    float zCamera = pWorld.z - camera.z;
 
-  CanvasPoint a, b, c;
-  float x_a = (f * t.vertices[0].x)/(t.vertices[0].z);
-  float y_a = (f * t.vertices[0].y)/(t.vertices[0].z);
-  a.x = x_a + (WIDTH/2); a.y = y_a + (HEIGHT/2);
+    float pScreen = f/-zCamera;
+    int xProj = std::floor(xCamera*pScreen) + WIDTH/2;
+    int yProj = std::floor((1-yCamera)*pScreen) + HEIGHT/2;
 
-  float x_b = (f * t.vertices[1].x)/(t.vertices[1].z);
-  float y_b = (f * t.vertices[1].y)/(t.vertices[1].z);
-  b.x = x_b + (WIDTH/2); b.y = y_b +(HEIGHT/2);
-
-  float x_c = (f * t.vertices[2].x)/(t.vertices[2].z);
-  float y_c = (f * t.vertices[2].y)/(t.vertices[2].z);
-  c.x = x_c + (WIDTH/2); c.y = y_c +(HEIGHT/2);
-
-  CanvasTriangle canvasTriangle = CanvasTriangle(a, b, c);
-  return canvasTriangle;
+    CanvasPoint p = CanvasPoint(xProj, yProj);
+    triangle.vertices[i] = p;
+  }
+  return triangle;
 }
 
 void Wireframe(vector <ModelTriangle> tris){
@@ -259,9 +263,9 @@ void Wireframe(vector <ModelTriangle> tris){
     cout << i << endl;
     CanvasTriangle new_tri = modelToCanvas(tris[i]);
     drawStroke(new_tri,Colour(255,255,255));
-
   }
 }
+
 void handleEvent(SDL_Event event)
 {
   if(event.type == SDL_KEYDOWN) {
