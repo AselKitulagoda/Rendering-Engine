@@ -27,6 +27,13 @@ void update();
 void handleEvent(SDL_Event event);
 void drawFilledWireframe(vector<ModelTriangle> tris);
 void drawStroke(CanvasTriangle t, Colour c);
+CanvasPoint getMinMaxX(CanvasTriangle t);
+CanvasPoint getMinMaxY(CanvasTriangle t);
+vector<CanvasPoint> interpolate(CanvasPoint from, CanvasPoint to, int numberOfValues);
+vector<float> interpolation(float from, float to, int numberOfValues);
+float getZFromXY(uint32_t x, uint32_t y, vector<tuple<uint32_t, uint32_t, float>> vals);
+vector<tuple<uint32_t, uint32_t, float>> computeDepth(ModelTriangle t);
+void depthBuffer(vector<ModelTriangle> tris);
 
 Colour getColourFromName(string mat, vector<Colour> colours)
 { 
@@ -53,7 +60,9 @@ int main(int argc, char* argv[])
   vector <Colour> colours;
   triangl = readObj();
   colours = readMaterial(MTLPATH);
-  drawFilledWireframe(triangl);
+  // drawFilledWireframe(triangl);
+  // vector<tuple<uint32_t, uint32_t, float>> depthVals = computeDepth(triangl[5]);
+  depthBuffer(triangl);
 
   while(true)
   {
@@ -374,37 +383,133 @@ CanvasPoint getMinMaxY(CanvasTriangle t)
   return minMax;
 }
 
-float computeDepth(uint32_t x, uint32_t y)
+vector<float> interpolation(float from, float to, int numberOfValues)
 {
+  vector<float> vals;
+  for(int i = 0; i < numberOfValues + 1; i++)
+  {
+    float calc = from + (i * (to - from)/numberOfValues);
+    vals.push_back(calc);
+  }
+  return vals;
+}
+
+float getZFromXY(uint32_t x, uint32_t y, vector<tuple<uint32_t, uint32_t, float>> vals)
+{   
+  float z = std::numeric_limits<float>::infinity();;
+  for(size_t i = 0; i < vals.size(); i++)
+  {
+    if(x == get<0>(vals[i]) && y == get<1>(vals[i]))
+    {
+      z = get<2>(vals[i]);
+      break;
+    }
+  }
+  return z;
+}
+
+//https://stackoverflow.com/questions/29731683/checking-depth-z-when-rendering-triangular-faces-in-3d-space
+
+// Compute the depths of the entire triangular region
+vector<tuple<uint32_t, uint32_t, float>> computeDepth(ModelTriangle t)
+{
+  vec3 camera(0, 0, CAMERA_Z);
+  float f=450; /* camera distance, some negative val */
   
+  vector<vec3> vertexInfo;  // z values at vertices
+
+  for(int i = 0; i < 3; i++)
+  {
+    vec3 pWorld = t.vertices[i];
+    float xCamera = pWorld.x - camera.x;
+    float yCamera = pWorld.y - camera.y;
+    float zCamera = pWorld.z - camera.z;
+
+    float pScreen = f/-zCamera;
+    int xProj = std::floor(xCamera*pScreen) + WIDTH/2;
+    int yProj = std::floor((1-yCamera)*pScreen) + HEIGHT/2;
+
+    vertexInfo.push_back(vec3(xProj, yProj, zCamera));
+  }
+
+  CanvasTriangle projection = modelToCanvas(t);
+  vector<CanvasPoint> topLeft = interpolate(projection.vertices[0], projection.vertices[1], WIDTH);
+  vector<CanvasPoint> topRight = interpolate(projection.vertices[0], projection.vertices[2], WIDTH);
+
+  // assume A, B, C, D = 1
+  vector<tuple<uint32_t, uint32_t, float>> toReturn;
+  toReturn.push_back(make_tuple(vertexInfo[0].x, vertexInfo[0].y, vertexInfo[0].z));
+  float zCurrent1 = get<2>(toReturn[0]);
+  float zCurrent2 = get<2>(toReturn[0]);
+  for(uint32_t i = 1; i < topLeft.size(); i++)
+  {
+    float zNew1 = zCurrent1 - 1;
+    toReturn.push_back(make_tuple(topLeft[i].x, topLeft[i].y, zNew1));
+    zCurrent1 = zNew1;
+
+    float zNew2 = zCurrent2 - 1;
+    toReturn.push_back(make_tuple(topRight[i].x, topRight[i].y, zNew2));
+    zCurrent2 = zNew2;
+  }
+
+  // Line wise interpolation 
+  for(uint32_t i = 1; i < WIDTH; i++)
+  {
+    vector<CanvasPoint> lineWise = interpolate(topLeft[i], topRight[i], abs(topLeft[i].x - topRight[i].x));
+    float zCurrent = getZFromXY(topLeft[i].x, topLeft[i].y, toReturn);
+    for(uint32_t j = 1; j < lineWise.size(); j++)
+    {
+      float zNew = zCurrent - 1;
+      toReturn.push_back(make_tuple(lineWise[j].x, lineWise[j].y, zNew));
+      zCurrent = zNew;
+    }
+  }
+  return toReturn;
 }
 
 void depthBuffer(vector<ModelTriangle> tris)
 {
   float *depthBuffer = new float [WIDTH * HEIGHT];
+  Colour *frameBuffer = new Colour [WIDTH * HEIGHT];
   for(uint32_t y = 0; y < HEIGHT; y++)
   {
     for(uint32_t x = 0; x < WIDTH; x++)
     {
-      depthBuffer[y][x] = std::numeric_limits<float>::infinity();
+      depthBuffer[x+y*WIDTH] = std::numeric_limits<float>::infinity();
+      frameBuffer[x+y*WIDTH] = Colour(0, 0, 0);
     }
   }
 
-  for(ModelTriangle t : tris)
+  for(size_t t = 0; t < tris.size(); t++)
   {
-    CanvasTriangle projection = modelToCanvas(t);
+    CanvasTriangle projection = modelToCanvas(tris[t]);
     CanvasPoint minMax_x = getMinMaxX(projection);
     CanvasPoint minMax_y = getMinMaxY(projection);
 
     CanvasPoint minPoint = CanvasPoint(minMax_x.x, minMax_y.x);
     CanvasPoint maxPoint = CanvasPoint(minMax_x.y, minMax_y.y);
 
+    vector<tuple<uint32_t, uint32_t, float>> depthValues = computeDepth(tris[t]);
     for(uint32_t y = minPoint.y; y <= maxPoint.y; y++)
     {
       for(uint32_t x = minPoint.x; x <= minPoint.x; x++)
       {
-        float z = computeDepth(x, y);
+        float z = getZFromXY(x, y, depthValues);
+        if(z < depthBuffer[x+y*WIDTH])
+        {
+          depthBuffer[x+y*WIDTH] = z;
+          frameBuffer[x+y*WIDTH] = tris[t].colour;
+        }
       }
+    }
+  }
+  for(uint32_t y = 0; y < HEIGHT; y++)
+  {
+    for(uint32_t x = 0; x < WIDTH; x++)
+    {
+      Colour c = frameBuffer[x+y*WIDTH];
+      uint32_t colour = (255<<24) + (int(c.red)<<16) + (int(c.green)<<8) + int(c.blue);
+      window.setPixelColour(x, y, colour);
     }
   }
 }
