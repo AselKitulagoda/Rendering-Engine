@@ -373,6 +373,7 @@ void computeDepth(vector<ModelTriangle> tris)
   }
 
   for(size_t t = 0; t < tris.size(); t++)
+  // for(size_t t = 0; t < 1; t++)
   {
     CanvasTriangle projection = modelToCanvas(tris[t]);
     
@@ -391,7 +392,7 @@ void computeDepth(vector<ModelTriangle> tris)
 
     // Calculate Depth for extra point
     // getDepthForExtraPoint(p1, p3, extraPoint);
-    extraPoint.depth = p1.depth - ratio*(p1.depth - p3.depth);
+    extraPoint.depth = (p1.depth - p3.depth)/2;
 
     // Interpolation 
     int numberOfValuesTop = (p1.y - p2.y);
@@ -415,11 +416,15 @@ void computeDepth(vector<ModelTriangle> tris)
         {
           if(numberOfValues == 1) { numberOfValues = 2; }
 
-          float depth = -1/(from.depth + ((to.depth - from.depth) * j/(numberOfValues - 1)));
+          cout << "from depth = " << from.depth << endl;
+          cout << "to depth = " << to.depth << endl;
 
-          if(depth > depthBuffer.at((from.x + j) + from.y * WIDTH))
+          float depth = -(from.depth + ((to.depth - from.depth) * j)/(numberOfValues - 1));
+          cout << "depth = " << depth << endl;
+
+          if(depth > depthBuffer.at(round((from.x + j)) + round(from.y) * WIDTH))
           {
-            depthBuffer.at((from.x + j) + from.y * WIDTH) = depth;
+            depthBuffer.at(round((from.x + j)) + round(from.y) * WIDTH) = depth;
             Colour c = tris[t].colour;
             uint32_t colour = (255<<24) + (int(c.red)<<16) + (int(c.green)<<8) + int(c.blue);
             window.setPixelColour(round(from.x + j), round(from.y), colour);
