@@ -313,6 +313,7 @@ CanvasTriangle modelToCanvas(ModelTriangle t)
   vec3 camera(0, 0, 300);
   float f=250; /* camera distance, some negative val */
   CanvasTriangle triangle;
+  triangle.colour = t.colour;
   for(int i = 0; i < 3; i++)
   {
     vec3 pWorld = t.vertices[i];
@@ -380,17 +381,45 @@ vector<CanvasPoint> computeDepth(CanvasTriangle t)
   vector<CanvasPoint> p3_extraPoint = interpolate(p3, extraPoint, numberOfValuesBot);
   vector<CanvasPoint> p3_p2 = interpolate(p3, p2, numberOfValuesBot);
 
-  vector<CanvasPoint> toReturn;
+  vector<float> depthBuffer;
+  for(size_t i = 0; i < WIDTH * HEIGHT; i++)
+  {
+    depthBuffer.push_back(INFINITY);
+  }
+
+  // vector<CanvasPoint> toReturn;
   for(int i = 0; i < p1_extraPoint.size(); i++)
   {
     vector<CanvasPoint> upper = interpolate(p1_extraPoint[i], p1_p2[i], abs(p1_extraPoint[i].x - p1_p2[i].x)+1);
-    toReturn.insert(toReturn.end(), upper.begin(), upper.end());
+    // toReturn.insert(toReturn.end(), upper.begin(), upper.end());
+    for(size_t j = 0; j < upper.size(); j++)
+    {
+      CanvasPoint current = upper.at(i);
+      if(current.depth < depthBuffer.at(round(current.x) + round(current.y)* WIDTH))
+      {
+        depthBuffer.at(round(current.x) + round(current.y)* WIDTH) = current.depth;
+        Colour c = t.colour;
+        uint32_t colour = (255<<24) + (int(c.red)<<16) + (int(c.green)<<8) + int(c.blue);
+        window.setPixelColour(round(current.x), round(current.y), colour);
+      }
+    }
   }
 
   for(int i = 0; i < p3_extraPoint.size(); i++)
   {
     vector<CanvasPoint> lower = interpolate(p3_extraPoint[i], p3_p2[i], abs(p3_extraPoint[i].x - p3_p2[i].x)+1);
-    toReturn.insert(toReturn.end(), lower.begin(), lower.end());
+    // toReturn.insert(toReturn.end(), lower.begin(), lower.end());
+    for(size_t j = 0; j < lower.size(); j++)
+    {
+      CanvasPoint current = lower.at(i);
+      if(current.depth < depthBuffer.at(round(current.x) + round(current.y)* WIDTH))
+      {
+        depthBuffer.at(round(current.x) + round(current.y)* WIDTH) = current.depth;
+        Colour c = t.colour;
+        uint32_t colour = (255<<24) + (int(c.red)<<16) + (int(c.green)<<8) + int(c.blue);
+        window.setPixelColour(round(current.x), round(current.y), colour);
+      }
+    }
   }
   return toReturn;
 }
@@ -410,32 +439,10 @@ void depthBuffer(vector<ModelTriangle> tris)
     //     }
     // }
 
-  vector<float> depthBuffer;
-  for(size_t i = 0; i < WIDTH * HEIGHT; i++)
-  {
-    depthBuffer.push_back(INFINITY);
-  }
-
-  // std::cout << depthBuffer[1534] << '\n';
-
   for(size_t t = 0; t < tris.size(); t++)
-  // for(size_t t = 0; t < 1; t++)
   {
     CanvasTriangle projection = modelToCanvas(tris[t]);
     vector<CanvasPoint> depthVals = computeDepth(projection);
-
-    for(size_t i = 0; i < depthVals.size(); i++)
-    {
-      CanvasPoint check = depthVals[i];
-      // cout << check.depth << endl;
-      if(check.depth < depthBuffer.at(check.x + check.y* WIDTH))
-      {
-        depthBuffer.at(check.x + check.y* WIDTH) = check.depth;
-        Colour c = tris[t].colour;
-        uint32_t colour = (255<<24) + (int(c.red)<<16) + (int(c.green)<<8) + int(c.blue);
-        window.setPixelColour(check.x, check.y, colour);
-      }
-    }
   }
 }
 
