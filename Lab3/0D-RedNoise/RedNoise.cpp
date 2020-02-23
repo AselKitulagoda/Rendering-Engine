@@ -19,11 +19,12 @@ using namespace glm;
 // #define OBJPATH "/home/ak17520/Documents/ComputerGraphics/Lab3/cornell-box.obj"
 
 vec3 cameraPos(0, 0, 300);
-mat3 cameraOrientation = mat3();
+mat3 cameraOrientation = mat3(1, 0, 0
+                              0, 1, 0
+                              0, 0, 1);
 
 vector<ModelTriangle> readObj(float scale);
 vector<Colour> readMaterial(string fname);
-// CanvasTriangle modelToCanvas(ModelTriangle t, double near, double far);
 CanvasTriangle modelToCanvas(ModelTriangle t);
 void drawLine(CanvasPoint p1, CanvasPoint p2, Colour c);
 void update();
@@ -393,7 +394,7 @@ void computeDepth(CanvasTriangle t, double *depthBuffer)
     for(size_t j = 0; j < upper.size(); j++)
     {
       CanvasPoint check = upper[j];
-      if((uint32_t) check.x >= 0 && (uint32_t) check.x < WIDTH && (uint32_t) check.y >= 0 && (uint32_t) check.y < WIDTH)
+      if((uint32_t) check.x >= 0 && (uint32_t) check.x < WIDTH && (uint32_t) check.y >= 0 && (uint32_t) check.y < HEIGHT)
       {
         if(check.depth > depthBuffer[((uint32_t)check.x + (uint32_t)check.y* WIDTH)])
         {
@@ -412,7 +413,7 @@ void computeDepth(CanvasTriangle t, double *depthBuffer)
     for(size_t j = 0; j < lower.size(); j++)
     {
       CanvasPoint check = lower[j];
-      if((uint32_t) check.x >= 0 && (uint32_t) check.x < WIDTH && (uint32_t) check.y >= 0 && (uint32_t) check.y < WIDTH)
+      if((uint32_t) check.x >= 0 && (uint32_t) check.x < WIDTH && (uint32_t) check.y >= 0 && (uint32_t) check.y < HEIGHT)
       {
         if(check.depth > depthBuffer[((uint32_t)check.x + (uint32_t)check.y* WIDTH)])
         {
@@ -455,17 +456,17 @@ void rotateX(float theta)
 
 void rotateY(float theta)
 {
-  mat3 rot = mat3(cos(theta), 0, sin(theta), 
-                  0, 1, 0, 
-                  -sin(theta), 0, cos(theta));
+  mat3 rot = mat3(vec3(cos(theta), 0, sin(theta)), 
+                  vec3(0, 1, 0), 
+                  vec3(-sin(theta), 0, cos(theta)));
   cameraOrientation *= rot;
 }
 
 void rotateZ(float theta)
 {
-  mat3 rot = mat3(cos(theta), -sin(theta), 0, 
-                  sin(theta), cos(theta), 0, 
-                  0, 0, 1);
+  mat3 rot = mat3(vec3(cos(theta), -sin(theta), 0), 
+                  vec3(sin(theta), cos(theta), 0), 
+                  vec3(0, 0, 1));
   cameraOrientation *= rot;
 }
 
@@ -492,25 +493,30 @@ void handleEvent(SDL_Event event)
       cout << "TRANSLATE DOWN" << endl;
       cameraPos.y += 10;
     }
+    else if(event.key.keysym.sym == SDLK_c)
+    {
+      cout << "CLEAR SCREEN" << endl;
+      window.clearPixels();
+    }
     else if(event.key.keysym.sym == SDLK_a)
     {
       cout << "ROTATE X" << endl;
-      rotateX(0.01);
+      rotateX(5*PI/180);
     } 
     else if(event.key.keysym.sym == SDLK_d)
     {
       cout << "ROTATE X OTHER" << endl;
-      rotateX(-0.01);
+      rotateX(-5*PI/180);
     } 
     else if(event.key.keysym.sym == SDLK_w)
     {
       cout << "ROTATE Y" << endl;
-      rotateY(0.01);
+      rotateY(5*PI/180);
     } 
     else if(event.key.keysym.sym == SDLK_s)
     {
       cout << "ROTATE Y OTHER" << endl;
-      rotateY(-0.01);
+      rotateY(-5*PI/180);
     } 
 
   }
