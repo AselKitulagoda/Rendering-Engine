@@ -17,7 +17,9 @@ using namespace glm;
 #define OBJPATH "/home/ks17226/Documents/ComputerGraphics/Lab3/cornell-box.obj"
 // #define MTLPATH "/home/ak17520/Documents/ComputerGraphics/Lab3/cornell-box.mtl"
 // #define OBJPATH "/home/ak17520/Documents/ComputerGraphics/Lab3/cornell-box.obj"
-#define CAMERA_Z 8
+
+vec3 cameraPos(0, 0, 300);
+mat3 cameraOrientation = mat3();
 
 vector<ModelTriangle> readObj(float scale);
 vector<Colour> readMaterial(string fname);
@@ -59,12 +61,15 @@ int main(int argc, char* argv[])
   triangl = readObj(50);
   colours = readMaterial(MTLPATH);
   // drawFilledWireframe(triangl);
-  depthBuffer(triangl);
 
   while(true)
   {
     // We MUST poll for events - otherwise the window will freeze !
-    if(window.pollForInputEvents(&event)) handleEvent(event);
+    if(window.pollForInputEvents(&event))
+    {
+      handleEvent(event);
+      depthBuffer(triangl);
+    } 
     update();
 
     // Need to render the frame at the end, or nothing actually gets shown on the screen !
@@ -310,25 +315,27 @@ return tris;
 
 CanvasTriangle modelToCanvas(ModelTriangle t)
 {
-  vec3 camera(0, 0, 300);
   float f=250; /* camera distance, some negative val */
   CanvasTriangle triangle;
   triangle.colour = t.colour;
   for(int i = 0; i < 3; i++)
   {
     vec3 pWorld = t.vertices[i];
-    float xCamera = pWorld.x - camera.x;
-    float yCamera = pWorld.y - camera.y;
-    double zCamera = pWorld.z - camera.z;
+    float xCamera = pWorld.x - cameraPos.x;
+    float yCamera = pWorld.y - cameraPos.y;
+    float zCamera = pWorld.z - cameraPos.z;
+
+    vec3 cameraToVertex = vec3(xCamera, yCamera, zCamera);
+    vec3 adjustedVector = cameraToVertex * cameraOrientation;
     // double correctedNear = near + camera.z;
 
     float pScreen = f/-zCamera;
-    int xProj = std::floor(xCamera*pScreen) + WIDTH/2;
-    int yProj = std::floor((1-yCamera)*pScreen) + HEIGHT/2;
+    int xProj = std::floor(adjustedVector.x*pScreen) + WIDTH/2;
+    int yProj = std::floor((-adjustedVector.y)*pScreen) + HEIGHT/2;
 
     CanvasPoint p = CanvasPoint(xProj, yProj);
     // double z = (near + far)/(far - near) + 1/(-zCamera) * ((-2 * far * near)/(far - near));
-    p.depth = -zCamera;
+    p.depth = 1/-adjustedVector.z;
     triangle.vertices[i] = p;
   }
   return triangle;
@@ -383,42 +390,51 @@ void computeDepth(CanvasTriangle t, double *depthBuffer)
   for(size_t i = 0; i < p1_extraPoint.size(); i++)
   {
     vector<CanvasPoint> upper = interpolate(p1_extraPoint[i], p1_p2[i], abs(p1_extraPoint[i].x - p1_p2[i].x)+1);
-    for(size_t j = 0; j < upper.size(); j++){
-        CanvasPoint check = upper[j];
-        if(check.depth < depthBuffer[((uint32_t)check.x + (uint32_t)check.y* WIDTH)])
+    for(size_t j = 0; j < upper.size(); j++)
+    {
+      CanvasPoint check = upper[j];
+      if((uint32_t) check.x >= 0 && (uint32_t) check.x < WIDTH && (uint32_t) check.y >= 0 && (uint32_t) check.y < WIDTH)
+      {
+        if(check.depth > depthBuffer[((uint32_t)check.x + (uint32_t)check.y* WIDTH)])
         {
           depthBuffer[((uint32_t)check.x + (uint32_t)check.y* WIDTH)] = check.depth;
           Colour c = t.colour;
           uint32_t colour = (255<<24) + (int(c.red)<<16) + (int(c.green)<<8) + int(c.blue);
           window.setPixelColour((int)check.x, (int)check.y, colour);
         }
+      }
     }
   }
 
   for(size_t i = 0; i < p3_extraPoint.size(); i++)
   {
     vector<CanvasPoint> lower = interpolate(p3_extraPoint[i], p3_p2[i], abs(p3_extraPoint[i].x - p3_p2[i].x)+1);
-      for(size_t j = 0; j < lower.size(); j++){
-        CanvasPoint check = lower[j];
-        if(check.depth < depthBuffer[((uint32_t)check.x + (uint32_t)check.y* WIDTH)])
+    for(size_t j = 0; j < lower.size(); j++)
+    {
+      CanvasPoint check = lower[j];
+      if((uint32_t) check.x >= 0 && (uint32_t) check.x < WIDTH && (uint32_t) check.y >= 0 && (uint32_t) check.y < WIDTH)
+      {
+        if(check.depth > depthBuffer[((uint32_t)check.x + (uint32_t)check.y* WIDTH)])
         {
           depthBuffer[((uint32_t)check.x + (uint32_t)check.y* WIDTH)] = check.depth;
           Colour c = t.colour;
           uint32_t colour = (255<<24) + (int(c.red)<<16) + (int(c.green)<<8) + int(c.blue);
           window.setPixelColour((int)check.x, (int)check.y, colour);
-        } 
+        }
+      }
     }
   }
 }
 
 void depthBuffer(vector<ModelTriangle> tris)
-{
+{ 
+  window.clearPixels();
   double *depthBuffer = (double*)malloc(sizeof(double) * WIDTH * HEIGHT);
   for(uint32_t y = 0; y < HEIGHT; y++)
   {
     for(uint32_t x = 0; x < WIDTH; x++)
     {
-      depthBuffer[x+y*WIDTH] = INFINITY;
+      depthBuffer[x+y*WIDTH] = 0;
     }
   }
 
@@ -429,13 +445,74 @@ void depthBuffer(vector<ModelTriangle> tris)
   }
 }
 
+void rotateX(float theta)
+{
+  mat3 rot = mat3(vec3(1, 0, 0), 
+                  vec3(0, cos(theta), -sin(theta)), 
+                  vec3(0, sin(theta), cos(theta)));
+  cameraOrientation *= rot;
+}
+
+void rotateY(float theta)
+{
+  mat3 rot = mat3(cos(theta), 0, sin(theta), 
+                  0, 1, 0, 
+                  -sin(theta), 0, cos(theta));
+  cameraOrientation *= rot;
+}
+
+void rotateZ(float theta)
+{
+  mat3 rot = mat3(cos(theta), -sin(theta), 0, 
+                  sin(theta), cos(theta), 0, 
+                  0, 0, 1);
+  cameraOrientation *= rot;
+}
+
 void handleEvent(SDL_Event event)
 {
   if(event.type == SDL_KEYDOWN) {
-    if(event.key.keysym.sym == SDLK_LEFT) cout << "LEFT" << endl;
-    else if(event.key.keysym.sym == SDLK_RIGHT) cout << "RIGHT" << endl;
-    else if(event.key.keysym.sym == SDLK_UP) cout << "UP" << endl;
-    else if(event.key.keysym.sym == SDLK_DOWN) cout << "DOWN" << endl;
+    if(event.key.keysym.sym == SDLK_LEFT) 
+    {
+      cout << "TRANSLATE LEFT" << endl;
+      cameraPos.x += 10;
+    }
+    else if(event.key.keysym.sym == SDLK_RIGHT)
+    {
+      cout << "TRANSLATE RIGHT" << endl;
+      cameraPos.x -= 10;
+    } 
+    else if(event.key.keysym.sym == SDLK_UP)
+    {
+      cout << "TRANSLATE UP" << endl;
+      cameraPos.y -= 10;
+    } 
+    else if(event.key.keysym.sym == SDLK_DOWN)
+    {
+      cout << "TRANSLATE DOWN" << endl;
+      cameraPos.y += 10;
+    }
+    else if(event.key.keysym.sym == SDLK_a)
+    {
+      cout << "ROTATE X" << endl;
+      rotateX(0.01);
+    } 
+    else if(event.key.keysym.sym == SDLK_d)
+    {
+      cout << "ROTATE X OTHER" << endl;
+      rotateX(-0.01);
+    } 
+    else if(event.key.keysym.sym == SDLK_w)
+    {
+      cout << "ROTATE Y" << endl;
+      rotateY(0.01);
+    } 
+    else if(event.key.keysym.sym == SDLK_s)
+    {
+      cout << "ROTATE Y OTHER" << endl;
+      rotateY(-0.01);
+    } 
+
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
 }
