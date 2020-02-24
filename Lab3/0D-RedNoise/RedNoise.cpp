@@ -11,6 +11,8 @@ using namespace glm;
 
 #define WIDTH 500
 #define HEIGHT 500
+#define SCALE_FACTOR 50
+#define PI 3.1415
 // #define MTLPATH "/home/asel/Documents/ComputerGraphics/Lab3/cornell-box.mtl"
 // #define OBJPATH "/home/asel/Documents/ComputerGraphics/Lab3/cornell-box.obj"
 #define MTLPATH "/home/ks17226/Documents/ComputerGraphics/Lab3/cornell-box.mtl"
@@ -19,9 +21,9 @@ using namespace glm;
 // #define OBJPATH "/home/ak17520/Documents/ComputerGraphics/Lab3/cornell-box.obj"
 
 vec3 cameraPos(0, 0, 300);
-mat3 cameraOrientation = mat3(1, 0, 0
-                              0, 1, 0
-                              0, 0, 1);
+mat3 cameraOrientation = mat3(vec3(1, 0, 0),
+                              vec3(0, 1, 0),
+                              vec3(0, 0, 1));
 
 vector<ModelTriangle> readObj(float scale);
 vector<Colour> readMaterial(string fname);
@@ -59,7 +61,7 @@ int main(int argc, char* argv[])
   SDL_Event event;
   vector <ModelTriangle> triangl;
   vector <Colour> colours;
-  triangl = readObj(50);
+  triangl = readObj(SCALE_FACTOR);
   colours = readMaterial(MTLPATH);
   // drawFilledWireframe(triangl);
 
