@@ -6,12 +6,14 @@
 #include <fstream>
 #include <vector>
 
+#include <glm/gtx/string_cast.hpp>
+
 using namespace std;
 using namespace glm;
 
 #define WIDTH 500
 #define HEIGHT 500
-#define SCALE_FACTOR 50
+#define SCALE_FACTOR 40
 #define PI 3.1415
 // #define MTLPATH "/home/asel/Documents/ComputerGraphics/Lab3/cornell-box.mtl"
 // #define OBJPATH "/home/asel/Documents/ComputerGraphics/Lab3/cornell-box.obj"
@@ -329,15 +331,14 @@ CanvasTriangle modelToCanvas(ModelTriangle t)
     float zCamera = pWorld.z - cameraPos.z;
 
     vec3 cameraToVertex = vec3(xCamera, yCamera, zCamera);
+    // vec3 cameraToVertex = pWorld;
     vec3 adjustedVector = cameraToVertex * cameraOrientation;
-    // double correctedNear = near + camera.z;
 
     float pScreen = f/-zCamera;
     int xProj = std::floor(adjustedVector.x*pScreen) + WIDTH/2;
     int yProj = std::floor((-adjustedVector.y)*pScreen) + HEIGHT/2;
 
     CanvasPoint p = CanvasPoint(xProj, yProj);
-    // double z = (near + far)/(far - near) + 1/(-zCamera) * ((-2 * far * near)/(far - near));
     p.depth = 1/-adjustedVector.z;
     triangle.vertices[i] = p;
   }
@@ -437,7 +438,7 @@ void depthBuffer(vector<ModelTriangle> tris)
   {
     for(uint32_t x = 0; x < WIDTH; x++)
     {
-      depthBuffer[x+y*WIDTH] = 0;
+      depthBuffer[x+y*WIDTH] = -INFINITY;
     }
   }
 
@@ -503,22 +504,22 @@ void handleEvent(SDL_Event event)
     else if(event.key.keysym.sym == SDLK_a)
     {
       cout << "ROTATE X" << endl;
-      rotateX(5*PI/180);
+      rotateX(0.1);
     } 
     else if(event.key.keysym.sym == SDLK_d)
     {
       cout << "ROTATE X OTHER" << endl;
-      rotateX(-5*PI/180);
+      rotateX(-0.1);
     } 
     else if(event.key.keysym.sym == SDLK_w)
     {
       cout << "ROTATE Y" << endl;
-      rotateY(5*PI/180);
+      rotateY(0.1);
     } 
     else if(event.key.keysym.sym == SDLK_s)
     {
       cout << "ROTATE Y OTHER" << endl;
-      rotateY(-5*PI/180);
+      rotateY(-0.1);
     } 
 
   }
