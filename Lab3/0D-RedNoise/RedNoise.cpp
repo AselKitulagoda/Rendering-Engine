@@ -11,12 +11,12 @@
 using namespace std;
 using namespace glm;
 
-#define WIDTH 500
-#define HEIGHT 500
+#define WIDTH 1000
+#define HEIGHT 1000
 #define SCALE_FACTOR 0.3
 #define PI 3.1415
-#define MTLPATH "/home/asel/Documents/ComputerGraphics/Lab3/cornell-box.mtl"
-#define OBJPATH "/home/asel/Documents/ComputerGraphics/Lab3/cornell-box.obj"
+#define MTLPATH "cornell-box.mtl"
+#define OBJPATH "cornell-box.obj"
 
 vec3 cameraPos(0, 0, 6);
 mat3 cameraOrientation = mat3(vec3(1, 0, 0),
