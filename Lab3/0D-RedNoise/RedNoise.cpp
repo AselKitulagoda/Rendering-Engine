@@ -13,7 +13,7 @@ using namespace glm;
 
 #define WIDTH 1000
 #define HEIGHT 1000
-#define SCALE_FACTOR 0.3
+#define SCALE_FACTOR 1
 #define PI 3.1415
 #define MTLPATH "cornell-box.mtl"
 #define OBJPATH "cornell-box.obj"
@@ -468,9 +468,21 @@ void rotateZ(float theta)
   cameraOrientation = cameraOrientation * rot;
 }
 
-void lookAt()
+void lookAt(vec3 point)
 {
+  vec3 forward = glm::normalize(vec3(cameraPos - point));
+  vec3 right = glm::normalize(glm::cross(vec3(0, 1, 0), forward));
+  vec3 up = glm::normalize(glm::cross(forward, right));
 
+  cameraOrientation = mat3(right, up, forward);
+}
+
+void resetCameraStuff()
+{
+  cameraPos = vec3(0, 0, 6);
+  cameraOrientation = mat3(vec3(1, 0, 0),
+                           vec3(0, 1, 0),
+                           vec3(0, 0, 1));
 }
 
 void handleEvent(SDL_Event event)
@@ -521,7 +533,16 @@ void handleEvent(SDL_Event event)
       cout << "ROTATE Y OTHER" << endl;
       rotateY(-0.01);
     }
-
+    else if(event.key.keysym.sym == SDLK_l)
+    {
+      cout << "LOOK AT" << endl;
+      lookAt(vec3(-3.014011, 5.325313, -5.839967));
+    }
+    else if(event.key.keysym.sym == SDLK_r)
+    {
+      cout << "RESET CAMERA POS" << endl;
+      resetCameraStuff();
+    }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
 }
