@@ -222,6 +222,8 @@ bool inRange(float val, float v1, float v2)
 RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles)
 { 
   RayTriangleIntersection result;
+  result.distanceFromCamera = INFINITY;
+
   for(size_t i = 0; i < triangles.size(); i++)
   {
     ModelTriangle curr = triangles.at(i);
@@ -236,14 +238,16 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
     float u = possibleSolution.y;
     float v = possibleSolution.z;
 
-    if()
+    if(inRange(u, 0.0, 1.0) && inRange(v, 0.0, 0.1) && (u+v <= 1.0))
     {
-      if(inRange(u, 0.0, 1.0) && inRange(v, 0.0, 0.1) && (u+v <= 1.0))
+      if(t < result.distanceFromCamera)
       {
-        
+        vec3 point = curr.vertices[0] + (u * e0) + (v * e1);
+        result = RayTriangleIntersection(point, t, curr);
       }
     }
   }
+  return result;
 }
 
 void rotateX(float theta)
