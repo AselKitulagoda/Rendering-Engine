@@ -1,6 +1,7 @@
 #include <ModelTriangle.h>
 #include <CanvasTriangle.h>
 #include <DrawingWindow.h>
+#include <RayTriangleIntersection.h>
 #include <Utils.h>
 #include <glm/glm.hpp>
 #include <fstream>
@@ -11,10 +12,11 @@
 using namespace std;
 using namespace glm;
 
-#define WIDTH 1000
-#define HEIGHT 1000
+#define WIDTH 640
+#define HEIGHT 480
 #define SCALE_FACTOR 0.3
 #define PI 3.1415
+#define FOV 90
 #define MTLPATH "cornell-box.mtl"
 #define OBJPATH "cornell-box.obj"
 
@@ -25,7 +27,9 @@ mat3 cameraOrientation = mat3(vec3(1, 0, 0),
 
 vector<ModelTriangle> readObj(float scale);
 vector<Colour> readMaterial(string fname);
+vec3 computeRayDirection(int x, int y, float fov);
 RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles);
+void drawRaytraced(vector<ModelTriangle> triangles);
 void update();
 void handleEvent(SDL_Event event);
 
@@ -50,6 +54,12 @@ DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 int main(int argc, char* argv[])
 {
   SDL_Event event;
+  vector <ModelTriangle> triangles;
+  vector <Colour> colours;
+  colours = readMaterial(MTLPATH);
+  triangles = readObj(SCALE_FACTOR);
+  
+  drawRaytraced(triangles);
 
   while(true)
   {
@@ -219,6 +229,24 @@ bool inRange(float val, float v1, float v2)
   else return false;
 }
 
+vec3 computeRayDirection(int x, int y, float fov)
+{
+  float ndc_x = (x + 0.5)/WIDTH;
+  float ndc_y = (y + 0.5)/HEIGHT;
+
+  float aspectRatio = (float) WIDTH / (float) HEIGHT;
+
+  float P_x = (2 * (ndc_x - 1)) * aspectRatio * tan(fov / 2 * M_PI / 180);
+  float P_y = (1 - (2 * ndc_y)) * tan(fov / 2 * M_PI / 180);
+
+  vec3 rayOriginWorld = (vec3(0,0,0) - cameraPos) * cameraOrientation;
+  vec3 rayPWorld = (vec3(P_x, P_y, -1) - cameraPos) * cameraOrientation;
+  vec3 rayDirection = rayPWorld - rayOriginWorld;
+  rayDirection = glm::normalize(rayDirection);
+
+  return rayDirection;
+}
+
 RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles)
 { 
   RayTriangleIntersection result;
@@ -234,7 +262,7 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
 
     vec3 possibleSolution = glm::inverse(DEMatrix) * SPVector;
 
-    float t = possibleSolution.x;
+    float t = abs(possibleSolution.x);
     float u = possibleSolution.y;
     float v = possibleSolution.z;
 
@@ -247,7 +275,27 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
       }
     }
   }
+  if(result.distanceFromCamera == INFINITY)
+  {
+    result.distanceFromCamera = -INFINITY;
+  }
   return result;
+}
+
+void drawRaytraced(vector<ModelTriangle> triangles)
+{
+  for(int y = 0; y < HEIGHT; y++)
+  {
+    for(int x = 0; x < WIDTH; x++)
+    {
+      vec3 ray = computeRayDirection(x, y, FOV);
+      RayTriangleIntersection closestIntersect = getClosestIntersection(cameraPos, ray, triangles);
+      if(closestIntersect.distanceFromCamera != -INFINITY)
+      {
+        window.setPixelColour(x, y, closestIntersect.intersectedTriangle.colour.pack());
+      }
+    }
+  }
 }
 
 void rotateX(float theta)
