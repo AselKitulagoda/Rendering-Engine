@@ -16,7 +16,7 @@ using namespace glm;
 #define HEIGHT 480
 #define SCALE_FACTOR 0.3
 #define PI 3.1415
-#define FOV 90
+#define FOV 30
 #define MTLPATH "cornell-box.mtl"
 #define OBJPATH "cornell-box.obj"
 
@@ -242,6 +242,7 @@ vec3 computeRayDirection(int x, int y, float fov)
   vec3 rayOriginWorld = (vec3(0,0,0) - cameraPos) * cameraOrientation;
   vec3 rayPWorld = (vec3(P_x, P_y, -1) - cameraPos) * cameraOrientation;
   vec3 rayDirection = rayPWorld - rayOriginWorld;
+
   rayDirection = glm::normalize(rayDirection);
 
   return rayDirection;
@@ -262,11 +263,11 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
 
     vec3 possibleSolution = glm::inverse(DEMatrix) * SPVector;
 
-    float t = abs(possibleSolution.x);
+    float t = possibleSolution.x;
     float u = possibleSolution.y;
     float v = possibleSolution.z;
 
-    if(inRange(u, 0.0, 1.0) && inRange(v, 0.0, 0.1) && (u+v <= 1.0))
+    if(inRange(u, 0.0, 1.0) && inRange(v, 0.0, 1.0) && (u+v <= 1.0))
     {
       if(t < result.distanceFromCamera)
       {
