@@ -20,6 +20,7 @@ using namespace glm;
 #define MTLPATH "cornell-box.mtl"
 #define OBJPATH "cornell-box.obj"
 
+int bool_flag = -1;
 // OBJ Stuff
 vector<ModelTriangle> readObj(float scale);
 vector<Colour> readMaterial(string fname);
@@ -82,6 +83,12 @@ int main(int argc, char* argv[])
     if(window.pollForInputEvents(&event))
     {
       handleEvent(event);
+      if (bool_flag == 0){
+        drawWireframe(triangles);
+      }
+      else if (bool_flag == 1){
+        depthBuffer(triangles);
+      }
     }
     update();
 
@@ -526,6 +533,7 @@ void handleEvent(SDL_Event event)
     {
       cout << "CLEAR SCREEN" << endl;
       window.clearPixels();
+      bool_flag = -2;
     }
     else if(event.key.keysym.sym == SDLK_w) // camera rotate X
     {
@@ -561,11 +569,14 @@ void handleEvent(SDL_Event event)
     {
       cout << "DRAWING WIREFRAME" << endl;
       drawWireframe(triangles);
+      bool_flag = 0;
     }
     else if(event.key.keysym.sym == SDLK_k) // rasterised
     {
       cout << "DRAWING RASTERISED" << endl;
       depthBuffer(triangles);
+            bool_flag = 1;
+
     }
     else if(event.key.keysym.sym == SDLK_l) // raytraced
     {
