@@ -16,7 +16,7 @@ using namespace glm;
 #define HEIGHT 480
 #define SCALE_FACTOR 0.3
 #define PI 3.1415
-#define FOV 30
+#define FOCAL_RAYTRACE -750
 #define MTLPATH "cornell-box.mtl"
 #define OBJPATH "cornell-box.obj"
 
@@ -38,7 +38,7 @@ void computeDepth(CanvasTriangle t, double *depthBuffer);
 void depthBuffer(vector<ModelTriangle> tris);
 
 // Raytracing Stuff
-vec3 computeRayDirection(int x, int y, float fov);
+vec3 computeRayDirection(int x, int y);
 RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles);
 void drawRaytraced(vector<ModelTriangle> triangles);
 
@@ -47,7 +47,7 @@ void update();
 void handleEvent(SDL_Event event);
 
 // Defining the Global Variables
-vec3 cameraPos(1, 0, 6);
+vec3 cameraPos(0, 0, 6);
 mat3 cameraOrientation = mat3(vec3(1, 0, 0),
                               vec3(0, 1, 0),
                               vec3(0, 0, 1));
@@ -397,20 +397,9 @@ bool inRange(float val, float v1, float v2)
   else return false;
 }
 
-vec3 computeRayDirection(int x, int y, float fov)
+vec3 computeRayDirection(int x, int y)
 {
-  float ndc_x = (x + 0.5)/WIDTH;
-  float ndc_y = (y + 0.5)/HEIGHT;
-
-  float aspectRatio = (float) WIDTH / (float) HEIGHT;
-
-  float P_x = (2 * (ndc_x - 1)) * aspectRatio * tan(fov / 2 * M_PI / 180);
-  float P_y = (1 - (2 * ndc_y)) * tan(fov / 2 * M_PI / 180);
-
-  vec3 rayOriginWorld = (vec3(0,0,0) - cameraPos) * cameraOrientation;
-  vec3 rayPWorld = (vec3(P_x, P_y, -1) - cameraPos) * cameraOrientation;
-  vec3 rayDirection = rayPWorld - rayOriginWorld;
-
+  vec3 rayDirection = (vec3((x - WIDTH/2), (-(y - HEIGHT/2)), FOCAL_RAYTRACE) - cameraPos) * cameraOrientation;
   rayDirection = glm::normalize(rayDirection);
 
   return rayDirection;
@@ -458,7 +447,7 @@ void drawRaytraced(vector<ModelTriangle> triangles)
   {
     for(int x = 0; x < WIDTH; x++)
     {
-      vec3 ray = computeRayDirection(x, y, FOV);
+      vec3 ray = computeRayDirection(x, y);
       RayTriangleIntersection closestIntersect = getClosestIntersection(cameraPos, ray, triangles);
       if(closestIntersect.distanceFromCamera != -INFINITY)
       {
