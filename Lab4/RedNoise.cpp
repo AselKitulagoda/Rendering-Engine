@@ -17,10 +17,10 @@ using namespace glm;
 #define SCALE_FACTOR 0.3
 #define PI 3.1415
 #define FOCAL_RAYTRACE -750
+#define LIGHT_STRENGTH 150
 #define MTLPATH "cornell-box.mtl"
 #define OBJPATH "cornell-box.obj"
 
-int bool_flag = -1;
 // OBJ Stuff
 vector<ModelTriangle> readObj(float scale);
 vector<Colour> readMaterial(string fname);
@@ -43,17 +43,22 @@ vec3 computeRayDirection(int x, int y);
 RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles);
 void drawRaytraced(vector<ModelTriangle> triangles);
 
+// Proximity Lighting
+float calculateBrightness(int x, int y);
+
 // Display and Event Stuff
 void update();
 void handleEvent(SDL_Event event);
 
 // Defining the Global Variables
+int bool_flag = -1;
 vec3 cameraPos(0, 0, 6);
 mat3 cameraOrientation = mat3(vec3(1, 0, 0),
                               vec3(0, 1, 0),
                               vec3(0, 0, 1));
 vector<Colour> colours = readMaterial(MTLPATH);
 vector<ModelTriangle> triangles = readObj(SCALE_FACTOR);
+vec3 lightSource(-0.88, 0.21, 2.51);
 
 Colour getColourFromName(string mat, vector<Colour> colours)
 {
@@ -404,6 +409,34 @@ bool inRange(float val, float v1, float v2)
   else return false;
 }
 
+float calculateNormals(vec3 point, ModelTriangle t)
+{ 
+  vec3 diff1 = t.vertices[1] - t.vertices[0];
+  vec3 diff2 = t.vertices[2] - t.vertices[0];
+
+  vec3 surfaceNormal = glm::normalize(glm::cross(diff1, diff2));
+  vec3 pointToLight = glm::normalize(lightSource - point);
+
+  float dotProduct = glm::dot(surfaceNormal, pointToLight);
+
+  if(dotProduct < 0.0f)
+  {
+    dotProduct = 0.0f;
+  }
+  return dotProduct;
+}
+
+float calculateBrightness(vec3 point, ModelTriangle t)
+{ 
+  float distance = glm::distance(point, lightSource);
+
+  float brightness = LIGHT_STRENGTH / (4 * M_PI * powf(distance, 2));
+  float dotProduct = calculateNormals(point, t);
+
+  float result = brightness * dotProduct;
+  return result;
+}
+
 vec3 computeRayDirection(int x, int y)
 {
   vec3 rayDirection = (vec3((x - WIDTH/2), (-(y - HEIGHT/2)), FOCAL_RAYTRACE) - cameraPos) * cameraOrientation;
@@ -458,10 +491,15 @@ void drawRaytraced(vector<ModelTriangle> triangles)
       RayTriangleIntersection closestIntersect = getClosestIntersection(cameraPos, ray, triangles);
       if(closestIntersect.distanceFromCamera != -INFINITY)
       {
-        window.setPixelColour(x, y, closestIntersect.intersectedTriangle.colour.pack());
+        float brightness = calculateBrightness(closestIntersect.intersectionPoint, closestIntersect.intersectedTriangle);
+        Colour newColour = Colour(closestIntersect.intersectedTriangle.colour.red * brightness,
+                                  closestIntersect.intersectedTriangle.colour.green * brightness,
+                                  closestIntersect.intersectedTriangle.colour.blue * brightness);
+        window.setPixelColour(x, y, newColour.pack());
       }
     }
   }
+  cout << "RAYTRACING DONE" << endl;
 }
 
 void rotateX(float theta)
