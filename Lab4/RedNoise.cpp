@@ -49,6 +49,9 @@ void drawRaytraced(vector<ModelTriangle> triangles);
 float computeDotProduct(vec3 point, ModelTriangle t);
 float calculateBrightness(int x, int y);
 
+// Shadows
+bool checkShadow(vec3 point, vector<ModelTriangle> triangles, int triangleIndex);
+
 // Display and Event Stuff
 void update();
 void handleEvent(SDL_Event event);
@@ -455,6 +458,39 @@ vec3 computeRayDirection(int x, int y)
   return rayDirection;
 }
 
+bool checkShadow(vec3 point, vector<ModelTriangle> triangles, size_t triangleIndex) 
+{
+  vec3 rayShadow = glm::normalize(lightSource - point);
+  float distanceFromLight = glm::length(rayShadow);
+
+  bool isShadow = false;
+
+  for(size_t i = 0; i < triangles.size(); i++)
+  {
+    ModelTriangle curr = triangles.at(i);
+    vec3 e0 = curr.vertices[1] - curr.vertices[0];
+    vec3 e1 = curr.vertices[2] - curr.vertices[0];
+    vec3 SPVector = point - curr.vertices[0];
+    mat3 DEMatrix(-rayShadow, e0, e1);
+
+    vec3 possibleSolution = glm::inverse(DEMatrix) * SPVector;
+
+    float t = possibleSolution.x;
+    float u = possibleSolution.y;
+    float v = possibleSolution.z;
+
+    if(inRange(u, 0.0, 1.0) && inRange(v, 0.0, 1.0) && (u+v <= 1.0) && (i != triangleIndex))
+    {
+      if(t < distanceFromLight && abs(t - distanceFromLight) > 0.001f)
+      {
+        isShadow = true;
+        break;
+      }
+    }
+  }
+  return isShadow;
+}
+
 RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles)
 { 
   RayTriangleIntersection result;
@@ -479,6 +515,17 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
       if(t < result.distanceFromCamera)
       {
         vec3 point = curr.vertices[0] + (u * e0) + (v * e1);
+        float brightness = calculateBrightness(point, curr);
+
+        bool shadow = checkShadow(point, triangles, i);
+
+        if(shadow)
+        {
+          brightness = 0.1f;
+        }
+
+        curr.colour = Colour(curr.colour.red * brightness, curr.colour.green * brightness, curr.colour.blue * brightness);
+
         result = RayTriangleIntersection(point, t, curr);
       }
     }
@@ -501,11 +548,7 @@ void drawRaytraced(vector<ModelTriangle> triangles)
       RayTriangleIntersection closestIntersect = getClosestIntersection(cameraPos, ray, triangles);
       if(closestIntersect.distanceFromCamera != -INFINITY)
       {
-        float brightness = calculateBrightness(closestIntersect.intersectionPoint, closestIntersect.intersectedTriangle);
-        Colour newColour = Colour(closestIntersect.intersectedTriangle.colour.red * brightness,
-                                  closestIntersect.intersectedTriangle.colour.green * brightness,
-                                  closestIntersect.intersectedTriangle.colour.blue * brightness);
-        window.setPixelColour(x, y, newColour.pack());
+        window.setPixelColour(x, y, closestIntersect.intersectedTriangle.colour.pack());
       }
     }
   }
