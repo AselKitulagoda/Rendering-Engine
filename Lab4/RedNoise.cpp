@@ -17,8 +17,9 @@ using namespace glm;
 #define SCALE_FACTOR 0.3
 #define PI 3.1415
 #define FOCAL_RAYTRACE -500
-#define INTENSITY 60
-#define AMBIENCE 0.6
+#define INTENSITY 1
+#define AMBIENCE 0.2
+#define FRACTION_VAL 0.5
 #define MTLPATH "cornell-box.mtl"
 #define OBJPATH "cornell-box.obj"
 
@@ -44,9 +45,8 @@ vec3 computeRayDirection(int x, int y);
 RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles);
 void drawRaytraced(vector<ModelTriangle> triangles);
 
-// Proximity Lighting
-vec3 getLightPosition(vector<ModelTriangle> triangles);
-float calculateNormals(vec3 point, ModelTriangle t);
+// Lighting
+float computeDotProduct(vec3 point, ModelTriangle t);
 float calculateBrightness(int x, int y);
 
 // Display and Event Stuff
@@ -65,7 +65,7 @@ mat3 cameraOrientation = mat3(vec3(1, 0, 0),
                               vec3(0, 0, 1));
 vector<Colour> colours = readMaterial(MTLPATH);
 vector<ModelTriangle> triangles = readObj(SCALE_FACTOR);
-vec3 lightSource = getLightPosition(triangles);
+vec3 lightSource = vec3(-0.0315915, 1.20455, -1.0108);
 
 Colour getColourFromName(string mat, vector<Colour> colours)
 {
@@ -417,36 +417,7 @@ bool inRange(float val, float v1, float v2)
   else return false;
 }
 
-vec3 getLightPosition(vector<ModelTriangle> triangles)
-{
-  vector<ModelTriangle> lightTriangles;
-  for(size_t i = 0; i < triangles.size(); i++)
-  {
-    Colour c = triangles.at(i).colour;
-    if(c.name == "White")
-    {
-      lightTriangles.push_back(triangles.at(i));
-    }
-  }
-
-  float x = 0, y = 0, z = 0;
-  for(size_t i = 0; i < lightTriangles.size(); i++)
-  {
-    for(int j = 0; j < 3; j++)
-    {
-      x += lightTriangles.at(i).vertices[j].x;
-      y += lightTriangles.at(i).vertices[j].y;
-      z += lightTriangles.at(i).vertices[j].z;
-    }
-  }
-
-  vec3 newLightSource = vec3(x/4, y/4, z/4) * (float) SCALE_FACTOR;
-  printVec3("light position", newLightSource);
-  
-  return newLightSource;
-}
-
-float calculateNormals(vec3 point, ModelTriangle t)
+float computeDotProduct(vec3 point, ModelTriangle t)
 { 
   vec3 diff1 = t.vertices[1] - t.vertices[0];
   vec3 diff2 = t.vertices[2] - t.vertices[0];
@@ -454,7 +425,7 @@ float calculateNormals(vec3 point, ModelTriangle t)
   vec3 surfaceNormal = glm::normalize(glm::cross(diff1, diff2));
   vec3 pointToLight = glm::normalize(lightSource - point);
 
-  float dotProduct = std::max(0.0f, glm::dot(surfaceNormal, pointToLight));
+  float dotProduct = std::max(0.0f, (float) glm::dot(surfaceNormal, pointToLight));
 
   return dotProduct;
 }
@@ -462,13 +433,13 @@ float calculateNormals(vec3 point, ModelTriangle t)
 float calculateBrightness(vec3 point, ModelTriangle t)
 { 
   float distance = glm::distance(point, lightSource);
-  float dotProduct = calculateNormals(point, t);
+  float dotProduct = computeDotProduct(point, t);
 
-  float brightness = INTENSITY * dotProduct / (10 * M_PI * powf(distance, 2));
+  float brightness = INTENSITY * dotProduct / (FRACTION_VAL * M_PI * distance * distance);
 
-  if(brightness < AMBIENCE)
+  if(brightness < (float) AMBIENCE)
   {
-    brightness = AMBIENCE;
+    brightness = (float) AMBIENCE;
   }
   if(brightness > 1.0f)
   {
@@ -581,6 +552,7 @@ void resetCameraStuff()
   cameraOrientation = mat3(vec3(1, 0, 0),
                            vec3(0, 1, 0),
                            vec3(0, 0, 1));
+  lightSource = vec3(-0.0315915, 1.20455, -1.0108);
 }
 
 void handleEvent(SDL_Event event)
@@ -605,6 +577,42 @@ void handleEvent(SDL_Event event)
     {
       cout << "TRANSLATE DOWN" << endl;
       cameraPos.y += 0.1;
+    }
+    else if(event.key.keysym.sym == SDLK_n) // light x translate
+    {
+      cout << "LIGHT RIGHT" << endl;
+      lightSource.x += 0.1;
+      // printVec3("light position", lightSource);
+    }
+    else if(event.key.keysym.sym == SDLK_v) // light x translate
+    {
+      cout << "LIGHT LEFT" << endl;
+      lightSource.x -= 0.1;
+      // printVec3("light position",lightSource);
+    }
+    else if(event.key.keysym.sym == SDLK_b) // light y translate
+    {
+      cout << "LIGHT DOWN" << endl;
+      lightSource.y -= 0.1;
+      // printVec3("light position", lightSource);
+    }
+    else if(event.key.keysym.sym == SDLK_g) // light y translate
+    {
+      cout << "LIGHT UP" << endl;
+      lightSource.y += 0.1;
+      // printVec3("light position", lightSource);
+    }
+    else if(event.key.keysym.sym == SDLK_f) // light z translate
+    {
+      cout << "LIGHT FRONT" << endl;
+      lightSource.z -= 0.1;
+      // printVec3("light position", lightSource);
+    }
+    else if(event.key.keysym.sym == SDLK_h) // light z translate
+    {
+      cout << "LIGHT BACK" << endl;
+      lightSource.z += 0.1;
+      // printVec3("light position", lightSource);
     }
     else if(event.key.keysym.sym == SDLK_z) // camera z translate
     {
