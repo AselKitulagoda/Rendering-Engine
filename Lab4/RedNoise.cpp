@@ -20,6 +20,7 @@ using namespace glm;
 #define INTENSITY 1
 #define AMBIENCE 0.2
 #define FRACTION_VAL 0.5
+#define SHADOW_THRESH 0.01
 #define MTLPATH "cornell-box.mtl"
 #define OBJPATH "cornell-box.obj"
 
@@ -69,6 +70,7 @@ mat3 cameraOrientation = mat3(vec3(1, 0, 0),
 vector<Colour> colours = readMaterial(MTLPATH);
 vector<ModelTriangle> triangles = readObj(SCALE_FACTOR);
 vec3 lightSource = vec3(-0.0315915, 1.20455, -1.0108);
+int shadowMode = 0;
 
 Colour getColourFromName(string mat, vector<Colour> colours)
 {
@@ -481,7 +483,7 @@ bool checkShadow(vec3 point, vector<ModelTriangle> triangles, size_t triangleInd
 
     if(inRange(u, 0.0, 1.0) && inRange(v, 0.0, 1.0) && (u+v <= 1.0) && (i != triangleIndex))
     {
-      if(t < distanceFromLight && abs(t - distanceFromLight) > 0.001f)
+      if(t < distanceFromLight && (abs(t - distanceFromLight) > (float) SHADOW_THRESH))
       {
         isShadow = true;
         break;
@@ -519,9 +521,12 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
 
         bool shadow = checkShadow(point, triangles, i);
 
-        if(shadow)
+        if(shadowMode)
         {
-          brightness = 0.1f;
+          if(shadow)
+          {
+            brightness = 0.1f;
+          }
         }
 
         curr.colour = Colour(curr.colour.red * brightness, curr.colour.green * brightness, curr.colour.blue * brightness);
@@ -697,6 +702,12 @@ void handleEvent(SDL_Event event)
     {
       cout << "LOOK AT" << endl;
       lookAt(vec3(-3.014011, 5.325313, -5.839967));
+    }
+    else if(event.key.keysym.sym == SDLK_o) // toggle shadow mode
+    {
+      if(shadowMode == 1) shadowMode = 0;
+      else shadowMode = 1;
+      cout << "SHADOW MODE = " << shadowMode << endl;
     }
     else if(event.key.keysym.sym == SDLK_r) // camera reset position
     {
