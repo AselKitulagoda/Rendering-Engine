@@ -20,7 +20,7 @@ using namespace glm;
 #define INTENSITY 1
 #define AMBIENCE 0.2
 #define FRACTION_VAL 0.5
-#define SHADOW_THRESH 0.01
+#define SHADOW_THRESH 0.1
 #define MTLPATH "cornell-box.mtl"
 #define OBJPATH "cornell-box.obj"
 
@@ -69,7 +69,7 @@ mat3 cameraOrientation = mat3(vec3(1, 0, 0),
                               vec3(0, 0, 1));
 vector<Colour> colours = readMaterial(MTLPATH);
 vector<ModelTriangle> triangles = readObj(SCALE_FACTOR);
-vec3 lightSource = vec3(-0.0315915, 1.20455, -1.0108);
+vec3 lightSource = vec3(-0.0315915, 1.20455, -0.6108);
 int shadowMode = 0;
 
 Colour getColourFromName(string mat, vector<Colour> colours)
@@ -437,7 +437,8 @@ float computeDotProduct(vec3 point, ModelTriangle t)
 
 float calculateBrightness(vec3 point, ModelTriangle t)
 { 
-  float distance = glm::distance(point, lightSource);
+  vec3 pointToLight = lightSource - point;
+  float distance = glm::length(pointToLight);
   float dotProduct = computeDotProduct(point, t);
 
   float brightness = INTENSITY * dotProduct / (FRACTION_VAL * M_PI * distance * distance);
@@ -525,7 +526,7 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
         {
           if(shadow)
           {
-            brightness = 0.1f;
+            brightness = 0.15f;
           }
         }
 
@@ -600,7 +601,7 @@ void resetCameraStuff()
   cameraOrientation = mat3(vec3(1, 0, 0),
                            vec3(0, 1, 0),
                            vec3(0, 0, 1));
-  lightSource = vec3(-0.0315915, 1.20455, -1.0108);
+  lightSource = vec3(-0.0315915, 1.20455, -0.6108);
 }
 
 void handleEvent(SDL_Event event)
