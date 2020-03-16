@@ -14,7 +14,7 @@ using namespace glm;
 
 #define WIDTH 640
 #define HEIGHT 480
-#define SCALE_FACTOR 0.3
+#define SCALE_FACTOR 0.005
 #define PI 3.1415
 #define FOCAL_RAYTRACE -500
 #define INTENSITY 1
@@ -27,7 +27,8 @@ using namespace glm;
 
 // OBJ Stuff
 vector<ModelTriangle> readObj(float scale);
-vector<Colour> readMaterial(string fname);
+vector <TexturePoint> texpoints;
+// vector<Colour> readMaterial(string fname);
 
 // Interpolation Function
 vector<CanvasPoint> interpolate(CanvasPoint from, CanvasPoint to, int numberOfValues);
@@ -68,26 +69,11 @@ vec3 cameraPos(0, 0, 6);
 mat3 cameraOrientation = mat3(vec3(1, 0, 0),
                               vec3(0, 1, 0),
                               vec3(0, 0, 1));
-vector<Colour> colours = readMaterial(MTLPATH);
+// vector<Colour> colours = readMaterial(MTLPATH);
 vector<ModelTriangle> triangles = readObj(SCALE_FACTOR);
 vec3 lightSource = vec3(-0.0315915, 1.20455, -0.6108);
 int shadowMode = 0;
 
-Colour getColourFromName(string mat, vector<Colour> colours)
-{
-  Colour result = Colour(0, 0, 0);
-  for(size_t i = 0; i < colours.size(); i++)
-  {
-    if(mat == colours[i].name)
-    {
-      result.red = colours[i].red;
-      result.blue = colours[i].blue;
-      result.green = colours[i].green;
-      break;
-    }
-  }
-  return result;
-}
 
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 
@@ -162,40 +148,41 @@ void drawStroke(CanvasTriangle t, Colour c)
   drawLine(t.vertices[2], t.vertices[0], c);
 }
 
-vector<Colour> readMaterial(string fname)
-{
-  ifstream fp;
-  fp.open(fname);
+// vector<Colour> readMaterial(string fname)
+// {
+//       // cout << "finished mat"<<endl;
+//   ifstream fp;
+//   fp.open(fname);
 
-  vector<Colour> colours;
-  while(!fp.eof())
-  {
-    string comment, colourInfo, newline;
-    getline(fp, comment);
-    string *splitName = split(comment, ' ');
+//   vector<Colour> colours;
+//   while(!fp.eof())
+//   {
+//     string comment, colourInfo, newline;
+//     getline(fp, comment);
+//     string *splitName = split(comment, ' ');
 
-    getline(fp, colourInfo);
-    string *splitColourInfo = split(colourInfo, ' ');
+//     getline(fp, colourInfo);
+//     string *splitColourInfo = split(colourInfo, ' ');
 
-    int r = stof(splitColourInfo[1]) * 255;
-    int g = stof(splitColourInfo[2]) * 255;
-    int b = stof(splitColourInfo[3]) * 255;
+//     int r = stof(splitColourInfo[1]) * 255;
+//     int g = stof(splitColourInfo[2]) * 255;
+//     int b = stof(splitColourInfo[3]) * 255;
 
-    Colour c = Colour(splitName[1], r, g, b);
+//     Colour c = Colour(splitName[1], r, g, b);
 
-    getline(fp, newline);
-    colours.push_back(c);
-  }
-  fp.close();
-    // cout << "finished mat"<<endl;
-  return colours;
-}
+//     getline(fp, newline);
+//     colours.push_back(c);
+//   }
+//   fp.close();
+//     cout << "finished mat"<<endl;
+//   return colours;
+// }
 
 vector<ModelTriangle> readObj(float scale)
 {
   vector <ModelTriangle> tris;
   ifstream fp;
-  vector<Colour> colours = readMaterial(MTLPATH);
+  // vector<Colour> colours = readMaterial(MTLPATH);
   vector<vec3> vertic;
   fp.open(OBJPATH);
 
@@ -208,20 +195,13 @@ vector<ModelTriangle> readObj(float scale)
 
   while(!fp.eof())
   {
-    string light;
     string comment;
-    string mat;
     getline(fp, comment);
 
     if (!comment.empty())
     {
-      string *splitcomment = split(comment,' ');
-      if (splitcomment[0] == "usemtl")
-      {
-        mat = splitcomment[1];
         while(true)
         {
-          getline(fp,comment);
           if (!comment.empty())
           {
             string *splitcomment = split(comment,' ');
@@ -238,9 +218,10 @@ vector<ModelTriangle> readObj(float scale)
               break;
             }
           }
+          getline(fp,comment);
         }
-      }
-    }
+      
+    
   }
 
   fp.clear();
@@ -253,50 +234,39 @@ vector<ModelTriangle> readObj(float scale)
   while(!fp.eof())
   {
     string comment_new;
-    string mat;
-    getline(fp,comment_new);
-    if (!comment_new.empty())
-    {
-      string *splitcomment = split(comment_new,' ');
-      if (splitcomment[0] == "usemtl")
-      {
-        mat = splitcomment[1];
-        Colour tricolour = getColourFromName(mat,colours);
-        tricolour.name = mat;
-
-        while(true){
-          getline(fp,comment_new);
-          splitcomment = split(comment_new,' ');
-          if (splitcomment[0] == "f" && !comment_new.empty()){break;}
-        }
-
       bool not_reach = true;
         while (not_reach)
         {
+          getline(fp,comment_new);
+          string *splitcomment = split(comment_new,' ');
           if (!comment_new.empty())
           {
-            splitcomment = split(comment_new,' ');
             if (splitcomment[0]=="f")
             {
-              int first_vert = stoi(splitcomment[1].substr(0, splitcomment[1].size()-1));
-              int second_vert = stoi(splitcomment[2].substr(0, splitcomment[2].size()-1));
-              int third_vert = stoi(splitcomment[3].substr(0, splitcomment[3].size()-1));
+              int first_vert = stoi(splitcomment[1].substr(0, splitcomment[1].find('/')));
+              int second_vert = stoi(splitcomment[2].substr(0, splitcomment[2].find('/')));
+              int third_vert = stoi(splitcomment[3].substr(0, splitcomment[3].find('/')));
 
-              tris.push_back(ModelTriangle(vertic[first_vert-1],vertic[second_vert-1],vertic[third_vert-1],tricolour));
+              tris.push_back(ModelTriangle(vertic[first_vert-1],vertic[second_vert-1],vertic[third_vert-1],Colour(255,255,255)));
+            }
+            else if (splitcomment[0] == "vt"){
+              float x_tex = stof(splitcomment[1]) * scale;
+              float y_tex = stof(splitcomment[2]) * scale;
+              texpoints.push_back(TexturePoint(x_tex,y_tex));
             }
             else{break;}
 
           }
-          if (!fp.eof()){
-          getline(fp,comment_new);
-          }
-          else{not_reach=false;}
+          if (fp.eof())
+          not_reach=false;
 
         }
-      }
     }
   }
   fp.close();
+  for (int i=0;i<tris.size();i++){
+    cout << (tris[i]) << endl;
+  }
   return tris;
 }
 
