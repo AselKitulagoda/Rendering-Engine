@@ -29,6 +29,7 @@ using namespace glm;
 vector<ModelTriangle> readObj(float scale);
 
 // Interpolation Function
+vector<float> interpolation(float from, float to, int numberOfValues);
 vector<CanvasPoint> interpolate(CanvasPoint from, CanvasPoint to, int numberOfValues);
 
 // Wireframe Stuff
@@ -108,6 +109,17 @@ int main(int argc, char* argv[])
 void update()
 {
   // Function for performing animation (shifting artifacts or moving the camera)
+}
+
+vector<float> interpolation(float from, float to, int numberOfValues)
+{
+  vector<float> vals;
+  for(int i = 0; i < numberOfValues + 1; i++)
+  {
+    float calc = from + (i * (to - from)/numberOfValues);
+    vals.push_back(calc);
+  }
+  return vals;
 }
 
 vector<CanvasPoint> interpolate(CanvasPoint from, CanvasPoint to, int numberOfValues)
