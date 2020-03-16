@@ -39,7 +39,7 @@ void drawWireframe(vector<ModelTriangle> tris);
 // Rasterising Stuff
 CanvasTriangle modelToCanvas(ModelTriangle t);
 void computeDepth(CanvasTriangle t, double *depthBuffer);
-void depthBuffer(vector<ModelTriangle> tris);
+void drawRasterised(vector<ModelTriangle> tris);
 
 // Raytracing Stuff
 vec3 computeRayDirection(int x, int y);
@@ -104,7 +104,7 @@ int main(int argc, char* argv[])
         drawWireframe(triangles);
       }
       else if (bool_flag == 1){
-        depthBuffer(triangles);
+        drawRasterised(triangles);
       }
     }
     update();
@@ -397,7 +397,7 @@ void computeDepth(CanvasTriangle t, double *depthBuffer)
   }
 }
 
-void depthBuffer(vector<ModelTriangle> tris)
+void drawRasterised(vector<ModelTriangle> tris)
 {
   window.clearPixels();
   double *depthBuffer = (double*)malloc(sizeof(double) * WIDTH * HEIGHT);
@@ -724,7 +724,7 @@ void handleEvent(SDL_Event event)
     else if(event.key.keysym.sym == SDLK_k) // rasterised
     {
       cout << "DRAWING RASTERISED" << endl;
-      depthBuffer(triangles);
+      drawRasterised(triangles);
       bool_flag = 1;
     }
     else if(event.key.keysym.sym == SDLK_l) // raytraced
