@@ -14,7 +14,7 @@ using namespace glm;
 
 #define WIDTH 640
 #define HEIGHT 480
-#define SCALE_FACTOR 0.7
+#define SCALE_FACTOR 0.3
 #define PI 3.1415
 #define FOCAL_RAYTRACE -500
 #define INTENSITY 1
@@ -26,7 +26,7 @@ using namespace glm;
 
 #define CAMERA_X 0
 #define CAMERA_Y 1
-#define CAMERA_Z 8
+#define CAMERA_Z 4
 
 // OBJ Stuff
 vector<ModelTriangle> readObj(float scale);
