@@ -14,7 +14,7 @@ using namespace glm;
 
 #define WIDTH 640
 #define HEIGHT 480
-#define SCALE_FACTOR 0.3
+#define SCALE_FACTOR 0.7
 #define PI 3.1415
 #define FOCAL_RAYTRACE -500
 #define INTENSITY 1
@@ -24,22 +24,30 @@ using namespace glm;
 #define MTLPATH "cornell-box.mtl"
 #define OBJPATH "cornell-box.obj"
 
+#define CAMERA_X 0
+#define CAMERA_Y 1
+#define CAMERA_Z 8
+
 // OBJ Stuff
 vector<ModelTriangle> readObj(float scale);
 vector<Colour> readMaterial(string fname);
 
-// Interpolation Function
-vector<CanvasPoint> interpolate(CanvasPoint from, CanvasPoint to, int numberOfValues);
+// Drawing Stuff
+void drawLine(CanvasPoint p1, CanvasPoint p2, Colour c, float *depthBuffer);
+void drawStroke(CanvasTriangle t, Colour c, float *depthBuffer);
+void drawFilled(CanvasTriangle t, Colour c, float *depthBuffer);
+void drawWireframe(vector<ModelTriangle> triangles);
+void drawRasterised(vector<ModelTriangle> triangles);
 
-// Wireframe Stuff
-void drawLine(CanvasPoint p1, CanvasPoint p2, Colour c);
-void drawStroke(CanvasTriangle t, Colour c);
-void drawWireframe(vector<ModelTriangle> tris);
+// Projection Stuff
+CanvasTriangle modelToCanvas(ModelTriangle modelTrig);
 
-// Rasterising Stuff
-CanvasTriangle modelToCanvas(ModelTriangle t);
-void computeDepth(CanvasTriangle t, double *depthBuffer);
-void drawRasterised(vector<ModelTriangle> tris);
+// Camera Stuff
+vec3 cameraTranslate(vec3 direction);
+mat3 rotateX(double theta, mat3 cameraOrien);
+mat3 rotateY(double theta, mat3 cameraOrien);
+mat3 lookAt(vec3 point);
+vec3 orbit(double orbitAngle);
 
 // Raytracing Stuff
 vec3 computeRayDirection(int x, int y);
@@ -63,10 +71,8 @@ void printVec3(string text, vec3 vector)
 
 // Defining the Global Variables
 int bool_flag = -1;
-vec3 cameraPos(0, 0, 6);
-mat3 cameraOrientation = mat3(vec3(1, 0, 0),
-                              vec3(0, 1, 0),
-                              vec3(0, 0, 1));
+vec3 cameraPos(CAMERA_X, CAMERA_Y, CAMERA_Z);
+mat3 cameraOrientation = mat3(1.0f);
 vector<Colour> colours = readMaterial(MTLPATH);
 vector<ModelTriangle> triangles = readObj(SCALE_FACTOR);
 vec3 lightSource = vec3(-0.0315915, 1.20455, -0.6108);
@@ -100,12 +106,6 @@ int main(int argc, char* argv[])
     if(window.pollForInputEvents(&event))
     {
       handleEvent(event);
-      if (bool_flag == 0){
-        drawWireframe(triangles);
-      }
-      else if (bool_flag == 1){
-        drawRasterised(triangles);
-      }
     }
     update();
 
@@ -117,48 +117,50 @@ int main(int argc, char* argv[])
 void update()
 {
   // Function for performing animation (shifting artifacts or moving the camera)
-}
-
-vector<CanvasPoint> interpolate(CanvasPoint from, CanvasPoint to, int numberOfValues)
-{
-  vector<CanvasPoint> vals;
-  for(int i = 0; i <= numberOfValues; i++)
+  if (bool_flag == 0)
   {
-    CanvasPoint p;
-    p.x = from.x + (i * (to.x - from.x)/numberOfValues);
-    p.y = from.y + (i * (to.y - from.y)/numberOfValues);
-    p.texturePoint.x = from.texturePoint.x + (i * (to.texturePoint.x - from.texturePoint.x)/numberOfValues);
-    p.texturePoint.y = from.texturePoint.y + (i * (to.texturePoint.y - from.texturePoint.y)/numberOfValues);
-    double depth = from.depth + (i * (to.depth - from.depth)/numberOfValues);
-    p.depth = depth;
-    vals.push_back(p);
+    drawWireframe(triangles);
   }
-  return vals;
+  else if (bool_flag == 1)
+  {
+    drawRasterised(triangles);
+  }
 }
 
-void drawLine(CanvasPoint p1, CanvasPoint p2, Colour c)
+void drawLine(CanvasPoint p1, CanvasPoint p2, Colour c, float *depthBuffer)
 {
   float dx = p2.x - p1.x;
   float dy = p2.y - p1.y;
+  float dDepth = p2.depth - p1.depth;
+
   float numberOfValues = std::max(abs(dx), abs(dy));
 
   float xChange = dx/(numberOfValues);
   float yChange = dy/(numberOfValues);
+  float depthChange = dDepth/(numberOfValues);
 
-  for(float i = 0; i < numberOfValues; i++)
+  for(float i = 0.0f; i < numberOfValues; i++)
   {
     float x = p1.x + (xChange * i);
     float y = p1.y + (yChange * i);
-    uint32_t colour = (255<<24) + (int(c.red)<<16) + (int(c.green)<<8) + int(c.blue);
-    window.setPixelColour(round(x), round(y), colour);
+    float depth = p1.depth + (depthChange * i);
+
+    if(x >= 0 && x < WIDTH && y >= 0 && y < HEIGHT)
+    {
+      if(depth < depthBuffer[(int) x + (int) y * WIDTH])
+      {
+        depthBuffer[(int) x + (int) y * WIDTH] = depth;
+        window.setPixelColour((int) x, (int) y, c.pack());
+      }
+    }
   }
 }
 
-void drawStroke(CanvasTriangle t, Colour c)
+void drawStroke(CanvasTriangle t, Colour c, float *depthBuffer)
 {
-  drawLine(t.vertices[0], t.vertices[1], c);
-  drawLine(t.vertices[1], t.vertices[2], c);
-  drawLine(t.vertices[2], t.vertices[0], c);
+  drawLine(t.vertices[0], t.vertices[1], c, depthBuffer);
+  drawLine(t.vertices[1], t.vertices[2], c, depthBuffer);
+  drawLine(t.vertices[2], t.vertices[0], c, depthBuffer);
 }
 
 vector<Colour> readMaterial(string fname)
@@ -301,7 +303,7 @@ vector<ModelTriangle> readObj(float scale)
 
 CanvasTriangle modelToCanvas(ModelTriangle modelTrig)
 {
-    float f = 3;
+    float f = -50.0f;
     CanvasTriangle canvasTrig = CanvasTriangle();
     canvasTrig.colour = modelTrig.colour;
     for(int i=0; i<3 ;i++) {
@@ -310,109 +312,112 @@ CanvasTriangle modelToCanvas(ModelTriangle modelTrig)
         float zdistance = modelTrig.vertices[i].z-cameraPos.z;
         vec3 cameraToVertex = vec3(xdistance, ydistance, zdistance);
         vec3 adjustedVector = cameraToVertex * cameraOrientation;
-        float pScreen = f/-adjustedVector.z;
+        float pScreen = f/adjustedVector.z;
         // Scale up the x and y canvas coords to get a bigger image (rather than a big model loader scaling)
-        float canvasScaling = 150;
+        float canvasScaling = 10;
         float xProj = (adjustedVector.x*pScreen*canvasScaling) + WIDTH/2;
         float yProj = (-adjustedVector.y*pScreen*canvasScaling) + HEIGHT/2;
         CanvasPoint p = CanvasPoint(xProj, yProj);
-        p.depth = 1.0/-adjustedVector.z;
+        p.depth = 1.0/adjustedVector.z;
         canvasTrig.vertices[i] = p;
     }
     return canvasTrig;
 }
 
-void drawWireframe(vector <ModelTriangle> tris)
+void drawFilled(CanvasTriangle t, Colour c, float *depthBuffer)
 {
-  window.clearPixels();
-  for (size_t i=0; i<tris.size(); i++){
-    CanvasTriangle new_tri = modelToCanvas(tris[i]);
-    drawStroke(new_tri, tris[i].colour);
-  }
-}
+  CanvasPoint p0 = t.vertices[0];
+  CanvasPoint p1 = t.vertices[1];
+  CanvasPoint p2 = t.vertices[2];
 
-void computeDepth(CanvasTriangle t, double *depthBuffer)
-{
-  CanvasPoint p1 = t.vertices[0];
-  CanvasPoint p2 = t.vertices[1];
-  CanvasPoint p3 = t.vertices[2];
+  if(p1.y < p0.y){ std::swap(p0, p1); }
+  if(p2.y < p1.y){ std::swap(p1, p2); }
+  if(p1.y < p0.y){ std::swap(p0, p1); }
 
-  if(p1.y < p2.y){ std::swap(p1, p2); }
-  if(p1.y < p3.y){ std::swap(p1, p3); }
-  if(p2.y < p3.y){ std::swap(p2, p3); }
+  CanvasPoint minPoint = p0;
+  CanvasPoint midPoint = p1;
+  CanvasPoint maxPoint = p2;
 
-  float ratio = (p1.y - p2.y)/(p1.y - p3.y);
+  float minMaxRatio = (maxPoint.x - minPoint.x) / (maxPoint.y - minPoint.y);
+  float minMaxDepth = (maxPoint.depth - minPoint.depth) / (maxPoint.y - minPoint.y);
+
+  float minMidRatio = (midPoint.x - minPoint.x) / (midPoint.y - minPoint.y);
+  float minMidDepth = (midPoint.depth - minPoint.depth) / (midPoint.y - minPoint.y);
+
+  float midMaxRatio = (maxPoint.x - midPoint.x) / (maxPoint.y - midPoint.y);
+  float midMaxDepth = (maxPoint.depth - midPoint.depth) / (maxPoint.y - midPoint.y);
+
   CanvasPoint extraPoint;
-  extraPoint.x = p1.x - ratio*(p1.x - p3.x);
-  extraPoint.y = p1.y - ratio*(p1.y - p3.y);
-  double depth = p1.depth - ratio*(p1.depth - p3.depth);
-  extraPoint.depth = depth;
+  extraPoint.x = minPoint.x + minMaxRatio * (midPoint.y - minPoint.y);
+  extraPoint.y = midPoint.y;
+  extraPoint.depth = minPoint.depth + minMaxDepth * (midPoint.y - minPoint.y);
 
-  // Interpolation
-  int numberOfValuesTop = (p1.y - p2.y);
-  int numberOfValuesBot = (p2.y - p3.y);
-
-  // Interpolating between the z values
-  vector<CanvasPoint> p1_extraPoint = interpolate(p1, extraPoint, ceil(numberOfValuesTop)+1);
-  vector<CanvasPoint> p1_p2 = interpolate(p1, p2, ceil(numberOfValuesTop)+1);
-  vector<CanvasPoint> p3_extraPoint = interpolate(p3, extraPoint, ceil(numberOfValuesBot)+1);
-  vector<CanvasPoint> p3_p2 = interpolate(p3, p2, ceil(numberOfValuesBot)+1);
-
-  for(size_t i = 0; i < p1_extraPoint.size(); i++)
+  // Top half interpolation
+  for(float i = minPoint.y; i < midPoint.y; i++)
   {
-    vector<CanvasPoint> upper = interpolate(p1_extraPoint[i], p1_p2[i], abs(p1_extraPoint[i].x - p1_p2[i].x)+1);
-    for(size_t j = 0; j < upper.size(); j++)
-    {
-      CanvasPoint check = upper[j];
-      if((uint32_t) check.x >= 0 && (uint32_t) check.x < WIDTH && (uint32_t) check.y >= 0 && (uint32_t) check.y < HEIGHT)
-      {
-        if(check.depth > depthBuffer[((uint32_t)check.x + (uint32_t)check.y* WIDTH)])
-        {
-          depthBuffer[((uint32_t)check.x + (uint32_t)check.y* WIDTH)] = check.depth;
-          Colour c = t.colour;
-          uint32_t colour = (255<<24) + (int(c.red)<<16) + (int(c.green)<<8) + int(c.blue);
-          window.setPixelColour((int)check.x, (int)check.y, colour);
-        }
-      }
-    }
+    CanvasPoint from, to;
+
+    from.x = minPoint.x + minMaxRatio * (i - minPoint.y);
+    from.y = i;
+    from.depth = minPoint.depth + minMaxDepth * (i - minPoint.y);
+
+    to.x = minPoint.x + minMidRatio * (i - minPoint.y);
+    to.y = i;
+    to.depth = minPoint.depth + minMidDepth * (i - minPoint.y);
+
+    drawLine(from, to, c, depthBuffer);
   }
 
-  for(size_t i = 0; i < p3_extraPoint.size(); i++)
+  // Bottom half interpolation
+  for(float i = midPoint.y; i < maxPoint.y; i++)
   {
-    vector<CanvasPoint> lower = interpolate(p3_extraPoint[i], p3_p2[i], abs(p3_extraPoint[i].x - p3_p2[i].x)+1);
-    for(size_t j = 0; j < lower.size(); j++)
-    {
-      CanvasPoint check = lower[j];
-      if((uint32_t) check.x >= 0 && (uint32_t) check.x < WIDTH && (uint32_t) check.y >= 0 && (uint32_t) check.y < HEIGHT)
-      {
-        if(check.depth > depthBuffer[((uint32_t)check.x + (uint32_t)check.y* WIDTH)])
-        {
-          depthBuffer[((uint32_t)check.x + (uint32_t)check.y* WIDTH)] = check.depth;
-          Colour c = t.colour;
-          uint32_t colour = (255<<24) + (int(c.red)<<16) + (int(c.green)<<8) + int(c.blue);
-          window.setPixelColour((int)check.x, (int)check.y, colour);
-        }
-      }
-    }
+    CanvasPoint from, to;
+
+    from.x = extraPoint.x + minMaxRatio * (i - midPoint.y);
+    from.y = i;
+    from.depth = extraPoint.depth + midMaxDepth * (i - midPoint.y);
+
+    to.x = midPoint.x + midMaxRatio * (i - midPoint.y);
+    to.y = i;
+    to.depth = midPoint.depth + midMaxDepth * (i - midPoint.y);
+
+    drawLine(from, to, c, depthBuffer);
   }
 }
 
-void drawRasterised(vector<ModelTriangle> tris)
+void drawWireframe(vector<ModelTriangle> triangles) 
 {
-  window.clearPixels();
-  double *depthBuffer = (double*)malloc(sizeof(double) * WIDTH * HEIGHT);
+  float *depthBuffer = (float*) malloc(sizeof(float) * WIDTH * HEIGHT);
   for(uint32_t y = 0; y < HEIGHT; y++)
   {
     for(uint32_t x = 0; x < WIDTH; x++)
     {
-      depthBuffer[x+y*WIDTH] = -INFINITY;
+      depthBuffer[x+y*WIDTH] = INFINITY;
     }
   }
 
-  for(size_t t = 0; t < tris.size(); t++)
+  for(size_t i = 0; i < triangles.size(); i++)
   {
-    CanvasTriangle projection = modelToCanvas(tris[t]);
-    computeDepth(projection, depthBuffer);
+    CanvasTriangle projection = modelToCanvas(triangles.at(i));
+    drawStroke(projection, projection.colour, depthBuffer);
+  }
+}
+
+void drawRasterised(vector<ModelTriangle> triangles) 
+{
+  float *depthBuffer = (float*) malloc(sizeof(float) * WIDTH * HEIGHT);
+  for(uint32_t y = 0; y < HEIGHT; y++)
+  {
+    for(uint32_t x = 0; x < WIDTH; x++)
+    {
+      depthBuffer[x+y*WIDTH] = INFINITY;
+    }
+  }
+
+  for(size_t i = 0; i < triangles.size(); i++)
+  {
+    CanvasTriangle projection = modelToCanvas(triangles.at(i));
+    drawFilled(projection, projection.colour, depthBuffer);
   }
 }
 
@@ -561,52 +566,45 @@ void drawRaytraced(vector<ModelTriangle> triangles)
   cout << "RAYTRACING DONE" << endl;
 }
 
-void rotateX(float theta)
+mat3 rotateX(double theta, mat3 cameraOrien) 
 {
-  mat3 rot(vec3(1.0, 0.0, 0.0),
-                  vec3(0.0, cos(theta), -sin(theta)),
-                  vec3(0.0, sin(theta), cos(theta)));
-  cameraOrientation = cameraOrientation * rot;
+  mat3 newCameraOrien;
+  mat3 rotMatrix = mat3(1.0f);
+
+  rotMatrix[0] = vec3(1.0, 0.0, 0.0);
+  rotMatrix[1] = vec3(0.0, cos(theta * M_PI/180), -sin(theta * M_PI/180));
+  rotMatrix[2] = vec3(0.0, sin(theta * M_PI/180), cos(theta * M_PI/180));
+
+  newCameraOrien = rotMatrix * cameraOrien;
+  return newCameraOrien;
 }
 
-void rotateY(float theta)
+mat3 rotateY(double theta, mat3 cameraOrien) 
 {
-  mat3 rot(vec3(cos(theta), 0.0, sin(theta)),
-                  vec3(0.0, 1.0, 0.0),
-                  vec3(-sin(theta), 0.0, cos(theta)));
-  cameraOrientation = cameraOrientation * rot;
-  // cout << glm::to_string(cameraOrientation) << '\n';
-}
+  mat3 newCameraOrien;
+  mat3 rotMatrix = mat3(1.0f);
 
-void rotateZ(float theta)
-{
-  mat3 rot(vec3(cos(theta), -sin(theta), 0.0),
-                  vec3(sin(theta), cos(theta), 0.0),
-                  vec3(0.0, 0.0, 1.0));
-  cameraOrientation = cameraOrientation * rot;
-}
+  rotMatrix[0] = vec3(cos(theta * M_PI/180), 0.0, sin(theta * M_PI/180));
+  rotMatrix[1] = vec3(0.0, 1.0, 0.0);
+  rotMatrix[2] = vec3(-sin(theta * M_PI/180), 0.0, cos(theta * M_PI/180));
 
-void lookAt(vec3 point)
-{
-  vec3 forward = glm::normalize(vec3(cameraPos - point));
-  vec3 right = glm::normalize(glm::cross(vec3(0, 1, 0), forward));
-  vec3 up = glm::normalize(glm::cross(forward, right));
-
-  cameraOrientation = mat3(right, up, forward);
+  newCameraOrien = rotMatrix * cameraOrien;
+  return newCameraOrien;
 }
 
 void resetCameraStuff()
 {
-  cameraPos = vec3(0, 0, 6);
-  cameraOrientation = mat3(vec3(1, 0, 0),
-                           vec3(0, 1, 0),
-                           vec3(0, 0, 1));
+  cameraPos = vec3(CAMERA_X, CAMERA_Y, CAMERA_Z);
+  cameraOrientation = mat3(vec3(1.0f, 0.0f, 0.0f),
+                           vec3(0.0f, 1.0f, 0.0f),
+                           vec3(0.0f, 0.0f, 1.0f));
   lightSource = vec3(-0.0315915, 1.20455, -0.6108);
 }
 
 void handleEvent(SDL_Event event)
 {
   if(event.type == SDL_KEYDOWN) {
+    window.clearPixels();
     if(event.key.keysym.sym == SDLK_LEFT) // camera x translate
     {
       cout << "TRANSLATE LEFT" << endl;
@@ -631,37 +629,37 @@ void handleEvent(SDL_Event event)
     {
       cout << "LIGHT RIGHT" << endl;
       lightSource.x += 0.1;
-      // printVec3("light position", lightSource);
+      printVec3("light position", lightSource);
     }
     else if(event.key.keysym.sym == SDLK_v) // light x translate
     {
       cout << "LIGHT LEFT" << endl;
       lightSource.x -= 0.1;
-      // printVec3("light position",lightSource);
+      printVec3("light position",lightSource);
     }
     else if(event.key.keysym.sym == SDLK_b) // light y translate
     {
       cout << "LIGHT DOWN" << endl;
       lightSource.y -= 0.1;
-      // printVec3("light position", lightSource);
+      printVec3("light position", lightSource);
     }
     else if(event.key.keysym.sym == SDLK_g) // light y translate
     {
       cout << "LIGHT UP" << endl;
       lightSource.y += 0.1;
-      // printVec3("light position", lightSource);
+      printVec3("light position", lightSource);
     }
     else if(event.key.keysym.sym == SDLK_f) // light z translate
     {
       cout << "LIGHT FRONT" << endl;
       lightSource.z -= 0.1;
-      // printVec3("light position", lightSource);
+      printVec3("light position", lightSource);
     }
     else if(event.key.keysym.sym == SDLK_h) // light z translate
     {
       cout << "LIGHT BACK" << endl;
       lightSource.z += 0.1;
-      // printVec3("light position", lightSource);
+      printVec3("light position", lightSource);
     }
     else if(event.key.keysym.sym == SDLK_z) // camera z translate
     {
@@ -682,27 +680,22 @@ void handleEvent(SDL_Event event)
     else if(event.key.keysym.sym == SDLK_w) // camera rotate X
     {
       cout << "ROTATE X" << endl;
-      rotateX(0.01);
+      cameraOrientation = rotateX(1.0, cameraOrientation);
     }
     else if(event.key.keysym.sym == SDLK_s) // camera rotate X
     {
       cout << "ROTATE X OTHER" << endl;
-      rotateX(-0.01);
+      cameraOrientation = rotateX(-1.0, cameraOrientation);
     }
     else if(event.key.keysym.sym == SDLK_d) // camera rotate Y
     {
       cout << "ROTATE Y" << endl;
-      rotateY(0.01);
+      cameraOrientation = rotateY(1.0, cameraOrientation);
     }
     else if(event.key.keysym.sym == SDLK_a) // camera rotate Y
     {
       cout << "ROTATE Y OTHER" << endl;
-      rotateY(-0.01);
-    }
-    else if(event.key.keysym.sym == SDLK_b) // camera lookAt
-    {
-      cout << "LOOK AT" << endl;
-      lookAt(vec3(-3.014011, 5.325313, -5.839967));
+      cameraOrientation = rotateX(-1.0, cameraOrientation);
     }
     else if(event.key.keysym.sym == SDLK_o) // toggle shadow mode
     {
@@ -718,19 +711,21 @@ void handleEvent(SDL_Event event)
     else if(event.key.keysym.sym == SDLK_j) // wireframe
     {
       cout << "DRAWING WIREFRAME" << endl;
-      drawWireframe(triangles);
       bool_flag = 0;
     }
     else if(event.key.keysym.sym == SDLK_k) // rasterised
     {
       cout << "DRAWING RASTERISED" << endl;
-      drawRasterised(triangles);
       bool_flag = 1;
     }
     else if(event.key.keysym.sym == SDLK_l) // raytraced
     {
       cout << "DRAWING RAYTRACED" << endl;
       drawRaytraced(triangles);
+    }
+    else if(event.key.keysym.sym == SDLK_y) // orbit
+    {
+      cout << "ORBIT" << endl;
     }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
