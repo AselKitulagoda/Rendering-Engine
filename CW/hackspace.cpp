@@ -89,19 +89,19 @@ mat3 lookAt(vec3 point)
 {
   mat3 newCameraOrientation;
 
-  double panTheta = degrees(atan((point.x - CAMERA_X) / point.z));
-  if(point.z < 0)
-  {
-    panTheta += 180;
-  } 
-  newCameraOrientation = rotateY(panTheta, mat3(1.0f));
-
   double tiltTheta = degrees(atan(point.z / (point.y - CAMERA_Y)));
   if(tiltTheta >= 0)
   {
     tiltTheta -= 90;
   }
   newCameraOrientation = rotateX(tiltTheta, newCameraOrientation);
+
+  double panTheta = degrees(atan((point.x - CAMERA_X) / point.z));
+  if(point.z < 0)
+  {
+    panTheta += 180;
+  } 
+  newCameraOrientation = rotateY(panTheta, mat3(1.0f));
 
   return newCameraOrientation;
 }
