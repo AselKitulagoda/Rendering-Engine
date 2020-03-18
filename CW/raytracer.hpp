@@ -55,7 +55,7 @@ float calculateBrightness(vec3 point, ModelTriangle t)
 
 vec3 computeRayDirection(int x, int y)
 {
-  vec3 rayDirection = glm::normalize((vec3((x - WIDTH/2), (-(y - HEIGHT/2)), FOCAL_RAYTRACE) - cameraPos) * cameraOrientation);
+  vec3 rayDirection = glm::normalize((vec3((x - WIDTH/2), (-(y - HEIGHT/2)), FOCAL_LENGTH) - cameraPos) * cameraOrientation);
   return rayDirection;
 }
 

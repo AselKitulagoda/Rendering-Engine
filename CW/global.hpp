@@ -17,8 +17,7 @@ using namespace glm;
 #define WIDTH 640
 #define HEIGHT 480
 #define SCALE_FACTOR 0.005
-#define PI 3.1415
-#define FOCAL_RAYTRACE -500
+#define FOCAL_LENGTH -500
 #define INTENSITY 1
 #define AMBIENCE 0.2
 #define FRACTION_VAL 0.5
@@ -26,6 +25,10 @@ using namespace glm;
 #define MTLPATH "materials.mtl"
 #define OBJPATH "logo.obj"
 #define TEXPATH "texture.ppm"
+
+#define CAMERA_X 1.4
+#define CAMERA_Y 1.6
+#define CAMERA_Z 6
 
 vector<float> interpolation(float from, float to, int numberOfValues);
 vector<CanvasPoint> interpolate(CanvasPoint from, CanvasPoint to, int numberOfValues);
@@ -40,13 +43,14 @@ vector<uint32_t> loadImage();
 void drawTextureLine(CanvasPoint to, CanvasPoint from, vector<uint32_t> pixelColours);
 void drawTextureMap();
 
+// 3D to 2D projection
+CanvasTriangle modelToCanvas(ModelTriangle modelTrig);
+
 // Defining the Global Variables
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 int bool_flag = -1;
-vec3 cameraPos(0, 0, 6);
-mat3 cameraOrientation = mat3(vec3(1, 0, 0),
-                              vec3(0, 1, 0),
-                              vec3(0, 0, 1));
+vec3 cameraPos(CAMERA_X, CAMERA_Y, CAMERA_Z);
+mat3 cameraOrientation = mat3(1.0f);
 vector<ModelTriangle> triangles = readObj(SCALE_FACTOR);
 vector<TexturePoint> texpoints;
 vector<CanvasTriangle> canvasTriangles;
@@ -79,6 +83,29 @@ vector<CanvasPoint> interpolate(CanvasPoint from, CanvasPoint to, int numberOfVa
     vals.push_back(p);
   }
   return vals;
+}
+
+CanvasTriangle modelToCanvas(ModelTriangle modelTrig)
+{
+    float f = -3;
+    CanvasTriangle canvasTrig = CanvasTriangle();
+    canvasTrig.colour = modelTrig.colour;
+    for(int i=0; i<3 ;i++) {
+        float xdistance = modelTrig.vertices[i].x-cameraPos.x;
+        float ydistance = modelTrig.vertices[i].y-cameraPos.y;
+        float zdistance = modelTrig.vertices[i].z-cameraPos.z;
+        vec3 cameraToVertex = vec3(xdistance, ydistance, zdistance);
+        vec3 adjustedVector = cameraOrientation * cameraToVertex;
+        float pScreen = f/adjustedVector.z;
+        // Scale up the x and y canvas coords to get a bigger image (rather than a big model loader scaling)
+        float canvasScaling = 150;
+        float xProj = (adjustedVector.x*pScreen*canvasScaling) + WIDTH/2;
+        float yProj = (-adjustedVector.y*pScreen*canvasScaling) + HEIGHT/2;
+        CanvasPoint p = CanvasPoint(xProj, yProj);
+        p.depth = 1.0/adjustedVector.z;
+        canvasTrig.vertices[i] = p;
+    }
+    return canvasTrig;
 }
 
 void printVec3(string text, vec3 vector)
