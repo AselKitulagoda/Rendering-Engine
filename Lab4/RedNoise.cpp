@@ -612,10 +612,14 @@ void drawRaytraceAntiAlias(vector<ModelTriangle> triangles)
           finalColours.push_back(closestIntersect.intersectedTriangle.colour);
         }
       }
-      Colour c = getAverageColour(finalColours);
-      window.setPixelColour(x, y, c.pack());
+      if(finalColours.size() > 0)
+      {
+        Colour c = getAverageColour(finalColours);
+        window.setPixelColour(x, y, c.pack());
+      }
     }
   }
+  cout << "RAYTRACE ANTI-ALIAS DONE" << endl;
 }
 
 mat3 rotateX(double theta, mat3 cameraOrien) 
