@@ -7,6 +7,7 @@ class Colour
     int red;
     int green;
     int blue;
+    float brightness;
 
     Colour()
     {
@@ -18,6 +19,7 @@ class Colour
       red = r;
       green = g;
       blue = b;
+      brightness = 1.0f;
     }
 
     Colour(std::string n, int r, int g, int b)
@@ -26,6 +28,16 @@ class Colour
       red = r;
       green = g;
       blue = b;
+      brightness = 1.0f;
+    }
+
+    Colour(int r, int g, int b, float bright)
+    {
+      name = "";
+      red = r;
+      green = g;
+      blue = b;
+      brightness = bright;
     }
 
     uint32_t pack()

@@ -54,7 +54,7 @@ mat3 cameraOrientation = mat3(1.0f);
 vector<ModelTriangle> triangles = readObj(SCALE_FACTOR);
 vector<TexturePoint> texpoints;
 vector<CanvasTriangle> canvasTriangles;
-vec3 lightSource = vec3(-0.0315915, 1.20455, -0.6108);
+vec3 lightSource = vec3(59.00, 358.00, 25.00) * float (SCALE_FACTOR);
 int shadowMode = 0;
 
 vector<float> interpolation(float from, float to, int numberOfValues)

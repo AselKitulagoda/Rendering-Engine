@@ -240,6 +240,11 @@ void handleEvent(SDL_Event event)
       cout << "DRAWING RAYTRACED" << endl;
       drawRaytraced(triangles);
     }
+    // else if(event.key.keysym.sym == SDLK_m) // raytraced anti alias
+    // {
+    //   cout << "DRAWING RAYTRACED ANTI ALIAS" << endl;
+    //   drawRaytraceAntiAlias(triangles);
+    // }
     else if(event.key.keysym.sym == SDLK_q) // orbit
     {
       cout << "ORBIT" << endl;

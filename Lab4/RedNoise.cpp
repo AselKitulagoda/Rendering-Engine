@@ -49,9 +49,11 @@ mat3 lookAt(vec3 point);
 vec3 orbit(vec3 point, double orbitTheta);
 
 // Raytracing Stuff
-vec3 computeRayDirection(int x, int y);
+vec3 computeRayDirection(float x, float y);
 RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles);
 void drawRaytraced(vector<ModelTriangle> triangles);
+Colour getAverageColour(vector<Colour> finalColours);
+void drawRaytraceAntiAlias(vector<ModelTriangle> triangles);
 
 // Lighting
 float computeDotProduct(vec3 point, ModelTriangle t);
@@ -459,7 +461,7 @@ float calculateBrightness(vec3 point, ModelTriangle t)
   return brightness;
 }
 
-vec3 computeRayDirection(int x, int y)
+vec3 computeRayDirection(float x, float y)
 {
   vec3 rayDirection = glm::normalize((vec3((x - WIDTH/2), (-(y - HEIGHT/2)), FOCAL_LENGTH) - cameraPos) * cameraOrientation);
   return rayDirection;
@@ -534,7 +536,7 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
           }
         }
 
-        curr.colour = Colour(curr.colour.red * brightness, curr.colour.green * brightness, curr.colour.blue * brightness);
+        curr.colour = Colour(curr.colour.red, curr.colour.green, curr.colour.blue, brightness);
 
         result = RayTriangleIntersection(point, t, curr);
       }
@@ -554,15 +556,66 @@ void drawRaytraced(vector<ModelTriangle> triangles)
   {
     for(int x = 0; x < WIDTH; x++)
     {
-      vec3 ray = computeRayDirection(x, y);
+      vec3 ray = computeRayDirection((float) x, (float) y);
       RayTriangleIntersection closestIntersect = getClosestIntersection(cameraPos, ray, triangles);
       if(closestIntersect.distanceFromCamera != -INFINITY)
       {
-        window.setPixelColour(x, y, closestIntersect.intersectedTriangle.colour.pack());
+        Colour c = Colour(closestIntersect.intersectedTriangle.colour.red * closestIntersect.intersectedTriangle.colour.brightness,
+                          closestIntersect.intersectedTriangle.colour.green * closestIntersect.intersectedTriangle.colour.brightness,
+                          closestIntersect.intersectedTriangle.colour.blue * closestIntersect.intersectedTriangle.colour.brightness);
+        window.setPixelColour(x, y, c.pack());
       }
     }
   }
   cout << "RAYTRACING DONE" << endl;
+}
+
+Colour getAverageColour(vector<Colour> finalColours)
+{
+  Colour average = finalColours.at(0);
+  for(size_t i = 1; i < finalColours.size(); i++)
+  {
+    int red = (average.red + finalColours.at(i).red) / 2;
+    int green = (average.green + finalColours.at(i).green) / 2;
+    int blue = (average.blue + finalColours.at(i).blue) / 2;
+    float brightness = (average.brightness + finalColours.at(i).brightness) / 2;
+
+    average = Colour(red, green, blue, brightness);
+  }
+  Colour toReturn = Colour(average.red * average.brightness, average.green * average.brightness, average.blue * average.brightness);
+  return toReturn;
+}
+
+void drawRaytraceAntiAlias(vector<ModelTriangle> triangles)
+{
+  window.clearPixels();
+
+  vector<vec2> quincunx;
+  quincunx.push_back(vec2(0.0f, 0.0f));
+  quincunx.push_back(vec2(0.5f, 0.0f));
+  quincunx.push_back(vec2(-0.5f, 0.0f));
+  quincunx.push_back(vec2(0.0f, 0.5f));
+  quincunx.push_back(vec2(0.0f, -0.5f));
+
+  for(int y = 0; y < HEIGHT; y++)
+  {
+    for(int x = 0; x < WIDTH; x++)
+    {
+      vector<Colour> finalColours;
+
+      for(size_t i = 0; i < quincunx.size(); i++)
+      {
+        vec3 ray = computeRayDirection(x + quincunx.at(i).x, y + quincunx.at(i).y);
+        RayTriangleIntersection closestIntersect = getClosestIntersection(cameraPos, ray, triangles);
+        if(closestIntersect.distanceFromCamera != -INFINITY)
+        {
+          finalColours.push_back(closestIntersect.intersectedTriangle.colour);
+        }
+      }
+      Colour c = getAverageColour(finalColours);
+      window.setPixelColour(x, y, c.pack());
+    }
+  }
 }
 
 mat3 rotateX(double theta, mat3 cameraOrien) 
@@ -756,6 +809,11 @@ void handleEvent(SDL_Event event)
     {
       cout << "DRAWING RAYTRACED" << endl;
       drawRaytraced(triangles);
+    }
+    else if(event.key.keysym.sym == SDLK_m) // raytraced anti alias
+    {
+      cout << "DRAWING RAYTRACED ANTI ALIAS" << endl;
+      drawRaytraceAntiAlias(triangles);
     }
     else if(event.key.keysym.sym == SDLK_q) // orbit
     {
