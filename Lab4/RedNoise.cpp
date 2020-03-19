@@ -572,16 +572,18 @@ void drawRaytraced(vector<ModelTriangle> triangles)
 
 Colour getAverageColour(vector<Colour> finalColours)
 {
-  Colour average = finalColours.at(0);
+  Colour average = Colour(finalColours.at(0).red * 2, finalColours.at(0).green * 2, finalColours.at(0).blue * 2, finalColours.at(0).brightness * 2);
   for(size_t i = 1; i < finalColours.size(); i++)
   {
-    int red = sqrt((pow(average.red, 2) + pow(finalColours.at(i).red, 2)) / 2);
-    int green = sqrt((pow(average.green, 2) + pow(finalColours.at(i).green, 2)) / 2);
-    int blue = sqrt((pow(average.blue, 2) + pow(finalColours.at(i).blue, 2)) / 2);
-    float brightness = (average.brightness + finalColours.at(i).brightness) / 2;
+    int red = average.red + finalColours.at(i).red;
+    int green = average.green + finalColours.at(i).green;
+    int blue = average.blue + finalColours.at(i).blue;
+    float brightness = average.brightness + finalColours.at(i).brightness;
 
     average = Colour(red, green, blue, brightness);
   }
+  int denom = finalColours.size() + 2;
+  average = Colour(average.red/denom, average.green/denom, average.blue/denom, average.brightness/denom);
   Colour toReturn = Colour(average.red * average.brightness, average.green * average.brightness, average.blue * average.brightness);
   return toReturn;
 }
