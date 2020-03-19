@@ -169,9 +169,9 @@ Colour getAverageColour(vector<Colour> finalColours)
   Colour average = finalColours.at(0);
   for(size_t i = 1; i < finalColours.size(); i++)
   {
-    int red = (average.red + finalColours.at(i).red) / 2;
-    int green = (average.green + finalColours.at(i).green) / 2;
-    int blue = (average.blue + finalColours.at(i).blue) / 2;
+    int red = sqrt((pow(average.red, 2) + pow(finalColours.at(i).red, 2)) / 2);
+    int green = sqrt((pow(average.green, 2) + pow(finalColours.at(i).green, 2)) / 2);
+    int blue = sqrt((pow(average.blue, 2) + pow(finalColours.at(i).blue, 2)) / 2);
     float brightness = (average.brightness + finalColours.at(i).brightness) / 2;
 
     average = Colour(red, green, blue, brightness);
