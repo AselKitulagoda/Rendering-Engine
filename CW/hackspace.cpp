@@ -51,9 +51,9 @@ void update()
 }
 
 vec3 unpack(uint32_t col){
-  int red = ((int)((col)>>24))%255;
-  int green = ((int)((col) >> 16))%255;
-  int blue = ((int)((col) >> 8))%255;
+  int red = ((int)((col)>>16))&255;
+  int green = ((int)((col) >> 8))&255;
+  int blue = ((int)((col)))&255;
   return vec3(red,green,blue);
 
     } 
@@ -292,6 +292,7 @@ void handleEvent(SDL_Event event)
     }
     else if(event.key.keysym.sym == SDLK_p) // orbit
     {
+      cout << "saved PPM" << endl;
       saveToPPM();
     }
   }
