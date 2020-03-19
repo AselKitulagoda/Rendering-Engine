@@ -290,7 +290,7 @@ void handleEvent(SDL_Event event)
       cameraPos = orbit(cameraPos, -3.0);
       cameraOrientation = lookAt(cameraPos);
     }
-    else if(event.key.keysym.sym == SDLK_e) // orbit
+    else if(event.key.keysym.sym == SDLK_p) // orbit
     {
       saveToPPM();
     }
