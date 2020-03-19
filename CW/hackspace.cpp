@@ -75,7 +75,7 @@ void saveToPPM(){
     for (int x=0;x<WIDTH* HEIGHT;x++){
       col = unpack(drawWin[x]);
       // fs << (u8)col.x<<(u8)col.y<<(u8)col.z;
-      fs << (uin32) col.x;
+      fs << (uint8_t) col.x;
       fs << (uint8_t) col.y;
       fs << (uint8_t) col.z;
 }
@@ -289,6 +289,10 @@ void handleEvent(SDL_Event event)
       cout << "ORBIT" << endl;
       cameraPos = orbit(cameraPos, -3.0);
       cameraOrientation = lookAt(cameraPos);
+    }
+    else if(event.key.keysym.sym == SDLK_e) // orbit
+    {
+      saveToPPM();
     }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
