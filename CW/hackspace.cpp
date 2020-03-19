@@ -12,9 +12,11 @@ mat3 rotateX(double theta, mat3 cameraOrien);
 mat3 rotateY(double theta, mat3 cameraOrien);
 mat3 lookAt(vec3 point);
 vec3 orbit(vec3 point, double orbitTheta);
+void saveToPPM();
 
 // Display and Event Stuff
 void update();
+vec3 unpack(uint32_t col);
 void handleEvent(SDL_Event event);
 
 int main(int argc, char* argv[])
@@ -46,6 +48,37 @@ void update()
   {
     drawRasterised(triangles);
   }
+}
+
+vec3 unpack(uint32_t col){
+  int red = ((int)((col)>>24))%255;
+  int green = ((int)((col) >> 16))%255;
+  int blue = ((int)((col) >> 8))%255;
+  return vec3(red,green,blue);
+
+    } 
+
+void saveToPPM(){
+  vector<uint32_t> drawWin;
+  for (int x=0;x<WIDTH;x++){
+    for (int y=0;y<HEIGHT;y++){
+      drawWin.push_back(window.getPixelColour(x,y));
+    }
+  }
+  ofstream fs;
+  fs.open("frame.ppm", std::ofstream::out | std::ofstream::trunc);
+  fs << "P6\n";
+  // fs << "\n";
+  fs << "640 480\n";
+  fs << "255\n";
+  vec3 col;
+    for (int x=0;x<WIDTH* HEIGHT;x++){
+      col = unpack(drawWin[x]);
+      // fs << (u8)col.x<<(u8)col.y<<(u8)col.z;
+      fs << (uin32) col.x;
+      fs << (uint8_t) col.y;
+      fs << (uint8_t) col.z;
+}
 }
 
 mat3 rotateX(double theta, mat3 cameraOrien) 
@@ -121,7 +154,7 @@ vec3 orbit(vec3 point, double orbitTheta)
 void handleEvent(SDL_Event event)
 {
   if(event.type == SDL_KEYDOWN) {
-    window.clearPixels();
+    // window.clearPixels();
     if(event.key.keysym.sym == SDLK_LEFT) // camera x translate
     {
       cout << "TRANSLATE LEFT" << endl;
