@@ -694,73 +694,70 @@ vec3 orbit(vec3 point, double orbitTheta)
   return newCameraPos;
 }
 
+void unpack(uint32_t col, std::ostream& fs)
+{
+  int red = (col >> 16) & 255;
+  int green = (col >> 8) & 255;
+  int blue = (col) & 255;
+
+  fs << (u8) red;
+  fs << (u8) green;
+  fs << (u8) blue;
+} 
+
+void saveToPPM()
+{
+  ofstream fs;
+  fs.open("frame.ppm", std::ofstream::out | std::ofstream::trunc);
+  fs << "P6\n";
+  fs << to_string(WIDTH) << " " << to_string(HEIGHT) << "\n";
+  fs << "255\n";
+
+  for(int y = 0; y < HEIGHT; y++)
+  {
+    for(int x = 0; x < WIDTH; x++)
+    {
+      unpack(window.getPixelColour(x,y), fs);
+    }
+  }
+}
+
 void handleEvent(SDL_Event event)
 {
   if(event.type == SDL_KEYDOWN) {
-    window.clearPixels();
     if(event.key.keysym.sym == SDLK_LEFT) // camera x translate
     {
+      window.clearPixels();
       cout << "TRANSLATE LEFT" << endl;
       cameraPos.x += 0.1;
     }
     else if(event.key.keysym.sym == SDLK_RIGHT) // camera x translate
     {
+      window.clearPixels();
       cout << "TRANSLATE RIGHT" << endl;
       cameraPos.x -= 0.1;
     }
     else if(event.key.keysym.sym == SDLK_UP) // camera y translate
     {
+      window.clearPixels();
       cout << "TRANSLATE UP" << endl;
       cameraPos.y -= 0.1;
     }
     else if(event.key.keysym.sym == SDLK_DOWN) // camera y translate
     {
+      window.clearPixels();
       cout << "TRANSLATE DOWN" << endl;
       cameraPos.y += 0.1;
     }
-    else if(event.key.keysym.sym == SDLK_n) // light x translate
-    {
-      cout << "LIGHT RIGHT" << endl;
-      lightSource.x += 0.1;
-      // printVec3("light position", lightSource);
-    }
-    else if(event.key.keysym.sym == SDLK_v) // light x translate
-    {
-      cout << "LIGHT LEFT" << endl;
-      lightSource.x -= 0.1;
-      // printVec3("light position",lightSource);
-    }
-    else if(event.key.keysym.sym == SDLK_b) // light y translate
-    {
-      cout << "LIGHT DOWN" << endl;
-      lightSource.y -= 0.1;
-      // printVec3("light position", lightSource);
-    }
-    else if(event.key.keysym.sym == SDLK_g) // light y translate
-    {
-      cout << "LIGHT UP" << endl;
-      lightSource.y += 0.1;
-      // printVec3("light position", lightSource);
-    }
-    else if(event.key.keysym.sym == SDLK_f) // light z translate
-    {
-      cout << "LIGHT FRONT" << endl;
-      lightSource.z -= 0.1;
-      // printVec3("light position", lightSource);
-    }
-    else if(event.key.keysym.sym == SDLK_h) // light z translate
-    {
-      cout << "LIGHT BACK" << endl;
-      lightSource.z += 0.1;
-      // printVec3("light position", lightSource);
-    }
     else if(event.key.keysym.sym == SDLK_z) // camera z translate
     {
+      window.clearPixels();
       cout << "TRANSLATE Z" << endl;
       cameraPos.z += 0.1;
     }
     else if(event.key.keysym.sym == SDLK_x) // camera z translate
     {
+      window.clearPixels();
       cout << "TRANSLATE Z" << endl;
       cameraPos.z -= 0.1;
     }
@@ -772,66 +769,83 @@ void handleEvent(SDL_Event event)
     }
     else if(event.key.keysym.sym == SDLK_w) // camera rotate X
     {
+      window.clearPixels();
       cout << "ROTATE X" << endl;
       cameraOrientation = rotateX(1.0, cameraOrientation);
     }
     else if(event.key.keysym.sym == SDLK_s) // camera rotate X
     {
+      window.clearPixels();
       cout << "ROTATE X OTHER" << endl;
       cameraOrientation = rotateX(-1.0, cameraOrientation);
     }
     else if(event.key.keysym.sym == SDLK_d) // camera rotate Y
     {
+      window.clearPixels();
       cout << "ROTATE Y" << endl;
       cameraOrientation = rotateY(1.0, cameraOrientation);
     }
     else if(event.key.keysym.sym == SDLK_a) // camera rotate Y
     {
+      window.clearPixels();
       cout << "ROTATE Y OTHER" << endl;
       cameraOrientation = rotateY(-1.0, cameraOrientation);
     }
     else if(event.key.keysym.sym == SDLK_o) // toggle shadow mode
     {
+      window.clearPixels();
       if(shadowMode == 1) shadowMode = 0;
       else shadowMode = 1;
       cout << "SHADOW MODE = " << shadowMode << endl;
     }
     else if(event.key.keysym.sym == SDLK_r) // camera reset position
     {
+      window.clearPixels();
       cout << "RESET CAMERA POS" << endl;
       resetCameraStuff();
     }
     else if(event.key.keysym.sym == SDLK_j) // wireframe
     {
+      window.clearPixels();
       cout << "DRAWING WIREFRAME" << endl;
       bool_flag = 0;
     }
     else if(event.key.keysym.sym == SDLK_k) // rasterised
     {
+      window.clearPixels();
       cout << "DRAWING RASTERISED" << endl;
       bool_flag = 1;
     }
     else if(event.key.keysym.sym == SDLK_l) // raytraced
     {
+      window.clearPixels();
       cout << "DRAWING RAYTRACED" << endl;
       drawRaytraced(triangles);
     }
     else if(event.key.keysym.sym == SDLK_m) // raytraced anti alias
     {
+      window.clearPixels();
       cout << "DRAWING RAYTRACED ANTI ALIAS" << endl;
       drawRaytraceAntiAlias(triangles);
     }
     else if(event.key.keysym.sym == SDLK_q) // orbit
     {
+      window.clearPixels();
       cout << "ORBIT" << endl;
       cameraPos = orbit(cameraPos, 3.0);
       cameraOrientation = lookAt(cameraPos);
     }
     else if(event.key.keysym.sym == SDLK_e) // orbit
     {
+      window.clearPixels();
       cout << "ORBIT" << endl;
       cameraPos = orbit(cameraPos, -3.0);
       cameraOrientation = lookAt(cameraPos);
+    }
+    else if(event.key.keysym.sym == SDLK_p) // save image
+    {
+      cout << "saved PPM" << endl;
+      saveToPPM();
     }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;

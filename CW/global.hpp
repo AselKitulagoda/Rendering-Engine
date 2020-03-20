@@ -43,6 +43,10 @@ vector<uint32_t> loadImage();
 void drawTextureLine(CanvasPoint to, CanvasPoint from, vector<uint32_t> pixelColours);
 void drawTextureMap();
 
+// Saving PPM Image
+void unpack(uint32_t col, std::ostream& fs);
+void savePPM();
+
 // 3D to 2D projection
 CanvasTriangle modelToCanvas(ModelTriangle modelTrig);
 
@@ -241,6 +245,34 @@ vector<uint32_t> loadImage()
   }
 
   return converted;
+}
+
+void unpack(uint32_t col, std::ostream& fs)
+{
+  int red = (col >> 16) & 255;
+  int green = (col >> 8) & 255;
+  int blue = (col) & 255;
+
+  fs << (u8) red;
+  fs << (u8) green;
+  fs << (u8) blue;
+} 
+
+void saveToPPM()
+{
+  ofstream fs;
+  fs.open("frame.ppm", std::ofstream::out | std::ofstream::trunc);
+  fs << "P6\n";
+  fs << to_string(WIDTH) << " " << to_string(HEIGHT) << "\n";
+  fs << "255\n";
+
+  for(int y = 0; y < HEIGHT; y++)
+  {
+    for(int x = 0; x < WIDTH; x++)
+    {
+      unpack(window.getPixelColour(x,y), fs);
+    }
+  }
 }
 
 void drawTextureLine(CanvasPoint to, CanvasPoint from, vector<uint32_t> pixelColours)
