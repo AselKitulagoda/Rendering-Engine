@@ -50,35 +50,30 @@ void update()
   }
 }
 
-vec3 unpack(uint32_t col){
-  int red = ((int)((col)>>16))&255;
-  int green = ((int)((col) >> 8))&255;
-  int blue = ((int)((col)))&255;
-  return vec3(red,green,blue);
+void unpack(uint32_t col,std::ostream& fs){
+  int red = (col>>16)&255;
+  int green = (col >> 8)&255;
+  int blue = (col)&255;
 
+  fs << (u8)red;
+  fs << (u8)green;
+  fs << (u8)blue;
     } 
 
 void saveToPPM(){
-  vector<uint32_t> drawWin;
-  for (int x=0;x<WIDTH;x++){
-    for (int y=0;y<HEIGHT;y++){
-      drawWin.push_back(window.getPixelColour(x,y));
-    }
-  }
-  ofstream fs;
+    ofstream fs;
   fs.open("frame.ppm", std::ofstream::out | std::ofstream::trunc);
   fs << "P6\n";
   // fs << "\n";
   fs << "640 480\n";
   fs << "255\n";
-  vec3 col;
-    for (int x=0;x<WIDTH* HEIGHT;x++){
-      col = unpack(drawWin[x]);
-      // fs << (u8)col.x<<(u8)col.y<<(u8)col.z;
-      fs << (uint8_t) col.x;
-      fs << (uint8_t) col.y;
-      fs << (uint8_t) col.z;
-}
+
+  for (int y=0;y<HEIGHT;y++){
+    for (int x=0;x<WIDTH;x++){
+      unpack(window.getPixelColour(x,y),fs);
+
+    }
+  }
 }
 
 mat3 rotateX(double theta, mat3 cameraOrien) 
