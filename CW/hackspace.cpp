@@ -260,42 +260,6 @@ void handleEvent(SDL_Event event)
       cout << "saved PPM" << endl;
       saveToPPM();
     }
-     else if(event.key.keysym.sym == SDLK_n) // light x translate
-    {
-      cout << "LIGHT RIGHT" << endl;
-      lightSource.x += 0.1;
-      printVec3("light position", lightSource);
-    }
-    else if(event.key.keysym.sym == SDLK_v) // light x translate
-    {
-      cout << "LIGHT LEFT" << endl;
-      lightSource.x -= 0.1;
-      printVec3("light position",lightSource);
-    }
-    else if(event.key.keysym.sym == SDLK_b) // light y translate
-    {
-      cout << "LIGHT DOWN" << endl;
-      lightSource.y -= 0.1;
-      printVec3("light position", lightSource);
-    }
-    else if(event.key.keysym.sym == SDLK_g) // light y translate
-    {
-      cout << "LIGHT UP" << endl;
-      lightSource.y += 0.1;
-      printVec3("light position", lightSource);
-    }
-    else if(event.key.keysym.sym == SDLK_f) // light z translate
-    {
-      cout << "LIGHT FRONT" << endl;
-      lightSource.z -= 0.1;
-      printVec3("light position", lightSource);
-    }
-    else if(event.key.keysym.sym == SDLK_h) // light z translate
-    {
-      cout << "LIGHT BACK" << endl;
-      lightSource.z += 0.1;
-      printVec3("light position", lightSource);
-    }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
 }
