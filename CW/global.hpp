@@ -16,7 +16,8 @@ using namespace glm;
 
 #define WIDTH 640
 #define HEIGHT 480
-#define SCALE_FACTOR 0.005
+#define SCALE_FACTOR 0.001
+#define SCALE_CORNELL 0.3
 #define FOCAL_LENGTH -500
 #define INTENSITY 1
 #define AMBIENCE 0.2
@@ -26,8 +27,11 @@ using namespace glm;
 #define OBJPATH "logo.obj"
 #define TEXPATH "texture.ppm"
 
-#define CAMERA_X 1.4
-#define CAMERA_Y 1.6
+#define MTL_CORNELL "cornell-box.mtl"
+#define OBJ_CORNELL "cornell-box.obj"
+
+#define CAMERA_X 0
+#define CAMERA_Y 0.5
 #define CAMERA_Z 6
 
 vector<float> interpolation(float from, float to, int numberOfValues);
@@ -36,7 +40,10 @@ void printVec3(string text, vec3 vector);
 bool inRange(float val, float v1, float v2);
 
 // OBJ Stuff
+vector<Colour> readMaterial(string fname);
 vector<ModelTriangle> readObj(float scale);
+Colour getColourFromName(string mat, vector<Colour> colours);
+vector<ModelTriangle> readCornellBox(float scale);
 
 // Texturing Stuff
 vector<uint32_t> loadImage();
@@ -55,10 +62,16 @@ DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 int bool_flag = -1;
 vec3 cameraPos(CAMERA_X, CAMERA_Y, CAMERA_Z);
 mat3 cameraOrientation = mat3(1.0f);
+
+// Loading Triangles
 vector<ModelTriangle> triangles = readObj(SCALE_FACTOR);
+
+// Cornell Box Material
+vector<Colour> cornellColours = readMaterial(MTL_CORNELL);
+
 vector<TexturePoint> texpoints;
 vector<CanvasTriangle> canvasTriangles;
-vec3 lightSource = vec3(59.00, 358.00, 25.00) * float (SCALE_FACTOR);
+vec3 lightSource = vec3(-0.0315915, 1.20455, -0.6108);
 int shadowMode = 0;
 
 vector<float> interpolation(float from, float to, int numberOfValues)
@@ -123,6 +136,160 @@ bool inRange(float val, float v1, float v2)
   else return false;
 }
 
+Colour getColourFromName(string mat, vector<Colour> colours)
+{
+  Colour result = Colour(0, 0, 0);
+  for(size_t i = 0; i < colours.size(); i++)
+  {
+    if(mat == colours[i].name)
+    {
+      result.red = colours[i].red;
+      result.blue = colours[i].blue;
+      result.green = colours[i].green;
+      break;
+    }
+  }
+  return result;
+}
+
+vector<Colour> readMaterial(string fname)
+{
+  ifstream fp;
+  fp.open(fname);
+
+  vector<Colour> colours;
+  while(!fp.eof())
+  {
+    string comment, colourInfo, newline;
+    getline(fp, comment);
+    string *splitName = split(comment, ' ');
+
+    getline(fp, colourInfo);
+    string *splitColourInfo = split(colourInfo, ' ');
+
+    int r = stof(splitColourInfo[1]) * 255;
+    int g = stof(splitColourInfo[2]) * 255;
+    int b = stof(splitColourInfo[3]) * 255;
+
+    Colour c = Colour(splitName[1], r, g, b);
+
+    getline(fp, newline);
+    colours.push_back(c);
+  }
+  fp.close();
+    // cout << "finished mat"<<endl;
+  return colours;
+}
+
+vector<ModelTriangle> readCornellBox(float scale)
+{
+  vector <ModelTriangle> tris;
+  ifstream fp;
+  vector<Colour> colours = readMaterial(MTL_CORNELL);
+  vector<vec3> vertic;
+  fp.open(OBJ_CORNELL);
+
+  if(fp.fail())
+    cout << "fails" << endl;
+
+  string newline;
+  getline(fp,newline);
+  getline(fp,newline);
+
+  while(!fp.eof())
+  {
+    string light;
+    string comment;
+    string mat;
+    getline(fp, comment);
+
+    if (!comment.empty())
+    {
+      string *splitcomment = split(comment,' ');
+      if (splitcomment[0] == "usemtl")
+      {
+        mat = splitcomment[1];
+        while(true)
+        {
+          getline(fp,comment);
+          if (!comment.empty())
+          {
+            string *splitcomment = split(comment,' ');
+            if (splitcomment[0]=="v")
+            {
+              float x = stof(splitcomment[1]) * scale;
+              float y = stof(splitcomment[2]) * scale;
+              float z = stof(splitcomment[3]) * scale;
+              vec3 verts = vec3(x,y,z);
+              vertic.push_back(verts);
+            }
+            else
+            {
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  fp.clear();
+  fp.seekg(0,ios::beg);
+  if(fp.fail())
+    cout << "fails" << endl;
+  getline(fp,newline);
+  getline(fp,newline);
+
+  while(!fp.eof())
+  {
+    string comment_new;
+    string mat;
+    getline(fp,comment_new);
+    if (!comment_new.empty())
+    {
+      string *splitcomment = split(comment_new,' ');
+      if (splitcomment[0] == "usemtl")
+      {
+        mat = splitcomment[1];
+        Colour tricolour = getColourFromName(mat,cornellColours);
+        tricolour.name = mat;
+
+        while(true){
+          getline(fp,comment_new);
+          splitcomment = split(comment_new,' ');
+          if (splitcomment[0] == "f" && !comment_new.empty()){break;}
+        }
+
+      bool not_reach = true;
+        while (not_reach)
+        {
+          if (!comment_new.empty())
+          {
+            splitcomment = split(comment_new,' ');
+            if (splitcomment[0]=="f")
+            {
+              int first_vert = stoi(splitcomment[1].substr(0, splitcomment[1].size()-1));
+              int second_vert = stoi(splitcomment[2].substr(0, splitcomment[2].size()-1));
+              int third_vert = stoi(splitcomment[3].substr(0, splitcomment[3].size()-1));
+
+              tris.push_back(ModelTriangle(vertic[first_vert-1],vertic[second_vert-1],vertic[third_vert-1],tricolour));
+            }
+            else{break;}
+
+          }
+          if (!fp.eof()){
+          getline(fp,comment_new);
+          }
+          else{not_reach=false;}
+
+        }
+      }
+    }
+  }
+  fp.close();
+  return tris;
+}
+
 vector<ModelTriangle> readObj(float scale)
 {
   vector <ModelTriangle> tris;
@@ -155,7 +322,7 @@ vector<ModelTriangle> readObj(float scale)
             float x = stof(splitcomment[1]) * scale;
             float y = stof(splitcomment[2]) * scale;
             float z = stof(splitcomment[3]) * scale;
-            vec3 verts = vec3(x,y,z);
+            vec3 verts = vec3(x - 0.7, y - 0.1, z - 0.5);
             vertic.push_back(verts);
           }
           else

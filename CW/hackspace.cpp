@@ -19,9 +19,24 @@ void update();
 vec3 unpack(uint32_t col);
 void handleEvent(SDL_Event event);
 
+// Appending the cornell box triangles to hackspace
+void appendTriangles();
+
+void appendTriangles()
+{
+  vector<ModelTriangle> cornellTriangles = readCornellBox(SCALE_CORNELL);
+
+  for(size_t i = 0; i < cornellTriangles.size(); i++)
+  {
+    triangles.push_back(cornellTriangles.at(i));
+  }
+}
+
 int main(int argc, char* argv[])
 {
   SDL_Event event;
+
+  appendTriangles();
 
   while(true)
   {
@@ -244,6 +259,42 @@ void handleEvent(SDL_Event event)
     {
       cout << "saved PPM" << endl;
       saveToPPM();
+    }
+     else if(event.key.keysym.sym == SDLK_n) // light x translate
+    {
+      cout << "LIGHT RIGHT" << endl;
+      lightSource.x += 0.1;
+      printVec3("light position", lightSource);
+    }
+    else if(event.key.keysym.sym == SDLK_v) // light x translate
+    {
+      cout << "LIGHT LEFT" << endl;
+      lightSource.x -= 0.1;
+      printVec3("light position",lightSource);
+    }
+    else if(event.key.keysym.sym == SDLK_b) // light y translate
+    {
+      cout << "LIGHT DOWN" << endl;
+      lightSource.y -= 0.1;
+      printVec3("light position", lightSource);
+    }
+    else if(event.key.keysym.sym == SDLK_g) // light y translate
+    {
+      cout << "LIGHT UP" << endl;
+      lightSource.y += 0.1;
+      printVec3("light position", lightSource);
+    }
+    else if(event.key.keysym.sym == SDLK_f) // light z translate
+    {
+      cout << "LIGHT FRONT" << endl;
+      lightSource.z -= 0.1;
+      printVec3("light position", lightSource);
+    }
+    else if(event.key.keysym.sym == SDLK_h) // light z translate
+    {
+      cout << "LIGHT BACK" << endl;
+      lightSource.z += 0.1;
+      printVec3("light position", lightSource);
     }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
