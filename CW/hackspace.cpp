@@ -36,8 +36,6 @@ int main(int argc, char* argv[])
 {
   SDL_Event event;
 
-  //appendTriangles();
-
   while(true)
   {
     // We MUST poll for events - otherwise the window will freeze !
@@ -45,17 +43,21 @@ int main(int argc, char* argv[])
     {
       handleEvent(event);
       if (bool_flag == 0){
+        // appendTriangles();
         drawWireframe(triangles);
       }
-      else if (bool_flag==1){
+      else if (bool_flag == 1){
+        // appendTriangles();
         drawRasterised(triangles);
       }
-      else if (bool_flag==2){
+      else if (bool_flag == 2){
         drawTextureRasterised(triangles);
+        // vector<ModelTriangle> cornellTriangles = readCornellBox(SCALE_CORNELL);
+        // drawRasterised(cornellTriangles);
+        // drawTextureRasterised(triangles);
       }
     }
     update();
-  
 
     // Need to render the frame at the end, or nothing actually gets shown on the screen !
     window.renderFrame();
@@ -65,15 +67,6 @@ int main(int argc, char* argv[])
 void update()
 {
   // Function for performing animation (shifting artifacts or moving the camera)
-  // if (bool_flag == 0)
-  // {
-  //   drawWireframe(triangles);
-  // }
-  // else if (bool_flag == 1)
-  // {
-  //   cout << "called rasterize" <<endl;
-  //   drawRasterised(triangles);
-  // }
 }
 
 mat3 rotateX(double theta, mat3 cameraOrien) 
@@ -151,37 +144,31 @@ void handleEvent(SDL_Event event)
   if(event.type == SDL_KEYDOWN) {
     if(event.key.keysym.sym == SDLK_LEFT) // camera x translate
     {
-      window.clearPixels();
       cout << "TRANSLATE LEFT" << endl;
       cameraPos.x += 0.1;
     }
     else if(event.key.keysym.sym == SDLK_RIGHT) // camera x translate
     {
-      window.clearPixels();
       cout << "TRANSLATE RIGHT" << endl;
       cameraPos.x -= 0.1;
     }
     else if(event.key.keysym.sym == SDLK_UP) // camera y translate
     {
-      window.clearPixels();
       cout << "TRANSLATE UP" << endl;
       cameraPos.y -= 0.1;
     }
     else if(event.key.keysym.sym == SDLK_DOWN) // camera y translate
     {
-      window.clearPixels();
       cout << "TRANSLATE DOWN" << endl;
       cameraPos.y += 0.1;
     }
     else if(event.key.keysym.sym == SDLK_z) // camera z translate
     {
-      window.clearPixels();
       cout << "TRANSLATE Z" << endl;
       cameraPos.z += 0.1;
     }
     else if(event.key.keysym.sym == SDLK_x) // camera z translate
     {
-      window.clearPixels();
       cout << "TRANSLATE Z" << endl;
       cameraPos.z -= 0.1;
     }
@@ -193,78 +180,79 @@ void handleEvent(SDL_Event event)
     }
     else if(event.key.keysym.sym == SDLK_w) // camera rotate X
     {
-      window.clearPixels();
       cout << "ROTATE X" << endl;
       cameraOrientation = rotateX(1.0, cameraOrientation);
     }
     else if(event.key.keysym.sym == SDLK_s) // camera rotate X
     {
-      window.clearPixels();
       cout << "ROTATE X OTHER" << endl;
       cameraOrientation = rotateX(-1.0, cameraOrientation);
     }
     else if(event.key.keysym.sym == SDLK_d) // camera rotate Y
     {
-      window.clearPixels();
       cout << "ROTATE Y" << endl;
       cameraOrientation = rotateY(1.0, cameraOrientation);
     }
     else if(event.key.keysym.sym == SDLK_a) // camera rotate Y
     {
-      window.clearPixels();
       cout << "ROTATE Y OTHER" << endl;
       cameraOrientation = rotateY(-1.0, cameraOrientation);
     }
     else if(event.key.keysym.sym == SDLK_o) // toggle shadow mode
     {
-      window.clearPixels();
       if(shadowMode == 1) shadowMode = 0;
       else shadowMode = 1;
       cout << "SHADOW MODE = " << shadowMode << endl;
     }
     else if(event.key.keysym.sym == SDLK_r) // camera reset position
     {
-      window.clearPixels();
       cout << "RESET CAMERA POS" << endl;
       resetCameraStuff();
     }
     else if(event.key.keysym.sym == SDLK_j) // wireframe
     {
-      window.clearPixels();
       cout << "DRAWING WIREFRAME" << endl;
-      bool_flag = 0;
+      // appendTriangles();
       drawWireframe(triangles);
+      bool_flag = 0;
     }
     else if(event.key.keysym.sym == SDLK_k) // rasterised
     {
-      window.clearPixels();
       cout << "DRAWING RASTERISED" << endl;
-      bool_flag = 1;
+      // appendTriangles();
       drawRasterised(triangles);
+      bool_flag = 1;
+    }
+    else if(event.key.keysym.sym == SDLK_t) // textured rasterised
+    {
+      window.clearPixels();
+      cout << "DRAWING TEXTURED RASTERISED" << endl;
+      bool_flag = 2;
+      drawTextureRasterised(triangles);
+      // vector<ModelTriangle> cornellTriangles = readCornellBox(SCALE_CORNELL);
+      // drawRasterised(cornellTriangles);
+      // drawTextureRasterised(triangles);
     }
     else if(event.key.keysym.sym == SDLK_l) // raytraced
     {
-      window.clearPixels();
       cout << "DRAWING RAYTRACED" << endl;
-      bool_flag = -1;
+      // appendTriangles();
       drawRaytraced(triangles);
     }
     else if(event.key.keysym.sym == SDLK_m) // raytraced anti alias
     {
-      window.clearPixels();
       cout << "DRAWING RAYTRACED ANTI ALIAS" << endl;
+      // appendTriangles();
       drawRaytraceAntiAlias(triangles);
     }
     else if(event.key.keysym.sym == SDLK_q) // orbit
     {
-      window.clearPixels();
       cout << "ORBIT" << endl;
       cameraPos = orbit(cameraPos, 3.0);
       cameraOrientation = lookAt(cameraPos);
     }
     else if(event.key.keysym.sym == SDLK_e) // orbit
     {
-      window.clearPixels();
       cout << "ORBIT" << endl;
       cameraPos = orbit(cameraPos, -3.0);
       cameraOrientation = lookAt(cameraPos);
@@ -276,16 +264,8 @@ void handleEvent(SDL_Event event)
     }
     else if(event.key.keysym.sym == SDLK_b) // backface culling mode
     {
-      window.clearPixels();
       cullingMode = !cullingMode;
       cout << "CULLING MODE = " << cullingMode << endl;
-    }
-    else if(event.key.keysym.sym == SDLK_t) // backface culling mode
-    {
-      window.clearPixels();
-      cout << "Drawing textured logo"<< endl;
-      drawTextureRasterised(triangles);
-      bool_flag = 2;
     }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;

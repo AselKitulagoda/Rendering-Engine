@@ -49,6 +49,8 @@ void drawStroke(CanvasTriangle t, float depthBuffer[WIDTH][HEIGHT])
 
 void drawWireframe(vector<ModelTriangle> triangles) 
 {
+  window.clearPixels();
+  
   float depthBuffer[WIDTH][HEIGHT];
   for(int i = 0; i < WIDTH; i++) 
   {

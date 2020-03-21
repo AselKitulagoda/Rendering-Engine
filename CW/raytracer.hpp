@@ -146,7 +146,7 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
 void drawRaytraced(vector<ModelTriangle> triangles)
 { 
   window.clearPixels();
-
+  
   for(int y = 0; y < HEIGHT; y++)
   {
     for(int x = 0; x < WIDTH; x++)
