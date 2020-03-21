@@ -38,6 +38,7 @@ vector<float> interpolation(float from, float to, int numberOfValues);
 vector<CanvasPoint> interpolate(CanvasPoint from, CanvasPoint to, int numberOfValues);
 void printVec3(string text, vec3 vector);
 bool inRange(float val, float v1, float v2);
+void displayImg();
 
 // OBJ Stuff
 vector<Colour> readMaterial(string fname);
@@ -78,6 +79,9 @@ vector<CanvasTriangle> canvasTriangles;
 vec3 lightSource = vec3(-0.0315915, 1.20455, -0.6108);
 int shadowMode = 0;
 bool cullingMode = 1;
+vector<uint32_t> pixelColours = loadImage();
+int texWidth;
+int texHeight;
 
 vector<float> interpolation(float from, float to, int numberOfValues)
 {
@@ -125,6 +129,7 @@ CanvasTriangle modelToCanvas(ModelTriangle modelTrig)
         float yProj = (-adjustedVector.y*pScreen*canvasScaling) + HEIGHT/2;
         CanvasPoint p = CanvasPoint(xProj, yProj);
         p.depth = 1.0/adjustedVector.z;
+        p.texturePoint = TexturePoint(modelTrig.texturepoints[i].x*texWidth,modelTrig.texturepoints[i].y*texHeight);
         canvasTrig.vertices[i] = p;
     }
     return canvasTrig;
@@ -346,6 +351,34 @@ vector<ModelTriangle> readObj(float scale)
   getline(fp,newline);
   getline(fp,newline);
 
+  while(!fp.eof()){
+    string comment_new;
+      bool not_reach = true;
+        while (not_reach)
+        {
+          getline(fp,comment_new);
+          string *splitcomment = split(comment_new,' ');
+          if (!comment_new.empty())
+          {
+            if (splitcomment[0] == "vt"){
+                float x_tex = stof(splitcomment[1]);
+                float y_tex = stof(splitcomment[2]);
+                texpoints.push_back(TexturePoint(x_tex, y_tex));
+              }
+            else{break;}
+          }
+          if (fp.eof())
+            not_reach=false;
+        }
+  }
+
+  fp.clear();
+  fp.seekg(0,ios::beg);
+  if(fp.fail())
+    cout << "fails" << endl;
+  getline(fp,newline);
+  getline(fp,newline);
+
   while(!fp.eof())
   {
     string comment_new;
@@ -361,13 +394,15 @@ vector<ModelTriangle> readObj(float scale)
               int first_vert = stoi(splitcomment[1].substr(0, splitcomment[1].find('/')));
               int second_vert = stoi(splitcomment[2].substr(0, splitcomment[2].find('/')));
               int third_vert = stoi(splitcomment[3].substr(0, splitcomment[3].find('/')));
-
-              tris.push_back(ModelTriangle(vertic[first_vert-1],vertic[second_vert-1],vertic[third_vert-1],Colour(255,255,255)));
-            }
-            else if (splitcomment[0] == "vt"){
-              float x_tex = stof(splitcomment[1]) * scale;
-              float y_tex = stof(splitcomment[2]) * scale;
-              texpoints.push_back(TexturePoint(x_tex, y_tex));
+              int first_tex_index = stoi(splitcomment[1].substr((splitcomment[1].find('/')+1),splitcomment[1].length()));
+              int second_tex_index = stoi(splitcomment[2].substr(splitcomment[2].find('/')+1,splitcomment[2].length()));
+              int third_tex_index = stoi(splitcomment[3].substr(splitcomment[3].find('/')+1,splitcomment[3].length()));
+              
+              vec2 first_tex_point = vec2(texpoints[first_tex_index-1].x,texpoints[first_tex_index-1].y);
+              vec2 second_tex_point = vec2(texpoints[second_tex_index-1].x,texpoints[second_tex_index-1].y);
+              vec2 third_tex_point = vec2(texpoints[third_tex_index-1].x,texpoints[third_tex_index-1].y);
+              tris.push_back(ModelTriangle(vertic[first_vert-1],vertic[second_vert-1],vertic[third_vert-1],Colour(255,255,255),first_tex_point,second_tex_point,third_tex_point));
+              // textriangles.push_back(TextureTriangle(vertic[first_vert-1],vertic[second_vert-1],vertic[third_vert-1],Colour(255,255,255),allTexPoints));
             }
             else{break;}
 
@@ -378,11 +413,53 @@ vector<ModelTriangle> readObj(float scale)
     }
   }
   fp.close();
+  cout << texpoints.size() << endl;
+  cout << vertic.size() << endl;
   return tris;
 }
 
 vector<uint32_t> loadImage()
 {
+  ifstream fp;
+  fp.open(TEXPATH);
+
+  string magicNum, comment, dimensions, byteSize;
+  getline(fp, magicNum);
+  getline(fp, comment);
+  getline(fp, dimensions);
+  getline(fp, byteSize);
+
+  int whiteSpacePos = dimensions.find(" ");
+  int newLinePos = dimensions.find('\n');
+
+  int width = stoi(dimensions.substr(0, whiteSpacePos));
+  texWidth = width;
+  int height = stoi(dimensions.substr(whiteSpacePos, newLinePos));
+  texHeight = height;
+
+  vector<Colour> pixelVals;
+  for(int i = 0; i < (width * height); i++)
+  {
+    Colour c;
+    c.red = fp.get();
+    c.green = fp.get();
+    c.blue = fp.get();
+    pixelVals.push_back(c);
+  }
+
+  vector<uint32_t> converted;
+  for(size_t i = 0; i < pixelVals.size(); i++)
+  { 
+    Colour c = pixelVals[i];
+    uint32_t colour = (255<<24) + (int(c.red)<<16) + (int(c.green)<<8) + int(c.blue);
+    converted.push_back(colour);
+  }
+
+  return converted;
+}
+
+
+void displayImg(){
   ifstream fp;
   fp.open(TEXPATH);
 
@@ -415,8 +492,11 @@ vector<uint32_t> loadImage()
     uint32_t colour = (255<<24) + (int(c.red)<<16) + (int(c.green)<<8) + int(c.blue);
     converted.push_back(colour);
   }
-
-  return converted;
+  for (int x=0;x<width;x++){
+      for (int y=0;y<height;y++){
+          window.setPixelColour(x,y,converted[x+y*width]);
+  }
+}
 }
 
 void unpack(uint32_t col, std::ostream& fs)
@@ -465,61 +545,60 @@ void drawTextureLine(CanvasPoint to, CanvasPoint from, vector<uint32_t> pixelCol
     TexturePoint tp;
     tp.x = from.texturePoint.x + (i * numberOfTextureValues.x/numberOfValues);
     tp.y = from.texturePoint.y + (i * numberOfTextureValues.y/numberOfValues);
-    cout << tp << endl;
-    window.setPixelColour(xs[i], ys[i], pixelColours[round(tp.x) + round(tp.y) * WIDTH]);
+    // cout << tp << endl;
+    window.setPixelColour(xs[i], ys[i], pixelColours[round(tp.x) + round(tp.y) * 300]);
   }
 }
 
-void drawTextureMap()
+void drawTextureMap(CanvasTriangle currentTri)
 { 
-  vector<uint32_t> pixelColours = loadImage();
+    CanvasPoint largest; largest.x = currentTri.vertices[0].x; largest.y = currentTri.vertices[0].y; largest.texturePoint = currentTri.vertices[0].texturePoint;
+    CanvasPoint middle; middle.x = currentTri.vertices[1].x; middle.y = currentTri.vertices[1].y; middle.texturePoint = currentTri.vertices[1].texturePoint;
+    CanvasPoint smallest; smallest.x = currentTri.vertices[2].x; smallest.y = currentTri.vertices[2].y; smallest.texturePoint = currentTri.vertices[2].texturePoint;
+    
+    if(largest.y < middle.y)
+    {
+      std::swap(largest, middle);
+    }
+    if(largest.y < smallest.y)
+    {
+      std::swap(largest, smallest);
+    }
+    if(middle.y < smallest.y)
+    {
+      std::swap(middle, smallest);
+    }
 
-  CanvasPoint largest; largest.x = rand()%WIDTH; largest.y = rand()%HEIGHT; largest.texturePoint = TexturePoint(195, 5);
-  CanvasPoint middle; middle.x = rand()%WIDTH; middle.y = rand()%HEIGHT; middle.texturePoint = TexturePoint(395, 380);
-  CanvasPoint smallest; smallest.x = rand()%WIDTH; smallest.y = rand()%HEIGHT; smallest.texturePoint = TexturePoint(65, 330);
+    float ratio = (largest.y - middle.y)/(largest.y - smallest.y);
+    CanvasPoint extraPoint;
+    extraPoint.x = largest.x - ratio*(largest.x - smallest.x);
+    extraPoint.y = largest.y - ratio*(largest.y - smallest.y);
+
+    TexturePoint extraTex;
+    extraTex.x = largest.texturePoint.x - ratio*(largest.texturePoint.x - smallest.texturePoint.x);
+    extraTex.y = largest.texturePoint.y - ratio*(largest.texturePoint.y - smallest.texturePoint.y);
+    
+    extraPoint.texturePoint = extraTex;
+
+    // Interpolation 
+    int numberOfValuesTop = (largest.y - middle.y);
+    int numberOfValuesBot = (middle.y - smallest.y);
+
+    vector<CanvasPoint> largest_extraPoint = interpolate(largest, extraPoint, ceil(numberOfValuesTop)+1);
+    vector<CanvasPoint> largest_middle = interpolate(largest, middle, ceil(numberOfValuesTop)+1);
+    vector<CanvasPoint> smallest_extraPoint = interpolate(smallest, extraPoint, ceil(numberOfValuesBot)+1);
+    vector<CanvasPoint> smallest_middle = interpolate(smallest, middle, ceil(numberOfValuesBot)+1);
+
+    for(int i = 0; i <= numberOfValuesTop; i++)
+    {
+      drawTextureLine(largest_extraPoint[i], largest_middle[i], pixelColours);
+    }
+
+    for(int i = 0; i <= numberOfValuesBot+1; i++)
+    {
+      drawTextureLine(smallest_extraPoint[i], smallest_middle[i], pixelColours);
+    }
   
-  if(largest.y < middle.y)
-  {
-    std::swap(largest, middle);
-  }
-  if(largest.y < smallest.y)
-  {
-    std::swap(largest, smallest);
-  }
-  if(middle.y < smallest.y)
-  {
-    std::swap(middle, smallest);
-  }
-
-  float ratio = (largest.y - middle.y)/(largest.y - smallest.y);
-  CanvasPoint extraPoint;
-  extraPoint.x = largest.x - ratio*(largest.x - smallest.x);
-  extraPoint.y = largest.y - ratio*(largest.y - smallest.y);
-
-  TexturePoint extraTex;
-  extraTex.x = largest.texturePoint.x - ratio*(largest.texturePoint.x - smallest.texturePoint.x);
-  extraTex.y = largest.texturePoint.y - ratio*(largest.texturePoint.y - smallest.texturePoint.y);
-  
-  extraPoint.texturePoint = extraTex;
-
-  // Interpolation 
-  int numberOfValuesTop = (largest.y - middle.y);
-  int numberOfValuesBot = (middle.y - smallest.y);
-
-  vector<CanvasPoint> largest_extraPoint = interpolate(largest, extraPoint, ceil(numberOfValuesTop)+1);
-  vector<CanvasPoint> largest_middle = interpolate(largest, middle, ceil(numberOfValuesTop)+1);
-  vector<CanvasPoint> smallest_extraPoint = interpolate(smallest, extraPoint, ceil(numberOfValuesBot)+1);
-  vector<CanvasPoint> smallest_middle = interpolate(smallest, middle, ceil(numberOfValuesBot)+1);
-
-  for(int i = 0; i <= numberOfValuesTop; i++)
-  {
-    drawTextureLine(largest_extraPoint[i], largest_middle[i], pixelColours);
-  }
-
-  for(int i = 0; i <= numberOfValuesBot+1; i++)
-  {
-    drawTextureLine(smallest_extraPoint[i], smallest_middle[i], pixelColours);
-  }
 }
 
 vec3 getTriangleCentroid(ModelTriangle t)

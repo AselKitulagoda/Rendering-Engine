@@ -103,4 +103,35 @@ void drawRasterised(vector<ModelTriangle> triangles)
   }
 }
 
+void drawTextureRasterised(vector<ModelTriangle> triangles) 
+{
+  float depthBuffer[WIDTH][HEIGHT];
+  for(int i = 0; i < WIDTH; i++) 
+  {
+    for(int j = 0; j < HEIGHT; j++) 
+    {
+      depthBuffer[i][j] = (float) INFINITY;
+    }
+  }
+
+  vector<ModelTriangle> filteredTriangles = backfaceCulling(triangles);
+
+  if(cullingMode)
+  {
+    for(size_t i = 0; i < filteredTriangles.size(); i++)
+    {
+      CanvasTriangle projection = modelToCanvas(filteredTriangles.at(i));
+      drawTextureMap(projection);
+    }
+  }
+  else 
+  {
+    for(size_t i = 0; i < triangles.size(); i++)
+    {
+      CanvasTriangle projection = modelToCanvas(triangles.at(i));
+      drawTextureMap(projection);
+    }
+  }
+}
+
 #endif

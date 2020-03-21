@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 {
   SDL_Event event;
 
-  appendTriangles();
+  //appendTriangles();
 
   while(true)
   {
@@ -44,8 +44,18 @@ int main(int argc, char* argv[])
     if(window.pollForInputEvents(&event))
     {
       handleEvent(event);
+      if (bool_flag == 0){
+        drawWireframe(triangles);
+      }
+      else if (bool_flag==1){
+        drawRasterised(triangles);
+      }
+      else if (bool_flag==2){
+        drawTextureRasterised(triangles);
+      }
     }
     update();
+  
 
     // Need to render the frame at the end, or nothing actually gets shown on the screen !
     window.renderFrame();
@@ -55,14 +65,15 @@ int main(int argc, char* argv[])
 void update()
 {
   // Function for performing animation (shifting artifacts or moving the camera)
-  if (bool_flag == 0)
-  {
-    drawWireframe(triangles);
-  }
-  else if (bool_flag == 1)
-  {
-    drawRasterised(triangles);
-  }
+  // if (bool_flag == 0)
+  // {
+  //   drawWireframe(triangles);
+  // }
+  // else if (bool_flag == 1)
+  // {
+  //   cout << "called rasterize" <<endl;
+  //   drawRasterised(triangles);
+  // }
 }
 
 mat3 rotateX(double theta, mat3 cameraOrien) 
@@ -222,17 +233,20 @@ void handleEvent(SDL_Event event)
       window.clearPixels();
       cout << "DRAWING WIREFRAME" << endl;
       bool_flag = 0;
+      drawWireframe(triangles);
     }
     else if(event.key.keysym.sym == SDLK_k) // rasterised
     {
       window.clearPixels();
       cout << "DRAWING RASTERISED" << endl;
       bool_flag = 1;
+      drawRasterised(triangles);
     }
     else if(event.key.keysym.sym == SDLK_l) // raytraced
     {
       window.clearPixels();
       cout << "DRAWING RAYTRACED" << endl;
+      bool_flag = -1;
       drawRaytraced(triangles);
     }
     else if(event.key.keysym.sym == SDLK_m) // raytraced anti alias
@@ -265,6 +279,13 @@ void handleEvent(SDL_Event event)
       window.clearPixels();
       cullingMode = !cullingMode;
       cout << "CULLING MODE = " << cullingMode << endl;
+    }
+    else if(event.key.keysym.sym == SDLK_t) // backface culling mode
+    {
+      window.clearPixels();
+      cout << "Drawing textured logo"<< endl;
+      drawTextureRasterised(triangles);
+      bool_flag = 2;
     }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;

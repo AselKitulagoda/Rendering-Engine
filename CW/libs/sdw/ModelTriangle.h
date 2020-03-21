@@ -1,5 +1,6 @@
 #include <glm/glm.hpp>
 #include "Colour.h"
+#include <vector>
 #include <string>
 
 class ModelTriangle
@@ -7,6 +8,8 @@ class ModelTriangle
   public:
     glm::vec3 vertices[3];
     Colour colour;
+    glm::vec2 texturepoints[3];
+
 
     ModelTriangle()
     {
@@ -17,6 +20,23 @@ class ModelTriangle
       vertices[0] = v0;
       vertices[1] = v1;
       vertices[2] = v2;
+      texturepoints[0] = glm::vec2(-1,-1);
+      texturepoints[1] = glm::vec2(-1,-1);
+      texturepoints[2] = glm::vec2(-1,-1);
+
+      colour = trigColour;
+
+    }
+
+    ModelTriangle(glm::vec3 v0, glm::vec3 v1, glm::vec3 v2, Colour trigColour,glm::vec2 t0,glm::vec2 t1,glm::vec2 t2)
+    {
+      vertices[0] = v0;
+      vertices[1] = v1;
+      vertices[2] = v2;
+
+      texturepoints[0] = t0;
+      texturepoints[1] = t1;
+      texturepoints[2] = t2;
       colour = trigColour;
     }
 };
