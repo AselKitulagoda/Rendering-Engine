@@ -74,7 +74,6 @@ void drawFilled(CanvasTriangle t, float depthBuffer[WIDTH][HEIGHT])
 
 void drawRasterised(vector<ModelTriangle> triangles) 
 {
-  window.clearPixels();
 
   float depthBuffer[WIDTH][HEIGHT];
   for(int i = 0; i < WIDTH; i++) 
@@ -107,8 +106,7 @@ void drawRasterised(vector<ModelTriangle> triangles)
 
 void drawTextureRasterised(vector<ModelTriangle> triangles) 
 {
-  window.clearPixels();
-
+  
   vector<ModelTriangle> filteredTriangles = backfaceCulling(triangles);
 
   if(cullingMode)

@@ -61,26 +61,45 @@ CanvasTriangle modelToCanvas(ModelTriangle modelTrig);
 vec3 getTriangleCentroid(ModelTriangle t);
 vector<ModelTriangle> backfaceCulling(vector<ModelTriangle> triangles);
 
+// Combining triangles
+vector<ModelTriangle> combineTriangles(vector<ModelTriangle> triangles, vector<ModelTriangle> cornellTriangles);
+
 // Defining the Global Variables
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 int bool_flag = -1;
 vec3 cameraPos(CAMERA_X, CAMERA_Y, CAMERA_Z);
 mat3 cameraOrientation = mat3(1.0f);
 
-// Loading Triangles
-vector<ModelTriangle> triangles = readObj(SCALE_FACTOR);
-
 // Cornell Box Material
 vector<Colour> cornellColours = readMaterial(MTL_CORNELL);
 
+// Loading Triangles
+vector<ModelTriangle> triangles = readObj(SCALE_FACTOR);
+vector<ModelTriangle> cornellTriangles = readCornellBox(SCALE_CORNELL);
+vector<ModelTriangle> combinedTriangles = combineTriangles(triangles, cornellTriangles);
+
 vector<TexturePoint> texpoints;
-vector<CanvasTriangle> canvasTriangles;
+
 vec3 lightSource = vec3(-0.0315915, 1.20455, -0.6108);
 int shadowMode = 0;
 bool cullingMode = 1;
 vector<uint32_t> pixelColours = loadImage();
 int texWidth;
 int texHeight;
+
+vector<ModelTriangle> combineTriangles(vector<ModelTriangle> triangles, vector<ModelTriangle> cornellTriangles)
+{
+  vector<ModelTriangle> combined;
+  for(size_t i = 0; i < triangles.size(); i++)
+  {
+    combined.push_back(triangles.at(i));
+  }
+  for(size_t i = 0; i < cornellTriangles.size(); i++)
+  {
+    combined.push_back(cornellTriangles.at(i));
+  }
+  return combined;
+}
 
 vector<float> interpolation(float from, float to, int numberOfValues)
 {

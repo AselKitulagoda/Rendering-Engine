@@ -19,19 +19,6 @@ void update();
 vec3 unpack(uint32_t col);
 void handleEvent(SDL_Event event);
 
-// Appending the cornell box triangles to hackspace
-void appendTriangles();
-
-void appendTriangles()
-{
-  vector<ModelTriangle> cornellTriangles = readCornellBox(SCALE_CORNELL);
-
-  for(size_t i = 0; i < cornellTriangles.size(); i++)
-  {
-    triangles.push_back(cornellTriangles.at(i));
-  }
-}
-
 int main(int argc, char* argv[])
 {
   SDL_Event event;
@@ -43,18 +30,17 @@ int main(int argc, char* argv[])
     {
       handleEvent(event);
       if (bool_flag == 0){
-        // appendTriangles();
-        drawWireframe(triangles);
+        window.clearPixels();
+        drawWireframe(combinedTriangles);
       }
       else if (bool_flag == 1){
-        // appendTriangles();
-        drawRasterised(triangles);
+        window.clearPixels();
+        drawRasterised(combinedTriangles);
       }
       else if (bool_flag == 2){
+        window.clearPixels();
+        drawRasterised(cornellTriangles);
         drawTextureRasterised(triangles);
-        // vector<ModelTriangle> cornellTriangles = readCornellBox(SCALE_CORNELL);
-        // drawRasterised(cornellTriangles);
-        // drawTextureRasterised(triangles);
       }
     }
     update();
@@ -212,38 +198,36 @@ void handleEvent(SDL_Event event)
     else if(event.key.keysym.sym == SDLK_j) // wireframe
     {
       cout << "DRAWING WIREFRAME" << endl;
-      // appendTriangles();
-      drawWireframe(triangles);
+      window.clearPixels();
+      drawWireframe(combinedTriangles);
       bool_flag = 0;
     }
     else if(event.key.keysym.sym == SDLK_k) // rasterised
     {
       cout << "DRAWING RASTERISED" << endl;
-      // appendTriangles();
-      drawRasterised(triangles);
+      window.clearPixels();
+      drawRasterised(combinedTriangles);
       bool_flag = 1;
     }
     else if(event.key.keysym.sym == SDLK_t) // textured rasterised
     {
-      window.clearPixels();
       cout << "DRAWING TEXTURED RASTERISED" << endl;
-      bool_flag = 2;
+      window.clearPixels();
+      drawRasterised(cornellTriangles);
       drawTextureRasterised(triangles);
-      // vector<ModelTriangle> cornellTriangles = readCornellBox(SCALE_CORNELL);
-      // drawRasterised(cornellTriangles);
-      // drawTextureRasterised(triangles);
+      bool_flag = 2;
     }
     else if(event.key.keysym.sym == SDLK_l) // raytraced
     {
       cout << "DRAWING RAYTRACED" << endl;
-      // appendTriangles();
-      drawRaytraced(triangles);
+      window.clearPixels();
+      drawRaytraced(combinedTriangles);
     }
     else if(event.key.keysym.sym == SDLK_m) // raytraced anti alias
     {
       cout << "DRAWING RAYTRACED ANTI ALIAS" << endl;
-      // appendTriangles();
-      drawRaytraceAntiAlias(triangles);
+      window.clearPixels();
+      drawRaytraceAntiAlias(combinedTriangles);
     }
     else if(event.key.keysym.sym == SDLK_q) // orbit
     {

@@ -145,8 +145,6 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
 
 void drawRaytraced(vector<ModelTriangle> triangles)
 { 
-  window.clearPixels();
-  
   for(int y = 0; y < HEIGHT; y++)
   {
     for(int x = 0; x < WIDTH; x++)
@@ -185,8 +183,6 @@ Colour getAverageColour(vector<Colour> finalColours)
 
 void drawRaytraceAntiAlias(vector<ModelTriangle> triangles)
 {
-  window.clearPixels();
-
   vector<vec2> quincunx;
   quincunx.push_back(vec2(0.0f, 0.0f));
   quincunx.push_back(vec2(0.5f, 0.0f));
