@@ -57,6 +57,10 @@ void savePPM();
 // 3D to 2D projection
 CanvasTriangle modelToCanvas(ModelTriangle modelTrig);
 
+// Backface Culling
+vec3 getTriangleCentroid(ModelTriangle t);
+vector<ModelTriangle> backfaceCulling();
+
 // Defining the Global Variables
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 int bool_flag = -1;
@@ -515,6 +519,39 @@ void drawTextureMap()
   {
     drawTextureLine(smallest_extraPoint[i], smallest_middle[i], pixelColours);
   }
+}
+
+vec3 getTriangleCentroid(ModelTriangle t)
+{
+  vec3 v1 = t.vertices[0];
+  vec3 v2 = t.vertices[1];
+  vec3 v3 = t.vertices[2];
+
+  vec3 result = vec3((v1.x + v2.x + v3.x)/3, (v1.y + v2.y + v3.y)/3, (v1.z + v2.z + v3.z)/3);
+  return result;
+}
+
+vector<ModelTriangle> backfaceCulling()
+{ 
+  vector<ModelTriangle> filtered;
+
+  for(size_t i = 0; i < triangles.size(); i++)
+  {
+    ModelTriangle t = triangles.at(i);
+    vec3 diff1 = t.vertices[1] - t.vertices[0];
+    vec3 diff2 = t.vertices[2] - t.vertices[0];
+
+    vec3 surfaceNormal = glm::normalize(glm::cross(diff1, diff2));
+    vec3 centroid = getTriangleCentroid(t);
+    vec3 vecToCamera = glm::normalize(cameraPos - centroid);
+
+    float result = glm::dot(surfaceNormal, vecToCamera);
+    if(result > 0.0f)
+    {
+      filtered.push_back(t);
+    }
+  }
+  return filtered;
 }
 
 #endif
