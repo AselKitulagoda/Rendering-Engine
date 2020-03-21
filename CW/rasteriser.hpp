@@ -83,10 +83,23 @@ void drawRasterised(vector<ModelTriangle> triangles)
     }
   }
 
-  for(size_t i = 0; i < triangles.size(); i++)
+  vector<ModelTriangle> filteredTriangles = backfaceCulling(triangles);
+
+  if(cullingMode)
   {
-    CanvasTriangle projection = modelToCanvas(triangles.at(i));
-    drawFilled(projection, depthBuffer);
+    for(size_t i = 0; i < filteredTriangles.size(); i++)
+    {
+      CanvasTriangle projection = modelToCanvas(filteredTriangles.at(i));
+      drawFilled(projection, depthBuffer);
+    }
+  }
+  else 
+  {
+    for(size_t i = 0; i < triangles.size(); i++)
+    {
+      CanvasTriangle projection = modelToCanvas(triangles.at(i));
+      drawFilled(projection, depthBuffer);
+    }
   }
 }
 

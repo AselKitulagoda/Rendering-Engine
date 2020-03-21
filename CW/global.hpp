@@ -59,7 +59,7 @@ CanvasTriangle modelToCanvas(ModelTriangle modelTrig);
 
 // Backface Culling
 vec3 getTriangleCentroid(ModelTriangle t);
-vector<ModelTriangle> backfaceCulling();
+vector<ModelTriangle> backfaceCulling(vector<ModelTriangle> triangles);
 
 // Defining the Global Variables
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
@@ -77,6 +77,7 @@ vector<TexturePoint> texpoints;
 vector<CanvasTriangle> canvasTriangles;
 vec3 lightSource = vec3(-0.0315915, 1.20455, -0.6108);
 int shadowMode = 0;
+bool cullingMode = 1;
 
 vector<float> interpolation(float from, float to, int numberOfValues)
 {
@@ -531,7 +532,7 @@ vec3 getTriangleCentroid(ModelTriangle t)
   return result;
 }
 
-vector<ModelTriangle> backfaceCulling()
+vector<ModelTriangle> backfaceCulling(vector<ModelTriangle> triangles)
 { 
   vector<ModelTriangle> filtered;
 

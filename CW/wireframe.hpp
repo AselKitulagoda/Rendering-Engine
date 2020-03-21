@@ -57,11 +57,23 @@ void drawWireframe(vector<ModelTriangle> triangles)
       depthBuffer[i][j] = (float) INFINITY;
     }
   }
+  vector<ModelTriangle> filteredTriangles = backfaceCulling(triangles);
 
-  for(size_t i = 0; i < triangles.size(); i++)
+  if(cullingMode)
   {
-    CanvasTriangle projection = modelToCanvas(triangles.at(i));
-    drawStroke(projection, depthBuffer);
+    for(size_t i = 0; i < filteredTriangles.size(); i++)
+    {
+      CanvasTriangle projection = modelToCanvas(filteredTriangles.at(i));
+      drawStroke(projection, depthBuffer);
+    }
+  }
+  else 
+  {
+    for(size_t i = 0; i < triangles.size(); i++)
+    {
+      CanvasTriangle projection = modelToCanvas(triangles.at(i));
+      drawStroke(projection, depthBuffer);
+    }
   }
 }
 

@@ -260,6 +260,12 @@ void handleEvent(SDL_Event event)
       cout << "saved PPM" << endl;
       saveToPPM();
     }
+    else if(event.key.keysym.sym == SDLK_b) // backface culling mode
+    {
+      window.clearPixels();
+      cullingMode = !cullingMode;
+      cout << "CULLING MODE = " << cullingMode << endl;
+    }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
 }

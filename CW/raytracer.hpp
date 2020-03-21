@@ -10,7 +10,7 @@ using namespace glm;
 
 // Raytracing Stuff
 vec3 computeRayDirection(float x, float y);
-RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles, vector<ModelTriangle> filteredTriangles);
+RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles);
 void drawRaytraced(vector<ModelTriangle> triangles);
 Colour getAverageColour(vector<Colour> finalColours);
 void drawRaytraceAntiAlias(vector<ModelTriangle> triangles);
@@ -94,14 +94,14 @@ bool checkShadow(vec3 point, vector<ModelTriangle> triangles, size_t triangleInd
   return isShadow;
 }
 
-RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles, vector<ModelTriangle> filteredTriangles)
+RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles)
 { 
   RayTriangleIntersection result;
   result.distanceFromCamera = INFINITY;
 
-  for(size_t i = 0; i < filteredTriangles.size(); i++)
+  for(size_t i = 0; i < triangles.size(); i++)
   {
-    ModelTriangle curr = filteredTriangles.at(i);
+    ModelTriangle curr = triangles.at(i);
     vec3 e0 = curr.vertices[1] - curr.vertices[0];
     vec3 e1 = curr.vertices[2] - curr.vertices[0];
     vec3 SPVector = cameraPos - curr.vertices[0];
@@ -120,7 +120,7 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
         vec3 point = curr.vertices[0] + (u * e0) + (v * e1);
         float brightness = calculateBrightness(point, curr);
 
-        bool shadow = checkShadow(point, filteredTriangles, i);
+        bool shadow = checkShadow(point, triangles, i);
 
         if(shadowMode)
         {
@@ -147,14 +147,12 @@ void drawRaytraced(vector<ModelTriangle> triangles)
 { 
   window.clearPixels();
 
-  vector<ModelTriangle> filteredTriangles = backfaceCulling();
-
   for(int y = 0; y < HEIGHT; y++)
   {
     for(int x = 0; x < WIDTH; x++)
     {
       vec3 ray = computeRayDirection((float) x, (float) y);
-      RayTriangleIntersection closestIntersect = getClosestIntersection(cameraPos, ray, triangles, filteredTriangles);
+      RayTriangleIntersection closestIntersect = getClosestIntersection(cameraPos, ray, triangles);
       if(closestIntersect.distanceFromCamera != -INFINITY)
       {
         Colour c = Colour(closestIntersect.intersectedTriangle.colour.red * closestIntersect.intersectedTriangle.colour.brightness,
@@ -189,8 +187,6 @@ void drawRaytraceAntiAlias(vector<ModelTriangle> triangles)
 {
   window.clearPixels();
 
-  vector<ModelTriangle> filteredTriangles = backfaceCulling();
-
   vector<vec2> quincunx;
   quincunx.push_back(vec2(0.0f, 0.0f));
   quincunx.push_back(vec2(0.5f, 0.0f));
@@ -207,7 +203,7 @@ void drawRaytraceAntiAlias(vector<ModelTriangle> triangles)
       for(size_t i = 0; i < quincunx.size(); i++)
       {
         vec3 ray = computeRayDirection(x + quincunx.at(i).x, y + quincunx.at(i).y);
-        RayTriangleIntersection closestIntersect = getClosestIntersection(cameraPos, ray, triangles, filteredTriangles);
+        RayTriangleIntersection closestIntersect = getClosestIntersection(cameraPos, ray, triangles);
         if(closestIntersect.distanceFromCamera != -INFINITY)
         {
           finalColours.push_back(closestIntersect.intersectedTriangle.colour);
