@@ -8,6 +8,7 @@ class ModelTriangle
     glm::vec3 vertices[3];
     Colour colour;
     glm::vec2 texturepoints[3];
+    glm::vec3 vertexNormals[3];
 
     ModelTriangle()
     {
@@ -22,7 +23,9 @@ class ModelTriangle
       texturepoints[1] = glm::vec2(-1,-1);
       texturepoints[2] = glm::vec2(-1,-1);
       colour = trigColour;
-
+      vertexNormals[0] = glm::vec3(1, 1, 1);
+      vertexNormals[1] = glm::vec3(1, 1, 1);
+      vertexNormals[2] = glm::vec3(1, 1, 1);
     }
 
     ModelTriangle(glm::vec3 v0, glm::vec3 v1, glm::vec3 v2, Colour trigColour, glm::vec2 t0, glm::vec2 t1, glm::vec2 t2)
@@ -34,6 +37,9 @@ class ModelTriangle
       texturepoints[1] = t1;
       texturepoints[2] = t2;
       colour = trigColour;
+      vertexNormals[0] = glm::vec3(1, 1, 1);
+      vertexNormals[1] = glm::vec3(1, 1, 1);
+      vertexNormals[2] = glm::vec3(1, 1, 1);
     }
 };
 

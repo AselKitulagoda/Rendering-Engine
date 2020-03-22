@@ -20,7 +20,7 @@ DrawingWindow::DrawingWindow(int w, int h, bool fullscreen)
   uint32_t flags = SDL_WINDOW_OPENGL;
   if(fullscreen) flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
   int ANYWHERE = SDL_WINDOWPOS_UNDEFINED;
-  window = SDL_CreateWindow("COMS30115", ANYWHERE, ANYWHERE, width, height, flags);
+  window = SDL_CreateWindow("J/K/L - Wireframe, Raster, Raytrace | B/O - Culling and Shadow | P - Save IMG", ANYWHERE, ANYWHERE, width, height, flags);
   if(window == 0) printMessageAndQuit("Could not set video mode: ", SDL_GetError());
 
   flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;

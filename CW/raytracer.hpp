@@ -22,6 +22,11 @@ float calculateBrightness(int x, int y);
 // Shadows
 bool checkShadow(vec3 point, vector<ModelTriangle> triangles, int triangleIndex);
 
+// Gouraud Shading
+vector<pair<size_t, ModelTriangle>> getTrianglesWithVertex(vec3 point, vector<ModelTriangle> triangles);
+vec3 getAverageSurfaceNormal(vector<pair<size_t, ModelTriangle>> commonTriangles);
+void updateVertexNormals(vector<ModelTriangle> triangles);
+
 float computeDotProduct(vec3 point, ModelTriangle t)
 { 
   vec3 diff1 = t.vertices[1] - t.vertices[0];
@@ -213,6 +218,59 @@ void drawRaytraceAntiAlias(vector<ModelTriangle> triangles)
     }
   }
   cout << "RAYTRACE ANTI-ALIAS DONE" << endl;
+}
+
+vector<pair<size_t, ModelTriangle>> getTrianglesWithVertex(vec3 point, vector<ModelTriangle> triangles)
+{
+  vector<pair<size_t, ModelTriangle>> result;
+
+  for(size_t i = 0; i < triangles.size(); i++)
+  {
+    ModelTriangle t = triangles.at(i);
+    if(point == t.vertices[0]) result.push_back(make_pair(0, t));
+    if(point == t.vertices[1]) result.push_back(make_pair(1, t));
+    if(point == t.vertices[2]) result.push_back(make_pair(2, t));
+  }
+  return result;
+}
+
+vec3 getAverageSurfaceNormal(vector<pair<size_t, ModelTriangle>> commonTriangles)
+{
+  vec3 average = vec3(0, 0, 0);
+  for(size_t i = 0; i < commonTriangles.size(); i++)
+  {
+    ModelTriangle t = commonTriangles.second.at(i);
+    vec3 diff1 = t.vertices[1] - t.vertices[0];
+    vec3 diff2 = t.vertices[2] - t.vertices[0];
+
+    vec3 surfaceNormal = glm::normalize(glm::cross(diff1, diff2));
+
+    average += surfaceNormal;
+  }
+  average = average/commonTriangles.size();
+  return average;
+}
+
+void updateVertexNormals(vector<ModelTriangle> triangles)
+{
+  for(size_t i = 0; i < triangles.size(); i++)
+  {
+    ModelTriangle t = triangles.at(i);
+    for(int j = 0; j < 3; j++)
+    {
+      vec3 vertex = t.vertices[j];
+      if(t.vertexNormals[j] != vec3(1, 1, 1))
+      {
+        vector<pair<size_t, ModelTriangle>> commonTriangles = getTrianglesWithVertex(vertex, triangles);
+        vec3 averageNormal = getAverageSurfaceNormal(commonTriangles);
+        for(pair<size_t, ModelTriangle> common : commonTriangles)
+        {
+          ModelTriangle curr = common.second;
+          curr.vertexNormals[common.first] = averageNormal;
+        }
+      }
+    }
+  }
 }
 
 #endif
