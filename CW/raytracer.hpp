@@ -239,7 +239,7 @@ vec3 getAverageSurfaceNormal(vector<pair<size_t, ModelTriangle>> commonTriangles
   vec3 average = vec3(0, 0, 0);
   for(size_t i = 0; i < commonTriangles.size(); i++)
   {
-    ModelTriangle t = commonTriangles.second.at(i);
+    ModelTriangle t = commonTriangles.at(i).second;
     vec3 diff1 = t.vertices[1] - t.vertices[0];
     vec3 diff2 = t.vertices[2] - t.vertices[0];
 
@@ -247,7 +247,7 @@ vec3 getAverageSurfaceNormal(vector<pair<size_t, ModelTriangle>> commonTriangles
 
     average += surfaceNormal;
   }
-  average = average/commonTriangles.size();
+  average = average/((float)commonTriangles.size());
   return average;
 }
 
