@@ -49,8 +49,6 @@ vector<ModelTriangle> readCornellBox(float scale);
 
 // Texturing Stuff
 vector<uint32_t> loadImage();
-void drawTextureLine(CanvasPoint to, CanvasPoint from, vector<uint32_t> pixelColours);
-void drawTextureMap();
 
 // Saving PPM Image
 void unpack(uint32_t col, std::ostream& fs);
@@ -93,13 +91,13 @@ int texHeight;
 vector<ModelTriangle> combineTriangles(vector<ModelTriangle> triangles, vector<ModelTriangle> cornellTriangles)
 {
   vector<ModelTriangle> combined;
-  for(size_t i = 0; i < triangles.size(); i++)
-  {
-    combined.push_back(triangles.at(i));
-  }
   for(size_t i = 0; i < cornellTriangles.size(); i++)
   {
     combined.push_back(cornellTriangles.at(i));
+  }
+  for(size_t i = 0; i < triangles.size(); i++)
+  {
+    combined.push_back(triangles.at(i));
   }
   return combined;
 }
@@ -492,8 +490,7 @@ vec3 unpackColour(uint32_t col)
   int red = (col >> 16) & 255;
   int green = (col >> 8) & 255;
   int blue = (col) & 255;
-  return vec3(red,green,blue);
-
+  return vec3(red, green, blue);
 } 
 
 void saveToPPM()
@@ -511,79 +508,6 @@ void saveToPPM()
       unpack(window.getPixelColour(x,y), fs);
     }
   }
-}
-
-void drawTextureLine(CanvasPoint to, CanvasPoint from, vector<uint32_t> pixelColours)
-{
-  float dx = to.x - from.x;
-  float dy = to.y - from.y;
-  float numberOfValues = ceil(std::max(abs(dx), abs(dy)));
-
-  vector<float> xs = interpolation(from.x, to.x, numberOfValues);
-  vector<float> ys = interpolation(from.y, to.y, numberOfValues);
-  
-  TexturePoint numberOfTextureValues;
-  numberOfTextureValues.x = to.texturePoint.x - from.texturePoint.x;
-  numberOfTextureValues.y = to.texturePoint.y - from.texturePoint.y;
-
-  for(float i = 0; i < numberOfValues; i++)
-  {
-    TexturePoint tp;
-    tp.x = from.texturePoint.x + (i * numberOfTextureValues.x/numberOfValues);
-    tp.y = from.texturePoint.y + (i * numberOfTextureValues.y/numberOfValues);
-    window.setPixelColour(xs[i], ys[i], pixelColours[round(tp.x) + round(tp.y) * 300]);
-  }
-}
-
-void drawTextureMap(CanvasTriangle currentTri)
-{ 
-    CanvasPoint largest; largest.x = currentTri.vertices[0].x; largest.y = currentTri.vertices[0].y; largest.texturePoint = currentTri.vertices[0].texturePoint;
-    CanvasPoint middle; middle.x = currentTri.vertices[1].x; middle.y = currentTri.vertices[1].y; middle.texturePoint = currentTri.vertices[1].texturePoint;
-    CanvasPoint smallest; smallest.x = currentTri.vertices[2].x; smallest.y = currentTri.vertices[2].y; smallest.texturePoint = currentTri.vertices[2].texturePoint;
-    
-    if(largest.y < middle.y)
-    {
-      std::swap(largest, middle);
-    }
-    if(largest.y < smallest.y)
-    {
-      std::swap(largest, smallest);
-    }
-    if(middle.y < smallest.y)
-    {
-      std::swap(middle, smallest);
-    }
-
-    float ratio = (largest.y - middle.y)/(largest.y - smallest.y);
-    CanvasPoint extraPoint;
-    extraPoint.x = largest.x - ratio*(largest.x - smallest.x);
-    extraPoint.y = largest.y - ratio*(largest.y - smallest.y);
-
-    TexturePoint extraTex;
-    extraTex.x = largest.texturePoint.x - ratio*(largest.texturePoint.x - smallest.texturePoint.x);
-    extraTex.y = largest.texturePoint.y - ratio*(largest.texturePoint.y - smallest.texturePoint.y);
-    
-    extraPoint.texturePoint = extraTex;
-
-    // Interpolation 
-    int numberOfValuesTop = (largest.y - middle.y);
-    int numberOfValuesBot = (middle.y - smallest.y);
-
-    vector<CanvasPoint> largest_extraPoint = interpolate(largest, extraPoint, ceil(numberOfValuesTop)+1);
-    vector<CanvasPoint> largest_middle = interpolate(largest, middle, ceil(numberOfValuesTop)+1);
-    vector<CanvasPoint> smallest_extraPoint = interpolate(smallest, extraPoint, ceil(numberOfValuesBot)+1);
-    vector<CanvasPoint> smallest_middle = interpolate(smallest, middle, ceil(numberOfValuesBot)+1);
-
-    for(int i = 0; i <= numberOfValuesTop; i++)
-    {
-      drawTextureLine(largest_extraPoint[i], largest_middle[i], pixelColours);
-    }
-
-    for(int i = 0; i <= numberOfValuesBot+1; i++)
-    {
-      drawTextureLine(smallest_extraPoint[i], smallest_middle[i], pixelColours);
-    }
-  
 }
 
 vec3 getTriangleCentroid(ModelTriangle t)

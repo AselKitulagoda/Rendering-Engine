@@ -11,6 +11,10 @@ using namespace glm;
 void drawFilled(CanvasTriangle t, float depthBuffer[WIDTH][HEIGHT]);
 void drawRasterised(vector<ModelTriangle> triangles);
 
+// Texturing Stuff
+void drawTextureLine(CanvasPoint to, CanvasPoint from, vector<uint32_t> pixelColours);
+void drawTextureMap(CanvasTriangle currentTri);
+
 void drawFilled(CanvasTriangle t, float depthBuffer[WIDTH][HEIGHT])
 {
   CanvasPoint p1 = t.vertices[0];
@@ -72,6 +76,78 @@ void drawFilled(CanvasTriangle t, float depthBuffer[WIDTH][HEIGHT])
   }
 }
 
+void drawTextureLine(CanvasPoint to, CanvasPoint from, vector<uint32_t> pixelColours)
+{
+  float dx = to.x - from.x;
+  float dy = to.y - from.y;
+  float numberOfValues = ceil(std::max(abs(dx), abs(dy)));
+
+  vector<float> xs = interpolation(from.x, to.x, numberOfValues);
+  vector<float> ys = interpolation(from.y, to.y, numberOfValues);
+  
+  TexturePoint numberOfTextureValues;
+  numberOfTextureValues.x = to.texturePoint.x - from.texturePoint.x;
+  numberOfTextureValues.y = to.texturePoint.y - from.texturePoint.y;
+
+  for(float i = 0; i < numberOfValues; i++)
+  {
+    TexturePoint tp;
+    tp.x = from.texturePoint.x + (i * numberOfTextureValues.x/numberOfValues);
+    tp.y = from.texturePoint.y + (i * numberOfTextureValues.y/numberOfValues);
+    window.setPixelColour(xs[i], ys[i], pixelColours[round(tp.x) + round(tp.y) * 300]);
+  }
+}
+
+void drawTextureMap(CanvasTriangle currentTri)
+{ 
+  CanvasPoint largest; largest.x = currentTri.vertices[0].x; largest.y = currentTri.vertices[0].y; largest.texturePoint = currentTri.vertices[0].texturePoint;
+  CanvasPoint middle; middle.x = currentTri.vertices[1].x; middle.y = currentTri.vertices[1].y; middle.texturePoint = currentTri.vertices[1].texturePoint;
+  CanvasPoint smallest; smallest.x = currentTri.vertices[2].x; smallest.y = currentTri.vertices[2].y; smallest.texturePoint = currentTri.vertices[2].texturePoint;
+  
+  if(largest.y < middle.y)
+  {
+    std::swap(largest, middle);
+  }
+  if(largest.y < smallest.y)
+  {
+    std::swap(largest, smallest);
+  }
+  if(middle.y < smallest.y)
+  {
+    std::swap(middle, smallest);
+  }
+
+  float ratio = (largest.y - middle.y)/(largest.y - smallest.y);
+  CanvasPoint extraPoint;
+  extraPoint.x = largest.x - ratio*(largest.x - smallest.x);
+  extraPoint.y = largest.y - ratio*(largest.y - smallest.y);
+
+  TexturePoint extraTex;
+  extraTex.x = largest.texturePoint.x - ratio*(largest.texturePoint.x - smallest.texturePoint.x);
+  extraTex.y = largest.texturePoint.y - ratio*(largest.texturePoint.y - smallest.texturePoint.y);
+  
+  extraPoint.texturePoint = extraTex;
+
+  // Interpolation 
+  int numberOfValuesTop = (largest.y - middle.y);
+  int numberOfValuesBot = (middle.y - smallest.y);
+
+  vector<CanvasPoint> largest_extraPoint = interpolate(largest, extraPoint, ceil(numberOfValuesTop)+1);
+  vector<CanvasPoint> largest_middle = interpolate(largest, middle, ceil(numberOfValuesTop)+1);
+  vector<CanvasPoint> smallest_extraPoint = interpolate(smallest, extraPoint, ceil(numberOfValuesBot)+1);
+  vector<CanvasPoint> smallest_middle = interpolate(smallest, middle, ceil(numberOfValuesBot)+1);
+
+  for(int i = 0; i <= numberOfValuesTop; i++)
+  {
+    drawTextureLine(largest_extraPoint[i], largest_middle[i], pixelColours);
+  }
+
+  for(int i = 0; i <= numberOfValuesBot+1; i++)
+  {
+    drawTextureLine(smallest_extraPoint[i], smallest_middle[i], pixelColours);
+  } 
+}
+
 void drawRasterised(vector<ModelTriangle> triangles) 
 {
 
@@ -91,7 +167,15 @@ void drawRasterised(vector<ModelTriangle> triangles)
     for(size_t i = 0; i < filteredTriangles.size(); i++)
     {
       CanvasTriangle projection = modelToCanvas(filteredTriangles.at(i));
-      drawFilled(projection, depthBuffer);
+      
+      if((projection.vertices[1].texturePoint.x) == -300.0f && (projection.vertices[1].texturePoint.y) == -300.0f)
+      {
+        drawFilled(projection, depthBuffer);
+      }
+      else
+      {
+        drawTextureMap(projection);
+      }
     }
   }
   else 
@@ -99,30 +183,15 @@ void drawRasterised(vector<ModelTriangle> triangles)
     for(size_t i = 0; i < triangles.size(); i++)
     {
       CanvasTriangle projection = modelToCanvas(triangles.at(i));
-      drawFilled(projection, depthBuffer);
-    }
-  }
-}
-
-void drawTextureRasterised(vector<ModelTriangle> triangles) 
-{
-  
-  vector<ModelTriangle> filteredTriangles = backfaceCulling(triangles);
-
-  if(cullingMode)
-  {
-    for(size_t i = 0; i < filteredTriangles.size(); i++)
-    {
-      CanvasTriangle projection = modelToCanvas(filteredTriangles.at(i));
-      drawTextureMap(projection);
-    }
-  }
-  else 
-  {
-    for(size_t i = 0; i < triangles.size(); i++)
-    {
-      CanvasTriangle projection = modelToCanvas(triangles.at(i));
-      drawTextureMap(projection);
+      
+      if((projection.vertices[1].texturePoint.x) == -300.0f && (projection.vertices[1].texturePoint.y) == -300.0f)     
+      {
+        drawFilled(projection, depthBuffer);
+      }
+      else
+      {
+        drawTextureMap(projection);
+      }
     }
   }
 }

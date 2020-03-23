@@ -39,11 +39,6 @@ int main(int argc, char* argv[])
         window.clearPixels();
         drawRasterised(combinedTriangles);
       }
-      else if (bool_flag == 2){
-        window.clearPixels();
-        drawRasterised(cornellTriangles);
-        drawTextureRasterised(triangles);
-      }
     }
     update();
 
@@ -210,14 +205,6 @@ void handleEvent(SDL_Event event)
       window.clearPixels();
       drawRasterised(combinedTriangles);
       bool_flag = 1;
-    }
-    else if(event.key.keysym.sym == SDLK_t) // textured rasterised
-    {
-      cout << "DRAWING TEXTURED RASTERISED" << endl;
-      window.clearPixels();
-      drawRasterised(cornellTriangles);
-      drawTextureRasterised(triangles);
-      bool_flag = 2;
     }
     else if(event.key.keysym.sym == SDLK_l) // raytraced
     {

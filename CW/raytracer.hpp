@@ -164,9 +164,6 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
     {
       if(t < result.distanceFromCamera)
       {
-        vec2 e0_tex = curr.texturepoints[1]*300.0f - curr.texturepoints[0]*300.0f;
-        vec2 e1_tex = curr.texturepoints[2]*300.0f - curr.texturepoints[0]*300.0f;
-        vec2 tex_point_final = curr.texturepoints[0]*300.0f + (u*e0_tex) + (v*e1_tex);
         vec3 point = curr.vertices[0] + (u * e0) + (v * e1);
         float brightness = calculateBrightness(point, curr);
 
@@ -179,13 +176,23 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
             brightness = 0.15f;
           }
         }
-        uint32_t intersection_col = pixelColours[round(tex_point_final.x)+round(tex_point_final.y)*texWidth];
+
+        vec2 e0_tex = curr.texturepoints[1]*300.0f - curr.texturepoints[0]*300.0f;
+        vec2 e1_tex = curr.texturepoints[2]*300.0f - curr.texturepoints[0]*300.0f;
+        vec2 tex_point_final = curr.texturepoints[0]*300.0f + (u * e0_tex) + (v * e1_tex);
+
+        uint32_t intersection_col = pixelColours[round(tex_point_final.x) + round(tex_point_final.y) * texWidth];
+        
         vec3 newColour;
 
-        if (abs(tex_point_final.x) == 300.0f && abs(tex_point_final.y) == 300.0f){
+        if((tex_point_final.x) == -300.0f && (tex_point_final.y) == -300.0f)
+        {
           newColour = vec3(curr.colour.red, curr.colour.green, curr.colour.blue);
         }
-        else { newColour = unpackColour(intersection_col);}
+        else 
+        { 
+          newColour = unpackColour(intersection_col);
+        }
 
         Colour colour = Colour(newColour.x, newColour.y, newColour.z, brightness);
 
