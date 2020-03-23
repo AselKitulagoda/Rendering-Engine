@@ -23,6 +23,8 @@ int main(int argc, char* argv[])
 {
   SDL_Event event;
 
+  updateVertexNormals(combinedTriangles);
+
   while(true)
   {
     // We MUST poll for events - otherwise the window will freeze !
@@ -250,6 +252,11 @@ void handleEvent(SDL_Event event)
     {
       cullingMode = !cullingMode;
       cout << "CULLING MODE = " << cullingMode << endl;
+    }
+    else if(event.key.keysym.sym == SDLK_1) // Gouraud shading mode
+    {
+      cout << "DRAWING GOURAUD" << endl;
+      drawRaytracedGouraud(combinedTriangles);
     }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;

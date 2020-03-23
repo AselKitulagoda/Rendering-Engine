@@ -26,6 +26,10 @@ bool checkShadow(vec3 point, vector<ModelTriangle> triangles, int triangleIndex)
 vector<pair<size_t, ModelTriangle>> getTrianglesWithVertex(vec3 point, vector<ModelTriangle> triangles);
 vec3 getAverageSurfaceNormal(vector<pair<size_t, ModelTriangle>> commonTriangles);
 void updateVertexNormals(vector<ModelTriangle> triangles);
+vector<float> calculateVertexBrightness(ModelTriangle t);
+float calculateAverageBrightness(vec3 point, ModelTriangle t);
+RayTriangleIntersection getClosestIntersectionGouraud(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles);
+void drawRaytracedGouraud(vector<ModelTriangle> triangles);
 
 float computeDotProduct(vec3 point, ModelTriangle t)
 { 
@@ -58,6 +62,44 @@ float calculateBrightness(vec3 point, ModelTriangle t)
   }
 
   return brightness;
+}
+
+vector<float> calculateVertexBrightness(ModelTriangle t)
+{
+  vector<float> brightnessVals;
+  for(int i = 0; i < 3; i++)
+  {
+    vec3 vertex = t.vertexNormals[i];
+    vec3 vertexToLight = lightSource - t.vertices[i];
+    float distance = glm::length(vertexToLight);
+
+    float dotProduct = std::max(0.0f, (float) glm::dot(vertex, vertexToLight));
+    float brightness = INTENSITY * dotProduct / (FRACTION_VAL * M_PI * distance * distance);
+
+    if(brightness < (float) AMBIENCE)
+    {
+      brightness = (float) AMBIENCE;
+    }
+    if(brightness > 1.0f)
+    {
+      brightness = 1.0f;
+    }
+
+    brightnessVals.push_back(brightness);
+  }
+  return brightnessVals;
+}
+
+float calculateAverageBrightness(vec3 point, ModelTriangle t)
+{
+  vector<float> brightnessVals = calculateVertexBrightness(t);
+  float d1 = glm::distance(point, t.vertices[0]);
+  float d2 = glm::distance(point, t.vertices[1]);
+  float d3 = glm::distance(point, t.vertices[2]);
+
+  float result = (d1 * brightnessVals.at(0)) + (d2 * brightnessVals.at(1)) + (d3 * brightnessVals.at(2));
+  result = result/(d1 + d2 + d3);
+  return result;
 }
 
 vec3 computeRayDirection(float x, float y)
@@ -165,6 +207,72 @@ void drawRaytraced(vector<ModelTriangle> triangles)
   cout << "RAYTRACING DONE" << endl;
 }
 
+RayTriangleIntersection getClosestIntersectionGouraud(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles)
+{ 
+  RayTriangleIntersection result;
+  result.distanceFromCamera = INFINITY;
+
+  for(size_t i = 0; i < triangles.size(); i++)
+  {
+    ModelTriangle curr = triangles.at(i);
+    vec3 e0 = curr.vertices[1] - curr.vertices[0];
+    vec3 e1 = curr.vertices[2] - curr.vertices[0];
+    vec3 SPVector = cameraPos - curr.vertices[0];
+    mat3 DEMatrix(-rayDirection, e0, e1);
+
+    vec3 possibleSolution = glm::inverse(DEMatrix) * SPVector;
+
+    float t = possibleSolution.x;
+    float u = possibleSolution.y;
+    float v = possibleSolution.z;
+
+    if(inRange(u, 0.0, 1.0) && inRange(v, 0.0, 1.0) && (u+v <= 1.0))
+    {
+      if(t < result.distanceFromCamera)
+      {
+        vec3 point = curr.vertices[0] + (u * e0) + (v * e1);
+        float brightness = calculateAverageBrightness(point, curr);
+
+        bool shadow = checkShadow(point, triangles, i);
+
+        if(shadowMode)
+        {
+          if(shadow)
+          {
+            brightness = 0.15f;
+          }
+        }
+
+        Colour colour = Colour(curr.colour.red, curr.colour.green, curr.colour.blue, brightness);
+
+        result = RayTriangleIntersection(point, t, curr, colour);
+      }
+    }
+  }
+  if(result.distanceFromCamera == INFINITY)
+  {
+    result.distanceFromCamera = -INFINITY;
+  }
+  return result;
+}
+
+void drawRaytracedGouraud(vector<ModelTriangle> triangles)
+{ 
+  for(int y = 0; y < HEIGHT; y++)
+  {
+    for(int x = 0; x < WIDTH; x++)
+    {
+      vec3 ray = computeRayDirection((float) x, (float) y);
+      RayTriangleIntersection closestIntersect = getClosestIntersectionGouraud(cameraPos, ray, triangles);
+      if(closestIntersect.distanceFromCamera != -INFINITY)
+      {
+        window.setPixelColour(x, y, closestIntersect.colour.packWithBrightness());
+      }
+    }
+  }
+  cout << "RAYTRACING GOURAUD DONE" << endl;
+}
+
 Colour getAverageColour(vector<Colour> finalColours)
 {
   Colour average = Colour(finalColours.at(0).red * 2, finalColours.at(0).green * 2, finalColours.at(0).blue * 2, finalColours.at(0).brightness * 2);
@@ -217,16 +325,16 @@ void drawRaytraceAntiAlias(vector<ModelTriangle> triangles)
   cout << "RAYTRACE ANTI-ALIAS DONE" << endl;
 }
 
-vector<pair<size_t, ModelTriangle>> getTrianglesWithVertex(vec3 point, vector<ModelTriangle> triangles)
+vector<pair<size_t, ModelTriangle>> getTrianglesWithVertex(vec3 vertex, vector<ModelTriangle> triangles)
 {
   vector<pair<size_t, ModelTriangle>> result;
 
   for(size_t i = 0; i < triangles.size(); i++)
   {
     ModelTriangle t = triangles.at(i);
-    if(point == t.vertices[0]) result.push_back(make_pair(0, t));
-    if(point == t.vertices[1]) result.push_back(make_pair(1, t));
-    if(point == t.vertices[2]) result.push_back(make_pair(2, t));
+    if(vertex == t.vertices[0]) result.push_back(make_pair(0, t));
+    if(vertex == t.vertices[1]) result.push_back(make_pair(1, t));
+    if(vertex == t.vertices[2]) result.push_back(make_pair(2, t));
   }
   return result;
 }
@@ -256,15 +364,12 @@ void updateVertexNormals(vector<ModelTriangle> triangles)
     for(int j = 0; j < 3; j++)
     {
       vec3 vertex = t.vertices[j];
-      if(t.vertexNormals[j] != vec3(1, 1, 1))
+      vector<pair<size_t, ModelTriangle>> commonTriangles = getTrianglesWithVertex(vertex, triangles);
+      vec3 averageNormal = getAverageSurfaceNormal(commonTriangles);
+      for(pair<size_t, ModelTriangle> common : commonTriangles)
       {
-        vector<pair<size_t, ModelTriangle>> commonTriangles = getTrianglesWithVertex(vertex, triangles);
-        vec3 averageNormal = getAverageSurfaceNormal(commonTriangles);
-        for(pair<size_t, ModelTriangle> common : commonTriangles)
-        {
-          ModelTriangle curr = common.second;
-          curr.vertexNormals[common.first] = averageNormal;
-        }
+        ModelTriangle curr = common.second;
+        curr.vertexNormals[common.first] = averageNormal;
       }
     }
   }
