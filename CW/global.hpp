@@ -34,6 +34,8 @@ using namespace glm;
 #define CAMERA_Y 0.5
 #define CAMERA_Z 6
 
+#define SHIFT 0.02
+
 vector<float> interpolation(float from, float to, int numberOfValues);
 vector<CanvasPoint> interpolate(CanvasPoint from, CanvasPoint to, int numberOfValues);
 void printVec3(string text, vec3 vector);

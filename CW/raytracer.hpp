@@ -158,10 +158,7 @@ void drawRaytraced(vector<ModelTriangle> triangles)
       RayTriangleIntersection closestIntersect = getClosestIntersection(cameraPos, ray, triangles);
       if(closestIntersect.distanceFromCamera != -INFINITY)
       {
-        Colour c = Colour(closestIntersect.intersectedTriangle.colour.red * closestIntersect.intersectedTriangle.colour.brightness,
-                          closestIntersect.intersectedTriangle.colour.green * closestIntersect.intersectedTriangle.colour.brightness,
-                          closestIntersect.intersectedTriangle.colour.blue * closestIntersect.intersectedTriangle.colour.brightness);
-        window.setPixelColour(x, y, c.pack());
+        window.setPixelColour(x, y, closestIntersect.intersectedTriangle.colour.packWithBrightness());
       }
     }
   }

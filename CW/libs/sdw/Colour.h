@@ -45,6 +45,12 @@ class Colour
       uint32_t colour = (255<<24) + (int(red)<<16) + (int(green)<<8) + int(blue);
       return colour;
     }
+
+    uint32_t packWithBrightness()
+    {
+      uint32_t colour = (255<<24) + (int(red * brightness)<<16) + (int(green * brightness)<<8) + int(blue * brightness);
+      return colour; 
+    }
 };
 
 std::ostream& operator<<(std::ostream& os, const Colour& colour)
