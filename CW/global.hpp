@@ -79,6 +79,7 @@ vector<Colour> cornellColours = readMaterial(MTL_CORNELL);
 vector<ModelTriangle> triangles = readObj(SCALE_FACTOR);
 vector<ModelTriangle> cornellTriangles = readCornellBox(SCALE_CORNELL);
 vector<ModelTriangle> combinedTriangles = combineTriangles(triangles, cornellTriangles);
+vec3 unpackColour(uint32_t col);
 
 vector<TexturePoint> texpoints;
 
@@ -149,7 +150,7 @@ CanvasTriangle modelToCanvas(ModelTriangle modelTrig)
         float yProj = (-adjustedVector.y*pScreen*canvasScaling) + HEIGHT/2;
         CanvasPoint p = CanvasPoint(xProj, yProj);
         p.depth = 1.0/adjustedVector.z;
-        p.texturePoint = TexturePoint(modelTrig.texturepoints[i].x * texWidth, modelTrig.texturepoints[i].y * texHeight);
+        p.texturePoint = TexturePoint(modelTrig.texturepoints[i].x*texWidth , modelTrig.texturepoints[i].y* texHeight);
         canvasTrig.vertices[i] = p;
     }
     return canvasTrig;
@@ -484,6 +485,15 @@ void unpack(uint32_t col, std::ostream& fs)
   fs << (u8) red;
   fs << (u8) green;
   fs << (u8) blue;
+}
+
+vec3 unpackColour(uint32_t col)
+{
+  int red = (col >> 16) & 255;
+  int green = (col >> 8) & 255;
+  int blue = (col) & 255;
+  return vec3(red,green,blue);
+
 } 
 
 void saveToPPM()
