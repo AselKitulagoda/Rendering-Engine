@@ -24,6 +24,13 @@ int main(int argc, char* argv[])
   SDL_Event event;
 
   updateVertexNormals(combinedTriangles);
+  for(size_t i = 0; i < combinedTriangles.size(); i++)
+  {
+    if(combinedTriangles.at(i).colour.name == "Cyan")
+    {
+      combinedTriangles.at(i).colour.reflectivity = 1.0f;
+    }
+  }
 
   while(true)
   {
@@ -244,6 +251,11 @@ void handleEvent(SDL_Event event)
     {
       cout << "DRAWING GOURAUD" << endl;
       drawRaytracedGouraud(combinedTriangles);
+    }
+    else if(event.key.keysym.sym == SDLK_2) // Reflective mode
+    {
+      reflectiveMode = !reflectiveMode;
+      cout << "REFLECTION MODE = " << reflectiveMode << endl;
     }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;

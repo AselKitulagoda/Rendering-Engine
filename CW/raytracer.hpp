@@ -31,6 +31,10 @@ float calculateAverageBrightness(vec3 point, ModelTriangle t);
 RayTriangleIntersection getClosestIntersectionGouraud(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles);
 void drawRaytracedGouraud(vector<ModelTriangle> triangles);
 
+// Reflection/Mirror
+RayTriangleIntersection getMirrorIntersection(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles);
+vec3 computeReflectedRay(vec3 surfaceNormal, vec3 rayDirection);
+
 float computeDotProduct(vec3 point, ModelTriangle t)
 { 
   vec3 diff1 = t.vertices[1] - t.vertices[0];
@@ -214,7 +218,9 @@ void drawRaytraced(vector<ModelTriangle> triangles)
     for(int x = 0; x < WIDTH; x++)
     {
       vec3 ray = computeRayDirection((float) x, (float) y);
-      RayTriangleIntersection closestIntersect = getClosestIntersection(cameraPos, ray, triangles);
+      RayTriangleIntersection closestIntersect;
+      if(reflectiveMode) closestIntersect = getMirrorIntersection(cameraPos, ray, triangles);
+      else closestIntersect = getClosestIntersection(cameraPos, ray, triangles);
       if(closestIntersect.distanceFromCamera != -INFINITY)
       {
         window.setPixelColour(x, y, closestIntersect.colour.packWithBrightness());
@@ -407,6 +413,88 @@ void updateVertexNormals(vector<ModelTriangle> triangles)
       }
     }
   }
+}
+
+// Reflection/Mirror stuff
+vec3 computeReflectedRay(vec3 surfaceNormal, vec3 rayDirection)
+{
+  vec3 reflected = rayDirection - (2.0f * surfaceNormal * glm::dot(rayDirection, surfaceNormal));
+  return reflected;
+}
+
+RayTriangleIntersection getMirrorIntersection(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles)
+{ 
+  RayTriangleIntersection result;
+  result.distanceFromCamera = INFINITY;
+
+  for(size_t i = 0; i < triangles.size(); i++)
+  {
+    ModelTriangle curr = triangles.at(i);
+    vec3 e0 = curr.vertices[1] - curr.vertices[0];
+    vec3 e1 = curr.vertices[2] - curr.vertices[0];
+    vec3 SPVector = cameraPos - curr.vertices[0];
+    mat3 DEMatrix(-rayDirection, e0, e1);
+
+    vec3 possibleSolution = glm::inverse(DEMatrix) * SPVector;
+
+    float t = possibleSolution.x;
+    float u = possibleSolution.y;
+    float v = possibleSolution.z;
+
+    if(inRange(u, 0.0, 1.0) && inRange(v, 0.0, 1.0) && (u+v <= 1.0))
+    {
+      if(t < result.distanceFromCamera)
+      {
+        vec3 point = curr.vertices[0] + (u * e0) + (v * e1);
+        float brightness = calculateBrightness(point, curr);
+
+        bool shadow = checkShadow(point, triangles, i);
+
+        if(shadowMode)
+        {
+          if(shadow)
+          {
+            brightness = 0.15f;
+          }
+        }
+
+        vec2 e0_tex = curr.texturepoints[1]*300.0f - curr.texturepoints[0]*300.0f;
+        vec2 e1_tex = curr.texturepoints[2]*300.0f - curr.texturepoints[0]*300.0f;
+        vec2 tex_point_final = curr.texturepoints[0]*300.0f + (u * e0_tex) + (v * e1_tex);
+
+        uint32_t intersection_col = pixelColours[round(tex_point_final.x) + round(tex_point_final.y) * texWidth];
+        
+        vec3 newColour;
+
+        if(curr.colour.reflectivity == 1.0f && (tex_point_final.x) == -300.0f && (tex_point_final.y) == -300.0f)
+        {
+          vec3 surfaceNormal = glm::normalize(glm::cross(e0, e1));
+          vec3 reflected = computeReflectedRay(surfaceNormal, rayDirection);
+          RayTriangleIntersection reflectedIntersect = getMirrorIntersection(cameraPos, reflected, triangles);
+          reflectedIntersect.colour.brightness = curr.colour.reflectivity * reflectedIntersect.colour.brightness;
+          brightness = reflectedIntersect.colour.brightness;
+          newColour = vec3(reflectedIntersect.colour.red, reflectedIntersect.colour.green, reflectedIntersect.colour.blue);
+        }
+        else if(curr.colour.reflectivity != 1.0f && (tex_point_final.x) == -300.0f && (tex_point_final.y) == -300.0f)
+        {
+          newColour = vec3(curr.colour.red, curr.colour.green, curr.colour.blue);
+        }
+        else 
+        { 
+          newColour = unpackColour(intersection_col);
+        }
+
+        Colour colour = Colour(newColour.x, newColour.y, newColour.z, brightness);
+
+        result = RayTriangleIntersection(point, t, curr, colour);
+      }
+    }
+  }
+  if(result.distanceFromCamera == INFINITY)
+  {
+    result.distanceFromCamera = -INFINITY;
+  }
+  return result;
 }
 
 #endif

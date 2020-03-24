@@ -8,6 +8,7 @@ class Colour
     int green;
     int blue;
     float brightness;
+    float reflectivity;
 
     Colour()
     {

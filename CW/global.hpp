@@ -84,6 +84,7 @@ vector<TexturePoint> texpoints;
 vec3 lightSource = vec3(-0.0315915, 1.20455, -0.6108);
 int shadowMode = 0;
 bool cullingMode = 1;
+bool reflectiveMode = false;
 vector<uint32_t> pixelColours = loadImage();
 int texWidth;
 int texHeight;
@@ -282,6 +283,7 @@ vector<ModelTriangle> readCornellBox(float scale)
         mat = splitcomment[1];
         Colour tricolour = getColourFromName(mat,cornellColours);
         tricolour.name = mat;
+        tricolour.reflectivity = 0.0f;
 
         while(true){
           getline(fp,comment_new);
