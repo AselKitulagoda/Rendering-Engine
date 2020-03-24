@@ -260,7 +260,24 @@ RayTriangleIntersection getClosestIntersectionGouraud(vec3 cameraPos, vec3 rayDi
           }
         }
 
-        Colour colour = Colour(curr.colour.red, curr.colour.green, curr.colour.blue, brightness);
+        vec2 e0_tex = curr.texturepoints[1]*300.0f - curr.texturepoints[0]*300.0f;
+        vec2 e1_tex = curr.texturepoints[2]*300.0f - curr.texturepoints[0]*300.0f;
+        vec2 tex_point_final = curr.texturepoints[0]*300.0f + (u * e0_tex) + (v * e1_tex);
+
+        uint32_t intersection_col = pixelColours[round(tex_point_final.x) + round(tex_point_final.y) * texWidth];
+        
+        vec3 newColour;
+
+        if((tex_point_final.x) == -300.0f && (tex_point_final.y) == -300.0f)
+        {
+          newColour = vec3(curr.colour.red, curr.colour.green, curr.colour.blue);
+        }
+        else 
+        { 
+          newColour = unpackColour(intersection_col);
+        }
+
+        Colour colour = Colour(newColour.x, newColour.y, newColour.z, brightness);
 
         result = RayTriangleIntersection(point, t, curr, colour);
       }
