@@ -321,7 +321,7 @@ Colour getAverageColour(vector<Colour> finalColours)
   }
   int denom = finalColours.size() + 2;
   average = Colour(average.red/denom, average.green/denom, average.blue/denom, average.brightness/denom);
-  Colour toReturn = Colour(average.red * average.brightness, average.green * average.brightness, average.blue * average.brightness);
+  Colour toReturn = Colour(average.red, average.green, average.blue, average.brightness);
   return toReturn;
 }
 
@@ -346,13 +346,13 @@ void drawRaytraceAntiAlias(vector<ModelTriangle> triangles)
         RayTriangleIntersection closestIntersect = getClosestIntersection(cameraPos, ray, triangles);
         if(closestIntersect.distanceFromCamera != -INFINITY)
         {
-          finalColours.push_back(closestIntersect.intersectedTriangle.colour);
+          finalColours.push_back(closestIntersect.colour);
         }
       }
       if(finalColours.size() > 0)
       {
         Colour c = getAverageColour(finalColours);
-        window.setPixelColour(x, y, c.pack());
+        window.setPixelColour(x, y, c.packWithBrightness());
       }
     }
   }
