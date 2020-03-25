@@ -31,8 +31,8 @@ using namespace glm;
 #define OBJ_CORNELL "cornell-box.obj"
 
 #define CAMERA_X 0
-#define CAMERA_Y 0.5
-#define CAMERA_Z 6
+#define CAMERA_Y 0.9
+#define CAMERA_Z 2
 
 #define SHIFT 0.02
 
@@ -201,7 +201,7 @@ vector<Colour> readMaterial(string fname)
     int g = stof(splitColourInfo[2]) * 255;
     int b = stof(splitColourInfo[3]) * 255;
 
-    Colour c = Colour(splitName[1], r, g, b);
+    Colour c = Colour(splitName[1], r, g, b, 0.0f);
 
     getline(fp, newline);
     colours.push_back(c);
@@ -422,7 +422,7 @@ vector<ModelTriangle> readObj(float scale)
               vec2 first_tex_point = vec2(texpoints[first_tex_index-1].x,texpoints[first_tex_index-1].y);
               vec2 second_tex_point = vec2(texpoints[second_tex_index-1].x,texpoints[second_tex_index-1].y);
               vec2 third_tex_point = vec2(texpoints[third_tex_index-1].x,texpoints[third_tex_index-1].y);
-              tris.push_back(ModelTriangle(vertic[first_vert-1], vertic[second_vert-1], vertic[third_vert-1], Colour(255,255,255), first_tex_point, second_tex_point, third_tex_point));
+              tris.push_back(ModelTriangle(vertic[first_vert-1], vertic[second_vert-1], vertic[third_vert-1], Colour(255,255,255,0.0f), first_tex_point, second_tex_point, third_tex_point));
             }
             else{break;}
 
@@ -543,6 +543,24 @@ vector<ModelTriangle> backfaceCulling(vector<ModelTriangle> triangles)
     }
   }
   return filtered;
+}
+
+bool compareModel(ModelTriangle t1, ModelTriangle t2)
+{
+  return (t1.vertices[0] == t2.vertices[0] && t1.vertices[1] == t2.vertices[1] && t1.vertices[2] == t2.vertices[2]);
+}
+
+vector<ModelTriangle> removeIntersectedTriangle(vector<ModelTriangle> triangles, ModelTriangle t)
+{
+  vector<ModelTriangle> result;
+  for(size_t i = 0; i < triangles.size(); i++)
+  {
+    if(!compareModel(triangles.at(i), t))
+    {
+      result.push_back(triangles.at(i));
+    }
+  }
+  return result;
 }
 
 #endif

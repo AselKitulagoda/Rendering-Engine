@@ -24,9 +24,11 @@ int main(int argc, char* argv[])
   SDL_Event event;
 
   updateVertexNormals(combinedTriangles);
+
+  // Updating the reflectivity
   for(size_t i = 0; i < combinedTriangles.size(); i++)
   {
-    if(combinedTriangles.at(i).colour.name == "Cyan")
+    if(combinedTriangles.at(i).colour.name == "Grey")
     {
       combinedTriangles.at(i).colour.reflectivity = 1.0f;
     }

@@ -21,6 +21,7 @@ class Colour
       green = g;
       blue = b;
       brightness = 1.0f;
+      reflectivity = 0.0f;
     }
 
     Colour(std::string n, int r, int g, int b)
@@ -30,6 +31,17 @@ class Colour
       green = g;
       blue = b;
       brightness = 1.0f;
+      reflectivity = 0.0f;
+    }
+
+    Colour(std::string n, int r, int g, int b, float ref)
+    {
+      name = n;
+      red = r;
+      green = g;
+      blue = b;
+      brightness = 1.0f;
+      reflectivity = ref;
     }
 
     Colour(int r, int g, int b, float bright)
@@ -39,6 +51,7 @@ class Colour
       green = g;
       blue = b;
       brightness = bright;
+      reflectivity = 0.0f;
     }
 
     uint32_t pack()

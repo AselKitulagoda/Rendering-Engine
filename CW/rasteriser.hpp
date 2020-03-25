@@ -89,7 +89,7 @@ void drawTextureLine(CanvasPoint to, CanvasPoint from, vector<uint32_t> pixelCol
   numberOfTextureValues.x = to.texturePoint.x - from.texturePoint.x;
   numberOfTextureValues.y = to.texturePoint.y - from.texturePoint.y;
 
-  for(float i = 0; i <= numberOfValues; i++)
+  for(float i = 0; i < numberOfValues; i++)
   {
     TexturePoint tp;
     tp.x = from.texturePoint.x + (i * numberOfTextureValues.x/numberOfValues);
