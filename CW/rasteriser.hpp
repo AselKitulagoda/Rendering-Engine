@@ -89,7 +89,7 @@ void drawTextureLine(CanvasPoint to, CanvasPoint from, vector<uint32_t> pixelCol
   numberOfTextureValues.x = to.texturePoint.x - from.texturePoint.x;
   numberOfTextureValues.y = to.texturePoint.y - from.texturePoint.y;
 
-  for(float i = 0; i < numberOfValues; i++)
+  for(float i = 0; i <= numberOfValues; i++)
   {
     TexturePoint tp;
     tp.x = from.texturePoint.x + (i * numberOfTextureValues.x/numberOfValues);
@@ -168,7 +168,9 @@ void drawRasterised(vector<ModelTriangle> triangles)
     {
       CanvasTriangle projection = modelToCanvas(filteredTriangles.at(i));
       
-      if((projection.vertices[1].texturePoint.x) == -300.0f && (projection.vertices[1].texturePoint.y) == -300.0f)
+      if((projection.vertices[0].texturePoint.x) == -300.0f && (projection.vertices[0].texturePoint.y) == -300.0f && 
+          (projection.vertices[1].texturePoint.x) == -300.0f && (projection.vertices[1].texturePoint.y) == -300.0f &&
+          (projection.vertices[2].texturePoint.x) == -300.0f && (projection.vertices[2].texturePoint.y) == -300.0f)
       {
         drawFilled(projection, depthBuffer);
       }
