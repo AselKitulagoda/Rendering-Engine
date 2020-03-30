@@ -18,6 +18,7 @@ using namespace glm;
 #define HEIGHT 480
 #define SCALE_FACTOR 0.001
 #define SCALE_CORNELL 0.3
+#define SCALE_SPHERE 0.05
 #define FOCAL_LENGTH -500
 #define INTENSITY 1
 #define AMBIENCE 0.2
@@ -29,6 +30,8 @@ using namespace glm;
 
 #define MTL_CORNELL "cornell-box.mtl"
 #define OBJ_CORNELL "cornell-box.obj"
+
+#define OBJ_SPHERE "sphere.obj"
 
 #define CAMERA_X 0
 #define CAMERA_Y 0.9
@@ -46,6 +49,7 @@ vector<Colour> readMaterial(string fname);
 vector<ModelTriangle> readObj(float scale);
 Colour getColourFromName(string mat, vector<Colour> colours);
 vector<ModelTriangle> readCornellBox(float scale);
+vector<ModelTriangle> readSphere(float scale);
 
 // Texturing Stuff
 vector<uint32_t> loadImage();
@@ -63,6 +67,12 @@ vector<ModelTriangle> backfaceCulling(vector<ModelTriangle> triangles);
 
 // Combining triangles
 vector<ModelTriangle> combineTriangles(vector<ModelTriangle> triangles, vector<ModelTriangle> cornellTriangles);
+vector<ModelTriangle> addSphereTriangles(vector<ModelTriangle> combined, vector<ModelTriangle> sphereTriangles);
+
+// Gouraud Pre-processing
+vector<pair<size_t, ModelTriangle>> getTrianglesWithVertex(vec3 point, vector<ModelTriangle> triangles);
+vec3 getAverageSurfaceNormal(vector<pair<size_t, ModelTriangle>> commonTriangles);
+void updateVertexNormals(vector<ModelTriangle> triangles);
 
 // Defining the Global Variables
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
@@ -76,14 +86,16 @@ vector<Colour> cornellColours = readMaterial(MTL_CORNELL);
 // Loading Triangles
 vector<ModelTriangle> triangles = readObj(SCALE_FACTOR);
 vector<ModelTriangle> cornellTriangles = readCornellBox(SCALE_CORNELL);
+vector<ModelTriangle> sphereTriangles = readSphere(SCALE_SPHERE);
 vector<ModelTriangle> combinedTriangles = combineTriangles(triangles, cornellTriangles);
+vector<ModelTriangle> allTriangles;
 vec3 unpackColour(uint32_t col);
 
 vector<TexturePoint> texpoints;
 
 vec3 lightSource = vec3(-0.0315915, 1.20455, -0.6108);
 int shadowMode = 0;
-bool cullingMode = 1;
+bool cullingMode = 0;
 bool reflectiveMode = false;
 vector<uint32_t> pixelColours = loadImage();
 int texWidth;
@@ -96,9 +108,19 @@ vector<ModelTriangle> combineTriangles(vector<ModelTriangle> triangles, vector<M
   {
     combined.push_back(cornellTriangles.at(i));
   }
+
   for(size_t i = 0; i < triangles.size(); i++)
   {
     combined.push_back(triangles.at(i));
+  }
+  return combined;
+}
+
+vector<ModelTriangle> addSphereTriangles(vector<ModelTriangle> combined, vector<ModelTriangle> sphereTriangles)
+{
+  for(size_t i = 0; i < sphereTriangles.size(); i++)
+  {
+    combined.push_back(sphereTriangles.at(i));
   }
   return combined;
 }
@@ -302,8 +324,9 @@ vector<ModelTriangle> readCornellBox(float scale)
               int first_vert = stoi(splitcomment[1].substr(0, splitcomment[1].size()-1));
               int second_vert = stoi(splitcomment[2].substr(0, splitcomment[2].size()-1));
               int third_vert = stoi(splitcomment[3].substr(0, splitcomment[3].size()-1));
-
-              tris.push_back(ModelTriangle(vertic[first_vert-1],vertic[second_vert-1],vertic[third_vert-1],tricolour));
+              ModelTriangle tri = ModelTriangle(vertic[first_vert-1],vertic[second_vert-1],vertic[third_vert-1],tricolour);
+              tri.tag = "cornell";
+              tris.push_back(tri);
             }
             else{break;}
 
@@ -422,7 +445,92 @@ vector<ModelTriangle> readObj(float scale)
               vec2 first_tex_point = vec2(texpoints[first_tex_index-1].x,texpoints[first_tex_index-1].y);
               vec2 second_tex_point = vec2(texpoints[second_tex_index-1].x,texpoints[second_tex_index-1].y);
               vec2 third_tex_point = vec2(texpoints[third_tex_index-1].x,texpoints[third_tex_index-1].y);
-              tris.push_back(ModelTriangle(vertic[first_vert-1], vertic[second_vert-1], vertic[third_vert-1], Colour(255,255,255,0.0f), first_tex_point, second_tex_point, third_tex_point));
+              ModelTriangle tri = ModelTriangle(vertic[first_vert-1], vertic[second_vert-1], vertic[third_vert-1], Colour(255,255,255,0.0f), first_tex_point, second_tex_point, third_tex_point);
+              tri.tag = "hackspace";
+              tris.push_back(tri);
+            }
+            else{break;}
+
+          }
+          if (fp.eof())
+            not_reach=false;
+        }
+    }
+  }
+  fp.close();
+  return tris;
+}
+
+vector<ModelTriangle> readSphere(float scale)
+{
+  vector <ModelTriangle> tris;
+  ifstream fp;
+  
+  vector<vec3> vertic;
+  fp.open(OBJ_SPHERE);
+
+  if(fp.fail())
+    cout << "fails" << endl;
+
+  string newline;
+  getline(fp,newline);
+  getline(fp,newline);
+
+  while(!fp.eof())
+  {
+    string comment;
+    getline(fp, comment);
+
+    if (!comment.empty())
+    {
+      while(true)
+      {
+        if (!comment.empty())
+        {
+          string *splitcomment = split(comment,' ');
+          if (splitcomment[0]=="v")
+          {
+            float x = stof(splitcomment[1]) * scale;
+            float y = stof(splitcomment[2]) * scale;
+            float z = stof(splitcomment[3]) * scale;
+            vec3 verts = vec3(x + 0.18, y + 0.55, z - 0.5);
+            vertic.push_back(verts);
+          }
+          else
+          {
+            break;
+          }
+        }
+        getline(fp,comment);
+      }
+    }
+
+  fp.clear();
+  fp.seekg(0,ios::beg);
+  if(fp.fail())
+    cout << "fails" << endl;
+  getline(fp,newline);
+  getline(fp,newline);
+
+  while(!fp.eof())
+  {
+    string comment_new;
+      bool not_reach = true;
+        while (not_reach)
+        {
+          getline(fp,comment_new);
+          string *splitcomment = split(comment_new,' ');
+          if (!comment_new.empty())
+          {
+            if (splitcomment[0]=="f")
+            {
+              int first_vert = stoi(splitcomment[1].substr(0, splitcomment[1].find('/')));
+              int second_vert = stoi(splitcomment[2].substr(0, splitcomment[2].find('/')));
+              int third_vert = stoi(splitcomment[3].substr(0, splitcomment[3].find('/')));
+              
+              ModelTriangle tri = ModelTriangle(vertic[first_vert-1], vertic[second_vert-1], vertic[third_vert-1], Colour(255,255,255,0.0f));
+              tri.tag = "sphere";
+              tris.push_back(tri);
             }
             else{break;}
 
@@ -547,20 +655,76 @@ vector<ModelTriangle> backfaceCulling(vector<ModelTriangle> triangles)
 
 bool compareModel(ModelTriangle t1, ModelTriangle t2)
 {
-  return (t1.vertices[0] == t2.vertices[0] && t1.vertices[1] == t2.vertices[1] && t1.vertices[2] == t2.vertices[2]);
+  if((t1.vertices[0] == t2.vertices[0]) && (t1.vertices[1] == t2.vertices[1]) && (t1.vertices[2] == t2.vertices[2]))
+    return true;
+  else
+    return false;
 }
 
 vector<ModelTriangle> removeIntersectedTriangle(vector<ModelTriangle> triangles, ModelTriangle t)
 {
   vector<ModelTriangle> result;
+
   for(size_t i = 0; i < triangles.size(); i++)
   {
-    if(!compareModel(triangles.at(i), t))
+    if(compareModel(t, triangles.at(i)) == false)
     {
       result.push_back(triangles.at(i));
     }
   }
+  // cout << "triangles before = " << triangles.size() << endl;
+  // cout << "triangles after removing = " << result.size() << endl;
   return result;
+}
+
+vector<pair<size_t, ModelTriangle>> getTrianglesWithVertex(vec3 vertex, vector<ModelTriangle> triangles)
+{
+  vector<pair<size_t, ModelTriangle>> result;
+
+  for(size_t i = 0; i < triangles.size(); i++)
+  {
+    ModelTriangle t = triangles.at(i);
+    if(vertex == t.vertices[0]) result.push_back(make_pair(0, t));
+    if(vertex == t.vertices[1]) result.push_back(make_pair(1, t));
+    if(vertex == t.vertices[2]) result.push_back(make_pair(2, t));
+  }
+  return result;
+}
+
+vec3 getAverageSurfaceNormal(vector<pair<size_t, ModelTriangle>> commonTriangles)
+{
+  vec3 average = vec3(0, 0, 0);
+  for(size_t i = 0; i < commonTriangles.size(); i++)
+  {
+    ModelTriangle t = commonTriangles.at(i).second;
+    vec3 diff1 = t.vertices[1] - t.vertices[0];
+    vec3 diff2 = t.vertices[2] - t.vertices[0];
+
+    vec3 surfaceNormal = glm::normalize(glm::cross(diff1, diff2));
+
+    average += surfaceNormal;
+  }
+  average = average/((float)commonTriangles.size());
+  return average;
+}
+
+void updateVertexNormals(vector<ModelTriangle> triangles)
+{
+  for(size_t i = 0; i < triangles.size(); i++)
+  {
+    ModelTriangle t = triangles.at(i);
+    for(int j = 0; j < 3; j++)
+    {
+      vec3 vertex = t.vertices[j];
+      vector<pair<size_t, ModelTriangle>> commonTriangles = getTrianglesWithVertex(vertex, triangles);
+      vec3 averageNormal = getAverageSurfaceNormal(commonTriangles);
+      for(pair<size_t, ModelTriangle> common : commonTriangles)
+      {
+        ModelTriangle curr = common.second;
+        curr.vertexNormals[common.first] = averageNormal;
+      }
+    }
+  }
 }
 
 #endif

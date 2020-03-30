@@ -168,9 +168,7 @@ void drawRasterised(vector<ModelTriangle> triangles)
     {
       CanvasTriangle projection = modelToCanvas(filteredTriangles.at(i));
       
-      if((projection.vertices[0].texturePoint.x) == -300.0f && (projection.vertices[0].texturePoint.y) == -300.0f && 
-          (projection.vertices[1].texturePoint.x) == -300.0f && (projection.vertices[1].texturePoint.y) == -300.0f &&
-          (projection.vertices[2].texturePoint.x) == -300.0f && (projection.vertices[2].texturePoint.y) == -300.0f)
+      if(filteredTriangles.at(i).tag == "cornell")
       {
         drawFilled(projection, depthBuffer);
       }
@@ -186,7 +184,7 @@ void drawRasterised(vector<ModelTriangle> triangles)
     {
       CanvasTriangle projection = modelToCanvas(triangles.at(i));
       
-      if((projection.vertices[1].texturePoint.x) == -300.0f && (projection.vertices[1].texturePoint.y) == -300.0f)     
+      if(triangles.at(i).tag == "cornell")     
       {
         drawFilled(projection, depthBuffer);
       }

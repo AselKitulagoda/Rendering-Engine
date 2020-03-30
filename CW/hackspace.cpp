@@ -23,7 +23,8 @@ int main(int argc, char* argv[])
 {
   SDL_Event event;
 
-  updateVertexNormals(combinedTriangles);
+  updateVertexNormals(sphereTriangles);
+  allTriangles = addSphereTriangles(combinedTriangles, sphereTriangles);
 
   // Updating the reflectivity
   for(size_t i = 0; i < combinedTriangles.size(); i++)
@@ -42,7 +43,7 @@ int main(int argc, char* argv[])
       handleEvent(event);
       if (bool_flag == 0){
         window.clearPixels();
-        drawWireframe(combinedTriangles);
+        drawWireframe(allTriangles);
       }
       else if (bool_flag == 1){
         window.clearPixels();
@@ -205,7 +206,7 @@ void handleEvent(SDL_Event event)
     {
       cout << "DRAWING WIREFRAME" << endl;
       window.clearPixels();
-      drawWireframe(combinedTriangles);
+      drawWireframe(allTriangles);
       bool_flag = 0;
     }
     else if(event.key.keysym.sym == SDLK_k) // rasterised
@@ -219,7 +220,8 @@ void handleEvent(SDL_Event event)
     {
       cout << "DRAWING RAYTRACED" << endl;
       window.clearPixels();
-      drawRaytraced(combinedTriangles);
+      drawRaytraced(allTriangles);
+      // drawRaytraced(cornellTriangles);
     }
     else if(event.key.keysym.sym == SDLK_m) // raytraced anti alias
     {
@@ -249,15 +251,46 @@ void handleEvent(SDL_Event event)
       cullingMode = !cullingMode;
       cout << "CULLING MODE = " << cullingMode << endl;
     }
-    else if(event.key.keysym.sym == SDLK_1) // Gouraud shading mode
-    {
-      cout << "DRAWING GOURAUD" << endl;
-      drawRaytracedGouraud(combinedTriangles);
-    }
     else if(event.key.keysym.sym == SDLK_2) // Reflective mode
     {
       reflectiveMode = !reflectiveMode;
       cout << "REFLECTION MODE = " << reflectiveMode << endl;
+    }
+    else if(event.key.keysym.sym == SDLK_n) // light x translate
+    {
+      cout << "LIGHT RIGHT" << endl;
+      lightSource.x += 0.1;
+      // printVec3("light position", lightSource);
+    }
+    else if(event.key.keysym.sym == SDLK_v) // light x translate
+    {
+      cout << "LIGHT LEFT" << endl;
+      lightSource.x -= 0.1;
+      // printVec3("light position",lightSource);
+    }
+    else if(event.key.keysym.sym == SDLK_b) // light y translate
+    {
+      cout << "LIGHT DOWN" << endl;
+      lightSource.y -= 0.1;
+      // printVec3("light position", lightSource);
+    }
+    else if(event.key.keysym.sym == SDLK_g) // light y translate
+    {
+      cout << "LIGHT UP" << endl;
+      lightSource.y += 0.1;
+      // printVec3("light position", lightSource);
+    }
+    else if(event.key.keysym.sym == SDLK_f) // light z translate
+    {
+      cout << "LIGHT FRONT" << endl;
+      lightSource.z -= 0.1;
+      // printVec3("light position", lightSource);
+    }
+    else if(event.key.keysym.sym == SDLK_h) // light z translate
+    {
+      cout << "LIGHT BACK" << endl;
+      lightSource.z += 0.1;
+      // printVec3("light position", lightSource);
     }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;

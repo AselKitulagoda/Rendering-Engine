@@ -9,6 +9,7 @@ class ModelTriangle
     Colour colour;
     glm::vec2 texturepoints[3];
     glm::vec3 vertexNormals[3];
+    std::string tag;
 
     ModelTriangle()
     {
@@ -36,6 +37,7 @@ class ModelTriangle
       vertexNormals[0] = initialiseVertexNormal();
       vertexNormals[1] = initialiseVertexNormal();
       vertexNormals[2] = initialiseVertexNormal();
+      tag = "";
     }
 
     ModelTriangle(glm::vec3 v0, glm::vec3 v1, glm::vec3 v2, Colour trigColour, glm::vec2 t0, glm::vec2 t1, glm::vec2 t2)
@@ -50,6 +52,7 @@ class ModelTriangle
       vertexNormals[0] = initialiseVertexNormal();
       vertexNormals[1] = initialiseVertexNormal();
       vertexNormals[2] = initialiseVertexNormal();
+      tag = "";
     }
 };
 
