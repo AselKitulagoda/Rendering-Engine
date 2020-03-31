@@ -70,9 +70,8 @@ vector<ModelTriangle> combineTriangles(vector<ModelTriangle> triangles, vector<M
 vector<ModelTriangle> addSphereTriangles(vector<ModelTriangle> combined, vector<ModelTriangle> sphereTriangles);
 
 // Gouraud Pre-processing
-vector<pair<size_t, ModelTriangle>> getTrianglesWithVertex(vec3 point, vector<ModelTriangle> triangles);
-vec3 getAverageSurfaceNormal(vector<pair<size_t, ModelTriangle>> commonTriangles);
-void updateVertexNormals(vector<ModelTriangle> triangles);
+vector<pair<ModelTriangle, vector<vec3>>> updateVertexNormals(vector<ModelTriangle> triangles);
+vector<vec3> getTriangleVertexNormals(ModelTriangle t, vector<pair<ModelTriangle, vector<vec3>>> triangleVertexNormals);
 
 // Defining the Global Variables
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
@@ -89,6 +88,7 @@ vector<ModelTriangle> cornellTriangles = readCornellBox(SCALE_CORNELL);
 vector<ModelTriangle> sphereTriangles = readSphere(SCALE_SPHERE);
 vector<ModelTriangle> combinedTriangles = combineTriangles(triangles, cornellTriangles);
 vector<ModelTriangle> allTriangles;
+vector<pair<ModelTriangle, vector<vec3>>> triangleVertexNormals;
 vec3 unpackColour(uint32_t col);
 
 vector<TexturePoint> texpoints;
@@ -672,59 +672,61 @@ vector<ModelTriangle> removeIntersectedTriangle(vector<ModelTriangle> triangles,
       result.push_back(triangles.at(i));
     }
   }
-  // cout << "triangles before = " << triangles.size() << endl;
-  // cout << "triangles after removing = " << result.size() << endl;
   return result;
 }
 
-vector<pair<size_t, ModelTriangle>> getTrianglesWithVertex(vec3 vertex, vector<ModelTriangle> triangles)
+vector<pair<ModelTriangle, vector<vec3>>> updateVertexNormals(vector<ModelTriangle> triangles)
 {
-  vector<pair<size_t, ModelTriangle>> result;
+  vector<pair<ModelTriangle, vector<vec3>>> result;
 
   for(size_t i = 0; i < triangles.size(); i++)
   {
-    ModelTriangle t = triangles.at(i);
-    if(vertex == t.vertices[0]) result.push_back(make_pair(0, t));
-    if(vertex == t.vertices[1]) result.push_back(make_pair(1, t));
-    if(vertex == t.vertices[2]) result.push_back(make_pair(2, t));
-  }
-  return result;
-}
-
-vec3 getAverageSurfaceNormal(vector<pair<size_t, ModelTriangle>> commonTriangles)
-{
-  vec3 average = vec3(0, 0, 0);
-  for(size_t i = 0; i < commonTriangles.size(); i++)
-  {
-    ModelTriangle t = commonTriangles.at(i).second;
-    vec3 diff1 = t.vertices[1] - t.vertices[0];
-    vec3 diff2 = t.vertices[2] - t.vertices[0];
-
-    vec3 surfaceNormal = glm::normalize(glm::cross(diff1, diff2));
-
-    average += surfaceNormal;
-  }
-  average = average/((float)commonTriangles.size());
-  return average;
-}
-
-void updateVertexNormals(vector<ModelTriangle> triangles)
-{
-  for(size_t i = 0; i < triangles.size(); i++)
-  {
-    ModelTriangle t = triangles.at(i);
+    vector<vec3> vertexNormals;
     for(int j = 0; j < 3; j++)
     {
-      vec3 vertex = t.vertices[j];
-      vector<pair<size_t, ModelTriangle>> commonTriangles = getTrianglesWithVertex(vertex, triangles);
-      vec3 averageNormal = getAverageSurfaceNormal(commonTriangles);
-      for(pair<size_t, ModelTriangle> common : commonTriangles)
+      vec3 currVertex = triangles.at(i).vertices[j];
+      vec3 average = vec3(0, 0, 0);
+      int counter = 0;
+
+      for(size_t k = 0; k < triangles.size(); k++)
       {
-        ModelTriangle curr = common.second;
-        curr.vertexNormals[common.first] = averageNormal;
+        for(int l = 0; l < 3; l++)
+        {
+          vec3 otherVertex = triangles.at(k).vertices[l];
+
+          if(otherVertex == currVertex)
+          {
+            vec3 diff1 = triangles.at(k).vertices[1] - triangles.at(k).vertices[0];
+            vec3 diff2 = triangles.at(k).vertices[2] - triangles.at(k).vertices[0];
+
+            vec3 surfaceNormal = glm::normalize(glm::cross(diff1, diff2));
+
+            average += surfaceNormal;
+            counter += 1;
+          }
+        }
       }
+      vec3 vNorm = average * (1 / (float) counter);
+      vertexNormals.push_back(vNorm);
+    }
+    result.push_back(make_pair(triangles.at(i), vertexNormals));
+  }
+  return result;
+}
+
+vector<vec3> getTriangleVertexNormals(ModelTriangle t, vector<pair<ModelTriangle, vector<vec3>>> triangleVertexNormals)
+{
+  vector<vec3> result;
+  for(size_t i = 0; i < triangleVertexNormals.size(); i++)
+  {
+    ModelTriangle curr = triangleVertexNormals.at(i).first;
+    if(compareModel(t, curr))
+    {
+      result = triangleVertexNormals.at(i).second;
+      break;
     }
   }
+  return result;
 }
 
 #endif

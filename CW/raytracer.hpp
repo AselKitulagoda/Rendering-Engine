@@ -67,10 +67,11 @@ float calculateBrightness(vec3 point, ModelTriangle t, vec3 rayDirection, vector
 
 vector<float> calculateVertexBrightness(vector<ModelTriangle> triangles, ModelTriangle t, vec3 rayDirection)
 {
+  vector<vec3> vertexNormals = getTriangleVertexNormals(t, triangleVertexNormals);
   vector<float> brightnessVals;
   for(int i = 0; i < 3; i++)
   {
-    vec3 vertex = t.vertexNormals[i];
+    vec3 vertex = vertexNormals[i];
     vec3 vertexToLight = lightSource - t.vertices[i];
     float distance = glm::length(vertexToLight);
 

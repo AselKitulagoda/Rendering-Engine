@@ -23,8 +23,8 @@ int main(int argc, char* argv[])
 {
   SDL_Event event;
 
-  updateVertexNormals(sphereTriangles);
   allTriangles = addSphereTriangles(combinedTriangles, sphereTriangles);
+  triangleVertexNormals = updateVertexNormals(allTriangles);
 
   // Updating the reflectivity
   for(size_t i = 0; i < combinedTriangles.size(); i++)
@@ -221,7 +221,6 @@ void handleEvent(SDL_Event event)
       cout << "DRAWING RAYTRACED" << endl;
       window.clearPixels();
       drawRaytraced(allTriangles);
-      // drawRaytraced(cornellTriangles);
     }
     else if(event.key.keysym.sym == SDLK_m) // raytraced anti alias
     {
@@ -255,42 +254,6 @@ void handleEvent(SDL_Event event)
     {
       reflectiveMode = !reflectiveMode;
       cout << "REFLECTION MODE = " << reflectiveMode << endl;
-    }
-    else if(event.key.keysym.sym == SDLK_n) // light x translate
-    {
-      cout << "LIGHT RIGHT" << endl;
-      lightSource.x += 0.1;
-      // printVec3("light position", lightSource);
-    }
-    else if(event.key.keysym.sym == SDLK_v) // light x translate
-    {
-      cout << "LIGHT LEFT" << endl;
-      lightSource.x -= 0.1;
-      // printVec3("light position",lightSource);
-    }
-    else if(event.key.keysym.sym == SDLK_b) // light y translate
-    {
-      cout << "LIGHT DOWN" << endl;
-      lightSource.y -= 0.1;
-      // printVec3("light position", lightSource);
-    }
-    else if(event.key.keysym.sym == SDLK_g) // light y translate
-    {
-      cout << "LIGHT UP" << endl;
-      lightSource.y += 0.1;
-      // printVec3("light position", lightSource);
-    }
-    else if(event.key.keysym.sym == SDLK_f) // light z translate
-    {
-      cout << "LIGHT FRONT" << endl;
-      lightSource.z -= 0.1;
-      // printVec3("light position", lightSource);
-    }
-    else if(event.key.keysym.sym == SDLK_h) // light z translate
-    {
-      cout << "LIGHT BACK" << endl;
-      lightSource.z += 0.1;
-      // printVec3("light position", lightSource);
     }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
