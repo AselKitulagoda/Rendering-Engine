@@ -14,6 +14,7 @@ DEBUG_OPTIONS = -ggdb -g3
 FUSSY_OPTIONS = -Werror -pedantic
 SANITIZER_OPTIONS = -O1 -fsanitize=undefined -fsanitize=address -fno-omit-frame-pointer
 SPEEDY_OPTIONS = -Ofast -funsafe-math-optimizations -march=native
+OPENMP_OPTIONS = -fopenmp
 LINKER_OPTIONS =
 
 # Set up flags
@@ -50,6 +51,12 @@ debug: window
 speedy: window
 	$(COMPILER) $(COMPILER_OPTIONS) $(SPEEDY_OPTIONS) -o $(OBJECT_FILE) $(SOURCE_FILE) $(SDL_COMPILER_FLAGS) $(SDW_COMPILER_FLAGS) $(GLM_COMPILER_FLAGS)
 	$(COMPILER) $(LINKER_OPTIONS) $(SPEEDY_OPTIONS) -o $(EXECUTABLE) $(OBJECT_FILE) $(SDW_LINKER_FLAGS) $(SDL_LINKER_FLAGS)
+	./$(EXECUTABLE)
+
+# Rule to build for high performance executable
+fast: window
+	$(COMPILER) $(COMPILER_OPTIONS) $(SPEEDY_OPTIONS) $(OPENMP_OPTIONS) -o $(OBJECT_FILE) $(SOURCE_FILE) $(SDL_COMPILER_FLAGS) $(SDW_COMPILER_FLAGS) $(GLM_COMPILER_FLAGS)
+	$(COMPILER) $(LINKER_OPTIONS) $(SPEEDY_OPTIONS) $(OPENMP_OPTIONS) -o $(EXECUTABLE) $(OBJECT_FILE) $(SDW_LINKER_FLAGS) $(SDL_LINKER_FLAGS)
 	./$(EXECUTABLE)
 
 # Rule for building the DisplayWindow

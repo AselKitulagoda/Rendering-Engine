@@ -23,15 +23,15 @@ int main(int argc, char* argv[])
 {
   SDL_Event event;
 
-  allTriangles = addSphereTriangles(combinedTriangles, sphereTriangles);
+  lightSources = {lightSource, vec3(lightSource.x, lightSource.y + 0.5, lightSource.z)};
   triangleVertexNormals = updateVertexNormals(allTriangles);
-
+  
   // Updating the reflectivity
-  for(size_t i = 0; i < combinedTriangles.size(); i++)
+  for(size_t i = 0; i < allTriangles.size(); i++)
   {
-    if(combinedTriangles.at(i).colour.name == "Grey")
+    if(allTriangles.at(i).colour.name == "Grey")
     {
-      combinedTriangles.at(i).colour.reflectivity = 1.0f;
+      allTriangles.at(i).colour.reflectivity = 1.0f;
     }
   }
 
@@ -191,11 +191,10 @@ void handleEvent(SDL_Event event)
       cout << "ROTATE Y OTHER" << endl;
       cameraOrientation = rotateY(-1.0, cameraOrientation);
     }
-    else if(event.key.keysym.sym == SDLK_o) // toggle shadow mode
+    else if(event.key.keysym.sym == SDLK_o) // toggle hard shadow mode
     {
-      if(shadowMode == 1) shadowMode = 0;
-      else shadowMode = 1;
-      cout << "SHADOW MODE = " << shadowMode << endl;
+      hardShadowMode = !hardShadowMode;
+      cout << "HARD SHADOW MODE = " << hardShadowMode << endl;
     }
     else if(event.key.keysym.sym == SDLK_r) // camera reset position
     {
@@ -249,6 +248,11 @@ void handleEvent(SDL_Event event)
     {
       cullingMode = !cullingMode;
       cout << "CULLING MODE = " << cullingMode << endl;
+    }
+    else if(event.key.keysym.sym == SDLK_1) // toggle soft shadow mode
+    {
+      softShadowMode = !softShadowMode;
+      cout << "SOFT SHADOW MODE = " << softShadowMode << endl;
     }
     else if(event.key.keysym.sym == SDLK_2) // Reflective mode
     {

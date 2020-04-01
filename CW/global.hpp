@@ -37,7 +37,7 @@ using namespace glm;
 #define CAMERA_Y 0.9
 #define CAMERA_Z 2
 
-#define SHIFT 0.02
+#define SHADOW_SHIFT 0.1
 
 vector<float> interpolation(float from, float to, int numberOfValues);
 vector<CanvasPoint> interpolate(CanvasPoint from, CanvasPoint to, int numberOfValues);
@@ -87,14 +87,16 @@ vector<ModelTriangle> triangles = readObj(SCALE_FACTOR);
 vector<ModelTriangle> cornellTriangles = readCornellBox(SCALE_CORNELL);
 vector<ModelTriangle> sphereTriangles = readSphere(SCALE_SPHERE);
 vector<ModelTriangle> combinedTriangles = combineTriangles(triangles, cornellTriangles);
-vector<ModelTriangle> allTriangles;
+vector<ModelTriangle> allTriangles = addSphereTriangles(combinedTriangles, sphereTriangles);
 vector<pair<ModelTriangle, vector<vec3>>> triangleVertexNormals;
 vec3 unpackColour(uint32_t col);
 
 vector<TexturePoint> texpoints;
 
 vec3 lightSource = vec3(-0.0315915, 1.20455, -0.6108);
-int shadowMode = 0;
+vector<vec3> lightSources;
+int hardShadowMode = 0;
+int softShadowMode = 0;
 bool cullingMode = 0;
 bool reflectiveMode = false;
 vector<uint32_t> pixelColours = loadImage();
@@ -528,7 +530,7 @@ vector<ModelTriangle> readSphere(float scale)
               int second_vert = stoi(splitcomment[2].substr(0, splitcomment[2].find('/')));
               int third_vert = stoi(splitcomment[3].substr(0, splitcomment[3].find('/')));
               
-              ModelTriangle tri = ModelTriangle(vertic[first_vert-1], vertic[second_vert-1], vertic[third_vert-1], Colour(255,255,255,0.0f));
+              ModelTriangle tri = ModelTriangle(vertic[first_vert-1], vertic[second_vert-1], vertic[third_vert-1], Colour(255, 102, 0, 0.0f));
               tri.tag = "sphere";
               tris.push_back(tri);
             }
@@ -679,6 +681,8 @@ vector<pair<ModelTriangle, vector<vec3>>> updateVertexNormals(vector<ModelTriang
 {
   vector<pair<ModelTriangle, vector<vec3>>> result;
 
+  #pragma omp parallel
+  #pragma omp for
   for(size_t i = 0; i < triangles.size(); i++)
   {
     vector<vec3> vertexNormals;

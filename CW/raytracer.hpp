@@ -20,7 +20,8 @@ float computeDotProduct(vec3 point, vec3 surfaceNormal, ModelTriangle t);
 float calculateBrightness(vec3 point, ModelTriangle t, vec3 rayDirection, vector<ModelTriangle> triangles);
 
 // Shadows
-bool checkShadow(vec3 point, vec3 rayShadow, vector<ModelTriangle> alteredTriangles);
+bool checkHardShadow(vec3 point, vec3 rayShadow, vector<ModelTriangle> alteredTriangles);
+float checkSoftShadow(vec3 point, vector<ModelTriangle> alteredTriangles);
 
 // Gouraud Shading
 vector<float> calculateVertexBrightness(vector<ModelTriangle> triangles, ModelTriangle t, vec3 rayDirection);
@@ -44,18 +45,36 @@ float calculateBrightness(vec3 point, ModelTriangle t, vec3 rayDirection, vector
   float dotProduct = std::max(0.0f, (float) glm::dot(surfaceNormal, glm::normalize(pointToLight)));
   brightness *= pow(dotProduct, 1.0f);
 
+  // Specular Highlighting
+  if(reflectiveMode)
+  {
+    vec3 flipped = -1.0f * rayDirection;
+    vec3 reflected = pointToLight - (2.0f * point * glm::dot(pointToLight, point));
+    float angle = std::max(0.0f, glm::dot(glm::normalize(flipped), glm::normalize(reflected)));
+    brightness += pow(angle, 1.0f);
+  }
+
   if(brightness < (float) AMBIENCE)
   {
     brightness = (float) AMBIENCE;
   }
 
-  if(shadowMode)
+  if(hardShadowMode)
   {
     vector<ModelTriangle> alteredTriangles = removeIntersectedTriangle(triangles, t);
-    bool shadow = checkShadow(point, pointToLight, alteredTriangles);
+    bool shadow = checkHardShadow(point, pointToLight, alteredTriangles);
     if(shadow)
       brightness = 0.15f;
   } 
+
+  if(softShadowMode)
+  {
+    vector<ModelTriangle> alteredTriangles = removeIntersectedTriangle(triangles, t);
+    float penumbra = checkSoftShadow(point, alteredTriangles);
+    float proportion = 1 - penumbra;
+    brightness *= proportion;
+    if(brightness < 0.15f) brightness = 0.15f;
+  }
 
   if(brightness > 1.0f)
   {
@@ -81,23 +100,18 @@ vector<float> calculateVertexBrightness(vector<ModelTriangle> triangles, ModelTr
     brightness *= pow(dotProduct, 1.0f);
 
     // Specular Highlighting
-    // vec3 flipped = -1.0f * rayDirection;
-    // vec3 reflected = vertexToLight - (2.0f * vertex * glm::dot(vertexToLight, vertex));
-    // float angle = std::max(0.0f, glm::dot(glm::normalize(flipped), glm::normalize(reflected)));
-    // brightness += pow(angle, 1.0f);
+    if(reflectiveMode)
+    {
+      vec3 flipped = -1.0f * rayDirection;
+      vec3 reflected = vertexToLight - (2.0f * vertex * glm::dot(vertexToLight, vertex));
+      float angle = std::max(0.0f, glm::dot(glm::normalize(flipped), glm::normalize(reflected)));
+      brightness += pow(angle, 1.0f);
+    }
 
     if(brightness < (float) AMBIENCE)
     {
       brightness = (float) AMBIENCE;
     }
-
-    if(shadowMode)
-    {
-      vector<ModelTriangle> alteredTriangles = removeIntersectedTriangle(triangles, t);
-      bool shadow = checkShadow(t.vertices[i], vertexToLight, alteredTriangles);
-      if(shadow)
-        brightness = 0.15f;
-    } 
 
     if(brightness > 1.0f)
     {
@@ -126,7 +140,7 @@ vec3 computeRayDirection(float x, float y)
   return rayDirection;
 }
 
-bool checkShadow(vec3 point, vec3 rayShadow, vector<ModelTriangle> alteredTriangles) 
+bool checkHardShadow(vec3 point, vec3 rayShadow, vector<ModelTriangle> alteredTriangles) 
 {
   float distanceFromLight = glm::length(rayShadow);
   
@@ -158,11 +172,27 @@ bool checkShadow(vec3 point, vec3 rayShadow, vector<ModelTriangle> alteredTriang
   return isShadow;
 }
 
+float checkSoftShadow(vec3 point, vector<ModelTriangle> alteredTriangles)
+{
+  float penumbra = 0.0f;
+  float numOfShadows = 0.0f;
+  for(size_t i = 0; i < lightSources.size(); i++)
+  {
+    vec3 pointToLight = lightSources.at(i) - point;
+    bool hardShadow = checkHardShadow(point, pointToLight, alteredTriangles);
+    if(hardShadow) numOfShadows += 1;
+  }
+  penumbra = numOfShadows / ((float) lightSources.size());
+  return penumbra;
+}
+
 RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles)
 { 
   RayTriangleIntersection result;
   result.distanceFromCamera = INFINITY;
 
+  #pragma omp parallel
+  #pragma omp for
   for(size_t i = 0; i < triangles.size(); i++)
   {
     ModelTriangle curr = triangles.at(i);
@@ -225,6 +255,8 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
 
 void drawRaytraced(vector<ModelTriangle> triangles)
 { 
+  #pragma omp parallel
+  #pragma omp for
   for(int y = 0; y < HEIGHT; y++)
   {
     for(int x = 0; x < WIDTH; x++)
@@ -282,6 +314,8 @@ void drawRaytraceAntiAlias(vector<ModelTriangle> triangles)
   quincunx.push_back(vec2(0.0f, 0.5f));
   quincunx.push_back(vec2(0.0f, -0.5f));
 
+  #pragma omp parallel
+  #pragma omp for
   for(int y = 0; y < HEIGHT; y++)
   {
     for(int x = 0; x < WIDTH; x++)
