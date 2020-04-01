@@ -259,6 +259,16 @@ void handleEvent(SDL_Event event)
       reflectiveMode = !reflectiveMode;
       cout << "REFLECTION MODE = " << reflectiveMode << endl;
     }
+    else if(event.key.keysym.sym == SDLK_3) // Gouraud mode
+    {
+      gouraudMode = !gouraudMode;
+      cout << "GOURAUD MODE = " << gouraudMode << endl;
+    }
+    else if(event.key.keysym.sym == SDLK_4) // Phong mode
+    {
+      phongMode = !phongMode;
+      cout << "PHONG MODE = " << phongMode << endl;
+    }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
 }

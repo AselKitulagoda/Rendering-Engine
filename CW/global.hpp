@@ -97,6 +97,8 @@ vec3 lightSource = vec3(-0.0315915, 1.20455, -0.6108);
 vector<vec3> lightSources;
 int hardShadowMode = 0;
 int softShadowMode = 0;
+int gouraudMode = 0;
+int phongMode = 0;
 bool cullingMode = 0;
 bool reflectiveMode = false;
 vector<uint32_t> pixelColours = loadImage();

@@ -23,9 +23,10 @@ float calculateBrightness(vec3 point, ModelTriangle t, vec3 rayDirection, vector
 bool checkHardShadow(vec3 point, vec3 rayShadow, vector<ModelTriangle> alteredTriangles);
 float checkSoftShadow(vec3 point, vector<ModelTriangle> alteredTriangles);
 
-// Gouraud Shading
+// Smooth Shading
 vector<float> calculateVertexBrightness(vector<ModelTriangle> triangles, ModelTriangle t, vec3 rayDirection);
-float calculateAverageBrightness(vector<ModelTriangle> triangles, vec3 point, ModelTriangle t, float u, float v, vec3 rayDirection);
+float calculateGouraudBrightness(vector<ModelTriangle> triangles, vec3 point, ModelTriangle t, float u, float v, vec3 rayDirection);
+float calculatePhongBrightness(vector<ModelTriangle> triangles, vec3 point, ModelTriangle t, float u, float v, vec3 rayDirection);
 
 // Reflection/Mirror
 vec3 computeReflectedRay(vec3 incidentRay, ModelTriangle t);
@@ -123,15 +124,70 @@ vector<float> calculateVertexBrightness(vector<ModelTriangle> triangles, ModelTr
   return brightnessVals;
 }
 
-float calculateAverageBrightness(vector<ModelTriangle> triangles, vec3 point, ModelTriangle t, float u, float v, vec3 rayDirection)
+float calculateGouraudBrightness(vector<ModelTriangle> triangles, vec3 point, ModelTriangle t, float u, float v, vec3 rayDirection)
 {
   vector<float> brightnessVals = calculateVertexBrightness(triangles, t, rayDirection);
-  float e0 = brightnessVals[1] - brightnessVals[0];
-  float e1 = brightnessVals[2] - brightnessVals[0];
+  float b0 = brightnessVals[1] - brightnessVals[0];
+  float b1 = brightnessVals[2] - brightnessVals[0];
 
-  float result = brightnessVals[0] + (u * e0) + (v * e1);
+  float result = brightnessVals[0] + (u * b0) + (v * b1);
 
   return result;
+}
+
+float calculatePhongBrightness(vector<ModelTriangle> triangles, vec3 point, ModelTriangle t, float u, float v, vec3 rayDirection)
+{
+  vector<vec3> vertexNormals = getTriangleVertexNormals(t, triangleVertexNormals);
+  vec3 n0 = vertexNormals[1] - vertexNormals[0];
+  vec3 n1 = vertexNormals[2] - vertexNormals[0];
+
+  vec3 adjustedNormal = vertexNormals[0] + (u * n0) + (v * n1);
+
+  vec3 pointToLight = lightSource - point;
+  float distance = glm::length(pointToLight);
+
+  float brightness = INTENSITY / (FRACTION_VAL * M_PI * distance * distance);
+
+  float dotProduct = std::max(0.0f, (float) glm::dot(adjustedNormal, glm::normalize(pointToLight)));
+  brightness *= pow(dotProduct, 1.0f);
+
+  // Specular Highlighting
+  if(reflectiveMode)
+  {
+    vec3 flipped = -1.0f * rayDirection;
+    vec3 reflected = pointToLight - (2.0f * point * glm::dot(pointToLight, point));
+    float angle = std::max(0.0f, glm::dot(glm::normalize(flipped), glm::normalize(reflected)));
+    brightness += pow(angle, 1.0f);
+  }
+
+  if(brightness < (float) AMBIENCE)
+  {
+    brightness = (float) AMBIENCE;
+  }
+
+  if(hardShadowMode)
+  {
+    vector<ModelTriangle> alteredTriangles = removeIntersectedTriangle(triangles, t);
+    bool shadow = checkHardShadow(point, pointToLight, alteredTriangles);
+    if(shadow)
+      brightness = 0.15f;
+  } 
+
+  if(softShadowMode)
+  {
+    vector<ModelTriangle> alteredTriangles = removeIntersectedTriangle(triangles, t);
+    float penumbra = checkSoftShadow(point, alteredTriangles);
+    float proportion = 1 - penumbra;
+    brightness *= proportion;
+    if(brightness < 0.15f) brightness = 0.15f;
+  }
+
+  if(brightness > 1.0f)
+  {
+    brightness = 1.0f;
+  }
+
+  return brightness;
 }
 
 vec3 computeRayDirection(float x, float y)
@@ -237,10 +293,27 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
         }
         else if(curr.tag == "sphere")
         {
-          newColour = vec3(curr.colour.red, curr.colour.green, curr.colour.blue);
-          brightness = calculateAverageBrightness(triangles, point, curr, u, v, rayDirection);
-          colour = Colour(newColour.x, newColour.y, newColour.z);
-          colour.brightness = brightness;
+          if(gouraudMode)
+          {
+            newColour = vec3(curr.colour.red, curr.colour.green, curr.colour.blue);
+            brightness = calculateGouraudBrightness(triangles, point, curr, u, v, rayDirection);
+            colour = Colour(newColour.x, newColour.y, newColour.z);
+            colour.brightness = brightness;
+          }
+          else if(phongMode)
+          {
+            newColour = vec3(curr.colour.red, curr.colour.green, curr.colour.blue);
+            brightness = calculatePhongBrightness(triangles, point, curr, u, v, rayDirection);
+            colour = Colour(newColour.x, newColour.y, newColour.z);
+            colour.brightness = brightness;
+          }
+          else
+          {
+            newColour = vec3(curr.colour.red, curr.colour.green, curr.colour.blue);
+            colour = Colour(newColour.x, newColour.y, newColour.z);
+            colour.brightness = brightness;
+          }
+          
         }
         result = RayTriangleIntersection(point, t, curr, colour);
       }
