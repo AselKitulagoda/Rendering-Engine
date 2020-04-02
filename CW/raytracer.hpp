@@ -165,23 +165,6 @@ float calculatePhongBrightness(vector<ModelTriangle> triangles, vec3 point, Mode
     brightness = (float) AMBIENCE;
   }
 
-  if(hardShadowMode)
-  {
-    vector<ModelTriangle> alteredTriangles = removeIntersectedTriangle(triangles, t);
-    bool shadow = checkHardShadow(point, pointToLight, alteredTriangles);
-    if(shadow)
-      brightness = 0.15f;
-  } 
-
-  if(softShadowMode)
-  {
-    vector<ModelTriangle> alteredTriangles = removeIntersectedTriangle(triangles, t);
-    float penumbra = checkSoftShadow(point, alteredTriangles);
-    float proportion = 1 - penumbra;
-    brightness *= proportion;
-    if(brightness < 0.15f) brightness = 0.15f;
-  }
-
   if(brightness > 1.0f)
   {
     brightness = 1.0f;
