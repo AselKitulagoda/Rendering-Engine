@@ -63,8 +63,8 @@ float calculateBrightness(vec3 point, ModelTriangle t, vec3 rayDirection, vector
   if(hardShadowMode)
   {
     vector<ModelTriangle> alteredTriangles = removeIntersectedTriangle(triangles, t);
-    bool shadow = checkHardShadow(point, pointToLight, alteredTriangles);
-    if(shadow)
+    bool hardShadow = checkHardShadow(point, pointToLight, alteredTriangles);
+    if(hardShadow)
       brightness = 0.15f;
   } 
 
@@ -72,8 +72,7 @@ float calculateBrightness(vec3 point, ModelTriangle t, vec3 rayDirection, vector
   {
     vector<ModelTriangle> alteredTriangles = removeIntersectedTriangle(triangles, t);
     float penumbra = checkSoftShadow(point, alteredTriangles);
-    float proportion = 1 - penumbra;
-    brightness *= proportion;
+    brightness *= (1 - penumbra);
     if(brightness < 0.15f) brightness = 0.15f;
   }
 
@@ -214,14 +213,14 @@ bool checkHardShadow(vec3 point, vec3 rayShadow, vector<ModelTriangle> alteredTr
 float checkSoftShadow(vec3 point, vector<ModelTriangle> alteredTriangles)
 {
   float penumbra = 0.0f;
-  float numOfShadows = 0.0f;
+  int count = 0;
   for(size_t i = 0; i < lightSources.size(); i++)
   {
-    vec3 pointToLight = lightSources.at(i) - point;
-    bool hardShadow = checkHardShadow(point, pointToLight, alteredTriangles);
-    if(hardShadow) numOfShadows += 1;
+    vec3 rayShadow = lightSources.at(i) - point;
+    bool shadow = checkHardShadow(point, rayShadow, alteredTriangles);
+    if(shadow) count += 1;
   }
-  penumbra = numOfShadows / ((float) lightSources.size());
+  penumbra = count / (float) lightSources.size();
   return penumbra;
 }
 

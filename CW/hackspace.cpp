@@ -12,7 +12,6 @@ mat3 rotateX(double theta, mat3 cameraOrien);
 mat3 rotateY(double theta, mat3 cameraOrien);
 mat3 lookAt(vec3 point);
 vec3 orbit(vec3 point, double orbitTheta);
-void saveToPPM();
 
 // Display and Event Stuff
 void update();
@@ -23,7 +22,6 @@ int main(int argc, char* argv[])
 {
   SDL_Event event;
 
-  lightSources = {lightSource, vec3(lightSource.x, lightSource.y + 0.5, lightSource.z)};
   triangleVertexNormals = updateVertexNormals(allTriangles);
   
   // Updating the reflectivity
@@ -44,6 +42,7 @@ int main(int argc, char* argv[])
       if (bool_flag == 0){
         window.clearPixels();
         drawWireframe(allTriangles);
+        // drawWireframe(cornellTriangles);
       }
       else if (bool_flag == 1){
         window.clearPixels();
@@ -206,6 +205,7 @@ void handleEvent(SDL_Event event)
       cout << "DRAWING WIREFRAME" << endl;
       window.clearPixels();
       drawWireframe(allTriangles);
+      // drawWireframe(cornellTriangles);
       bool_flag = 0;
     }
     else if(event.key.keysym.sym == SDLK_k) // rasterised
@@ -219,7 +219,8 @@ void handleEvent(SDL_Event event)
     {
       cout << "DRAWING RAYTRACED" << endl;
       window.clearPixels();
-      drawRaytraced(allTriangles);
+      // drawRaytraced(allTriangles);
+      drawRaytraced(cornellTriangles);
     }
     else if(event.key.keysym.sym == SDLK_m) // raytraced anti alias
     {
@@ -241,8 +242,10 @@ void handleEvent(SDL_Event event)
     }
     else if(event.key.keysym.sym == SDLK_p) // save image
     {
-      cout << "saved PPM" << endl;
-      saveToPPM();
+      cout << "saved PPM, file num = " << filenum << endl;
+      savePPM(filepath);
+      filenum++;
+      filepath = "frames/" + std::to_string(filenum) + ".ppm";
     }
     else if(event.key.keysym.sym == SDLK_b) // backface culling mode
     {

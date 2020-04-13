@@ -56,7 +56,7 @@ vector<uint32_t> loadImage();
 
 // Saving PPM Image
 void unpack(uint32_t col, std::ostream& fs);
-void savePPM();
+void savePPM(string filepath);
 
 // 3D to 2D projection
 CanvasTriangle modelToCanvas(ModelTriangle modelTrig);
@@ -94,7 +94,13 @@ vec3 unpackColour(uint32_t col);
 vector<TexturePoint> texpoints;
 
 vec3 lightSource = vec3(-0.0315915, 1.20455, -0.6108);
-vector<vec3> lightSources;
+vector<vec3> lightSources = { vec3(lightSource.x - 0.25f, lightSource.y, lightSource.z),
+                              vec3(lightSource.x - 0.2f, lightSource.y, lightSource.z), 
+                              vec3(lightSource.x - 0.15f, lightSource.y, lightSource.z),
+                              lightSource,
+                              vec3(lightSource.x + 0.15f, lightSource.y, lightSource.z),
+                              vec3(lightSource.x + 0.2f, lightSource.y, lightSource.z),
+                              vec3(lightSource.x + 0.25f, lightSource.y, lightSource.z) };
 int hardShadowMode = 0;
 int softShadowMode = 0;
 int gouraudMode = 0;
@@ -104,6 +110,9 @@ bool reflectiveMode = false;
 vector<uint32_t> pixelColours = loadImage();
 int texWidth;
 int texHeight;
+
+int filenum = 0;
+string filepath = "frames/" + std::to_string(filenum) + ".ppm";
 
 vector<ModelTriangle> combineTriangles(vector<ModelTriangle> triangles, vector<ModelTriangle> cornellTriangles)
 {
@@ -607,10 +616,10 @@ vec3 unpackColour(uint32_t col)
   return vec3(red, green, blue);
 } 
 
-void saveToPPM()
+void savePPM(string filepath)
 {
   ofstream fs;
-  fs.open("frame.ppm", std::ofstream::out | std::ofstream::trunc);
+  fs.open(filepath, std::ofstream::out | std::ofstream::trunc);
   fs << "P6\n";
   fs << to_string(WIDTH) << " " << to_string(HEIGHT) << "\n";
   fs << "255\n";
