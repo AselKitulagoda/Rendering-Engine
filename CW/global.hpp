@@ -94,13 +94,19 @@ vec3 unpackColour(uint32_t col);
 vector<TexturePoint> texpoints;
 
 vec3 lightSource = vec3(-0.0315915, 1.20455, -0.6108);
-vector<vec3> lightSources = { vec3(lightSource.x - 0.25f, lightSource.y, lightSource.z),
-                              vec3(lightSource.x - 0.2f, lightSource.y, lightSource.z), 
-                              vec3(lightSource.x - 0.15f, lightSource.y, lightSource.z),
+vector<vec3> lightSources = { vec3(lightSource.x - 0.12f, lightSource.y, lightSource.z),
+                              vec3(lightSource.x - 0.1f, lightSource.y, lightSource.z), 
+                              vec3(lightSource.x - 0.08f, lightSource.y, lightSource.z),
+                              vec3(lightSource.x - 0.06f, lightSource.y, lightSource.z),
+                              vec3(lightSource.x - 0.04f, lightSource.y, lightSource.z),
+                              vec3(lightSource.x - 0.02f, lightSource.y, lightSource.z),
                               lightSource,
-                              vec3(lightSource.x + 0.15f, lightSource.y, lightSource.z),
-                              vec3(lightSource.x + 0.2f, lightSource.y, lightSource.z),
-                              vec3(lightSource.x + 0.25f, lightSource.y, lightSource.z) };
+                              vec3(lightSource.x + 0.02f, lightSource.y, lightSource.z),
+                              vec3(lightSource.x + 0.04f, lightSource.y, lightSource.z),
+                              vec3(lightSource.x + 0.06f, lightSource.y, lightSource.z),
+                              vec3(lightSource.x + 0.08f, lightSource.y, lightSource.z),
+                              vec3(lightSource.x + 0.1f, lightSource.y, lightSource.z),
+                              vec3(lightSource.x + 0.12f, lightSource.y, lightSource.z) };
 int hardShadowMode = 0;
 int softShadowMode = 0;
 int gouraudMode = 0;

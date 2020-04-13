@@ -42,7 +42,6 @@ int main(int argc, char* argv[])
       if (bool_flag == 0){
         window.clearPixels();
         drawWireframe(allTriangles);
-        // drawWireframe(cornellTriangles);
       }
       else if (bool_flag == 1){
         window.clearPixels();
@@ -205,7 +204,6 @@ void handleEvent(SDL_Event event)
       cout << "DRAWING WIREFRAME" << endl;
       window.clearPixels();
       drawWireframe(allTriangles);
-      // drawWireframe(cornellTriangles);
       bool_flag = 0;
     }
     else if(event.key.keysym.sym == SDLK_k) // rasterised
@@ -219,8 +217,7 @@ void handleEvent(SDL_Event event)
     {
       cout << "DRAWING RAYTRACED" << endl;
       window.clearPixels();
-      // drawRaytraced(allTriangles);
-      drawRaytraced(cornellTriangles);
+      drawRaytraced(allTriangles);
     }
     else if(event.key.keysym.sym == SDLK_m) // raytraced anti alias
     {
