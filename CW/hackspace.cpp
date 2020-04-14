@@ -269,6 +269,11 @@ void handleEvent(SDL_Event event)
       phongMode = !phongMode;
       cout << "PHONG MODE = " << phongMode << endl;
     }
+    else if(event.key.keysym.sym == SDLK_5) // Wu Lines (Anti-aliasing)
+    {
+      wuMode = !wuMode;
+      cout << "WU LINES MODE = " << wuMode << endl;
+    }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
 }

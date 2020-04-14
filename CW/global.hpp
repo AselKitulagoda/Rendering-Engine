@@ -112,6 +112,7 @@ int softShadowMode = 0;
 int gouraudMode = 0;
 int phongMode = 0;
 bool cullingMode = 0;
+int wuMode = 0;
 bool reflectiveMode = false;
 vector<uint32_t> pixelColours = loadImage();
 int texWidth;
