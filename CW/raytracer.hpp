@@ -270,8 +270,8 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
         intersection_col=checkcols[round(tex_point_final.x) + round(tex_point_final.y) * texWidth];
         }
         if (curr.tag == "hackspace"){
-        if (round(tex_point_final.x)<300 && round(tex_point_final.x)>0 && round(tex_point_final.y)<300 && round(tex_point_final.y)>0)
-        intersection_col=pixelColours[round(tex_point_final.x) + round(tex_point_final.y) * texWidth];
+          if (round(tex_point_final.x)<300 && round(tex_point_final.x)>0 && round(tex_point_final.y)<300 && round(tex_point_final.y)>0)
+            intersection_col=pixelColours[round(tex_point_final.x) + round(tex_point_final.y) * texWidth];
         }
         
         Colour colour = Colour();
@@ -397,6 +397,21 @@ void drawRaytraceAntiAlias(vector<ModelTriangle> triangles)
       {
         vec3 ray = computeRayDirection(x + quincunx.at(i).x, y + quincunx.at(i).y);
         RayTriangleIntersection closestIntersect = getClosestIntersection(cameraPos, ray, triangles);
+
+        // Do reflection
+        if(reflectiveMode)
+        {
+          if(closestIntersect.intersectedTriangle.colour.reflectivity > 0.0f)
+          { 
+            vector<ModelTriangle> reflectionTriangles = removeIntersectedTriangle(triangles, closestIntersect.intersectedTriangle);
+            vec3 incidentRay = glm::normalize(closestIntersect.intersectionPoint - cameraPos);
+            vec3 reflectedRay = computeReflectedRay(incidentRay, closestIntersect.intersectedTriangle);
+            RayTriangleIntersection mirrorIntersect = getClosestIntersection(closestIntersect.intersectionPoint, reflectedRay, reflectionTriangles);
+            if(mirrorIntersect.distanceFromCamera == -INFINITY) closestIntersect.colour = Colour(0, 0, 0);
+            else closestIntersect.colour = mirrorIntersect.colour;
+          }
+        }
+
         if(closestIntersect.distanceFromCamera != -INFINITY)
         {
           finalColours.push_back(closestIntersect.colour);

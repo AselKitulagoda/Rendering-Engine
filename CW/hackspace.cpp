@@ -39,13 +39,16 @@ int main(int argc, char* argv[])
     if(window.pollForInputEvents(&event))
     {
       handleEvent(event);
-      if (bool_flag == 0){
-        window.clearPixels();
-        drawWireframe(allTriangles);
-      }
-      else if (bool_flag == 1){
-        window.clearPixels();
-        drawRasterised(combinedTriangles);
+      if(event.type == SDL_KEYDOWN)
+      {
+        if (bool_flag == 0){
+          window.clearPixels();
+          drawWireframe(allTriangles);
+        }
+        else if (bool_flag == 1){
+          window.clearPixels();
+          drawRasterised(combinedTriangles);
+        }
       }
     }
     update();
@@ -223,7 +226,7 @@ void handleEvent(SDL_Event event)
     {
       cout << "DRAWING RAYTRACED ANTI ALIAS" << endl;
       window.clearPixels();
-      drawRaytraceAntiAlias(combinedTriangles);
+      drawRaytraceAntiAlias(allTriangles);
     }
     else if(event.key.keysym.sym == SDLK_q) // orbit
     {
@@ -242,7 +245,7 @@ void handleEvent(SDL_Event event)
       cout << "saved PPM, file num = " << filenum << endl;
       savePPM(filepath);
       filenum++;
-      filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
+      filepath = "raytracer_frames/" + std::to_string(filenum) + ".ppm";
     }
     else if(event.key.keysym.sym == SDLK_b) // backface culling mode
     {

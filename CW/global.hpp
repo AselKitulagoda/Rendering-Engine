@@ -87,13 +87,9 @@ vector<Colour> cornellColours = readMaterial(MTL_CORNELL);
 
 // Loading Triangles
 vector<ModelTriangle> sphereTriangles = readSphere(SCALE_SPHERE);
-vector <ModelTriangle> allTriangles = addSphereTriangles(readSphere(SCALE_SPHERE),combineTriangles(readObj(SCALE_FACTOR,"logo.obj"),combineTriangles(readGround(SCALE_CORNELL,"ground.obj"),readCornellBox(SCALE_CORNELL))));
-vector <ModelTriangle> combinedTriangles = addSphereTriangles(readSphere(SCALE_SPHERE),combineTriangles(readObj(SCALE_FACTOR,"logo.obj"),combineTriangles(readGround(SCALE_CORNELL,"ground.obj"),readCornellBox(SCALE_CORNELL))));
-// vector<ModelTriangle> triangles = readObj(SCALE_FACTOR,"logo.obj");
-//vector<ModelTriangle> cornellTriangles = readCornellBox(SCALE_CORNELL);
-// vector<ModelTriangle> sphereTriangles = readSphere(SCALE_SPHERE);
-// vector<ModelTriangle> combinedTriangles = combineTriangles(triangles, cornellTriangles);
-// vector<ModelTriangle> allTriangles = addSphereTriangles(combinedTriangles, sphereTriangles);
+vector <ModelTriangle> allTriangles = combineTriangles(combineTriangles(sphereTriangles,readObj(SCALE_FACTOR,"logo.obj")),combineTriangles(readGround(SCALE_CORNELL,"ground.obj"),readCornellBox(SCALE_CORNELL)));
+vector <ModelTriangle> combinedTriangles = combineTriangles(combineTriangles(readObj(SCALE_FACTOR,"logo.obj"),sphereTriangles),combineTriangles(readGround(SCALE_CORNELL,"ground.obj"),readCornellBox(SCALE_CORNELL)));
+
 vector<pair<ModelTriangle, vector<vec3>>> triangleVertexNormals;
 vec3 unpackColour(uint32_t col);
 
@@ -124,8 +120,8 @@ vector<uint32_t> checkcols = loadCheckImage("chessNEW.ppm");
 int texWidth;
 int texHeight;
 
-int filenum = 0;
-string filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
+int filenum = 133;
+string filepath = "raytracer_frames/" + std::to_string(filenum) + ".ppm";
 
 vector<ModelTriangle> combineTriangles(vector<ModelTriangle> triangles, vector<ModelTriangle> cornellTriangles)
 {
