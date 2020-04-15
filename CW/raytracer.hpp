@@ -266,9 +266,11 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
 
         uint32_t intersection_col=0;
         if (curr.tag == "checker"){
+    
         intersection_col=checkcols[round(tex_point_final.x) + round(tex_point_final.y) * texWidth];
         }
         if (curr.tag == "hackspace"){
+        if (round(tex_point_final.x)<300 && round(tex_point_final.x)>0 && round(tex_point_final.y)<300 && round(tex_point_final.y)>0)
         intersection_col=pixelColours[round(tex_point_final.x) + round(tex_point_final.y) * texWidth];
         }
         
