@@ -125,7 +125,7 @@ int texWidth;
 int texHeight;
 
 int filenum = 0;
-string filepath = "frames/" + std::to_string(filenum) + ".ppm";
+string filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
 
 vector<ModelTriangle> combineTriangles(vector<ModelTriangle> triangles, vector<ModelTriangle> cornellTriangles)
 {
@@ -351,6 +351,11 @@ vector<ModelTriangle> readCornellBox(float scale)
       {
         mat = splitcomment[1];
         Colour tricolour = getColourFromName(mat,cornellColours);
+        if(mat == "Magenta")
+        {
+          mat = "Yellow";
+          tricolour = getColourFromName(mat,cornellColours);
+        } 
         tricolour.name = mat;
         tricolour.reflectivity = 0.0f;
 

@@ -1,1 +1,1 @@
-ffmpeg -framerate 30 -i frames/%d.ppm -c:v libx264 -profile:v high -crf 18 -pix_fmt yuv420p output.mp4
+ffmpeg -framerate 15 -i frames/%d.ppm -c:v libx264 -profile:v high -crf 18 -pix_fmt yuv420p -q 4 output.mp4

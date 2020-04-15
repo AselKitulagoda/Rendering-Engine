@@ -242,7 +242,7 @@ void handleEvent(SDL_Event event)
       cout << "saved PPM, file num = " << filenum << endl;
       savePPM(filepath);
       filenum++;
-      filepath = "frames/" + std::to_string(filenum) + ".ppm";
+      filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
     }
     else if(event.key.keysym.sym == SDLK_b) // backface culling mode
     {
