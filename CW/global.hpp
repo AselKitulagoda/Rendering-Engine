@@ -31,6 +31,7 @@ using namespace glm;
 #define MTL_CORNELL "cornell-box.mtl"
 #define OBJ_CORNELL "cornell-box.obj"
 
+
 #define OBJ_SPHERE "sphere.obj"
 
 #define CAMERA_X 0
@@ -46,13 +47,14 @@ bool inRange(float val, float v1, float v2);
 
 // OBJ Stuff
 vector<Colour> readMaterial(string fname);
-vector<ModelTriangle> readObj(float scale);
+vector<ModelTriangle> readObj(float scale,string objpath);
+vector<ModelTriangle> readGround(float scale,string objpath);
 Colour getColourFromName(string mat, vector<Colour> colours);
 vector<ModelTriangle> readCornellBox(float scale);
 vector<ModelTriangle> readSphere(float scale);
 
 // Texturing Stuff
-vector<uint32_t> loadImage();
+vector<uint32_t> loadImage(string texPath);
 
 // Saving PPM Image
 void unpack(uint32_t col, std::ostream& fs);
@@ -64,6 +66,7 @@ CanvasTriangle modelToCanvas(ModelTriangle modelTrig);
 // Backface Culling
 vec3 getTriangleCentroid(ModelTriangle t);
 vector<ModelTriangle> backfaceCulling(vector<ModelTriangle> triangles);
+vector<uint32_t> loadCheckImage(string TexPath);
 
 // Combining triangles
 vector<ModelTriangle> combineTriangles(vector<ModelTriangle> triangles, vector<ModelTriangle> cornellTriangles);
@@ -83,15 +86,17 @@ mat3 cameraOrientation = mat3(1.0f);
 vector<Colour> cornellColours = readMaterial(MTL_CORNELL);
 
 // Loading Triangles
-vector<ModelTriangle> triangles = readObj(SCALE_FACTOR);
-vector<ModelTriangle> cornellTriangles = readCornellBox(SCALE_CORNELL);
 vector<ModelTriangle> sphereTriangles = readSphere(SCALE_SPHERE);
-vector<ModelTriangle> combinedTriangles = combineTriangles(triangles, cornellTriangles);
-vector<ModelTriangle> allTriangles = addSphereTriangles(combinedTriangles, sphereTriangles);
+vector <ModelTriangle> allTriangles = addSphereTriangles(readSphere(SCALE_SPHERE),combineTriangles(readObj(SCALE_FACTOR,"logo.obj"),combineTriangles(readGround(SCALE_CORNELL,"ground.obj"),readCornellBox(SCALE_CORNELL))));
+vector <ModelTriangle> combinedTriangles = addSphereTriangles(readSphere(SCALE_SPHERE),combineTriangles(readObj(SCALE_FACTOR,"logo.obj"),combineTriangles(readGround(SCALE_CORNELL,"ground.obj"),readCornellBox(SCALE_CORNELL))));
+// vector<ModelTriangle> triangles = readObj(SCALE_FACTOR,"logo.obj");
+//vector<ModelTriangle> cornellTriangles = readCornellBox(SCALE_CORNELL);
+// vector<ModelTriangle> sphereTriangles = readSphere(SCALE_SPHERE);
+// vector<ModelTriangle> combinedTriangles = combineTriangles(triangles, cornellTriangles);
+// vector<ModelTriangle> allTriangles = addSphereTriangles(combinedTriangles, sphereTriangles);
 vector<pair<ModelTriangle, vector<vec3>>> triangleVertexNormals;
 vec3 unpackColour(uint32_t col);
 
-vector<TexturePoint> texpoints;
 
 vec3 lightSource = vec3(-0.0315915, 1.20455, -0.6108);
 vector<vec3> lightSources = { vec3(lightSource.x - 0.12f, lightSource.y, lightSource.z),
@@ -114,7 +119,8 @@ int phongMode = 0;
 bool cullingMode = 0;
 int wuMode = 0;
 bool reflectiveMode = false;
-vector<uint32_t> pixelColours = loadImage();
+vector<uint32_t> pixelColours = loadImage("texture.ppm");
+vector<uint32_t> checkcols = loadCheckImage("chessNEW.ppm");
 int texWidth;
 int texHeight;
 
@@ -161,13 +167,20 @@ vector<CanvasPoint> interpolate(CanvasPoint from, CanvasPoint to, int numberOfVa
   vector<CanvasPoint> vals;
   for(int i = 0; i <= numberOfValues; i++)
   {
+    //Interpolate between from and two
+    //initialise canvas Point
     CanvasPoint p;
+    //Normal interpolation for x and y
     p.x = from.x + (i * (to.x - from.x)/numberOfValues);
     p.y = from.y + (i * (to.y - from.y)/numberOfValues);
+    //Interpolate texture Points normally for x and y
     p.texturePoint.x = from.texturePoint.x + (i * (to.texturePoint.x - from.texturePoint.x)/numberOfValues);
     p.texturePoint.y = from.texturePoint.y + (i * (to.texturePoint.y - from.texturePoint.y)/numberOfValues);
+    //Interpolate depth for each Point shouldn't happen like this because extraPoint depth is not set
     double depth = from.depth + (i * (to.depth - from.depth)/numberOfValues);
+    //set depth for each CanvasPoint
     p.depth = depth;
+    //Push each CanvasPoint to a vector to return
     vals.push_back(p);
   }
   return vals;
@@ -175,25 +188,39 @@ vector<CanvasPoint> interpolate(CanvasPoint from, CanvasPoint to, int numberOfVa
 
 CanvasTriangle modelToCanvas(ModelTriangle modelTrig)
 {
+    // f here is focal length set it to -3 so it is behind the camera
     float f = -3;
+    // initialise empty canvas triangle
     CanvasTriangle canvasTrig = CanvasTriangle();
+    //set Canvas Triangle colour to model triangle colour already pre packed
     canvasTrig.colour = modelTrig.colour;
+    //iterate through each of the vertices in the model triangle
     for(int i=0; i<3 ;i++) {
+        //set for each vertices(x,y,z) to position relative to the camera position(0,0.9,2) at the moment
         float xdistance = modelTrig.vertices[i].x-cameraPos.x;
         float ydistance = modelTrig.vertices[i].y-cameraPos.y;
         float zdistance = modelTrig.vertices[i].z-cameraPos.z;
+        // this is the vertex position relate to the camera
         vec3 cameraToVertex = vec3(xdistance, ydistance, zdistance);
+        //adjusted vector is the camera orientation initially mat3x3(1.0f) multipied by vertices by vertex position relative to camera gives vector from camera to image plane for the vertex
         vec3 adjustedVector = cameraOrientation * cameraToVertex;
+        // pScreen is the depth relate to the camera since image is focal length away depth has to be adjusted to be on the image plane
         float pScreen = f/adjustedVector.z;
         // Scale up the x and y canvas coords to get a bigger image (rather than a big model loader scaling)
         float canvasScaling = 150;
+        // this is x and y co-ord relative to canvas multiply by canvas scaling to get bigger image and add width+height so it ends up is centre screen 
         float xProj = (adjustedVector.x*pScreen*canvasScaling) + WIDTH/2;
         float yProj = (-adjustedVector.y*pScreen*canvasScaling) + HEIGHT/2;
+        //finally converts vertex to a Canvas Point
         CanvasPoint p = CanvasPoint(xProj, yProj);
         p.depth = 1.0/adjustedVector.z;
-        p.texturePoint = TexturePoint(modelTrig.texturepoints[i].x*texWidth , modelTrig.texturepoints[i].y* texHeight);
+        // initialises texture point for each vertex
+        
+        // p.texturePoint = TexturePoint(modelTrig.texturepoints[i].x*texWidth , modelTrig.texturepoints[i].y* texHeight);
+        p.texturePoint = TexturePoint(modelTrig.texturepoints[i].x/adjustedVector.z , modelTrig.texturepoints[i].y/adjustedVector.z);
         canvasTrig.vertices[i] = p;
     }
+    //returns Canvas Triangle with texture point + canvas points initialised + colour attribute initialised
     return canvasTrig;
 }
 
@@ -364,13 +391,14 @@ vector<ModelTriangle> readCornellBox(float scale)
   return tris;
 }
 
-vector<ModelTriangle> readObj(float scale)
+vector<ModelTriangle> readObj(float scale,string objpath)
 {
+  vector<TexturePoint> texpoints;
   vector <ModelTriangle> tris;
   ifstream fp;
   
   vector<vec3> vertic;
-  fp.open(OBJPATH);
+  fp.open(objpath);
 
   if(fp.fail())
     cout << "fails" << endl;
@@ -396,7 +424,7 @@ vector<ModelTriangle> readObj(float scale)
             float x = stof(splitcomment[1]) * scale;
             float y = stof(splitcomment[2]) * scale;
             float z = stof(splitcomment[3]) * scale;
-            vec3 verts = vec3(x - 0.7, y - 0.1, z - 0.5);
+            vec3 verts = vec3(x- 0.7 , y- 0.1, z- 0.5);
             vertic.push_back(verts);
           }
           else
@@ -415,6 +443,7 @@ vector<ModelTriangle> readObj(float scale)
   getline(fp,newline);
   getline(fp,newline);
 
+    
   while(!fp.eof()){
     string comment_new;
       bool not_reach = true;
@@ -461,12 +490,132 @@ vector<ModelTriangle> readObj(float scale)
               int first_tex_index = stoi(splitcomment[1].substr((splitcomment[1].find('/')+1),splitcomment[1].length()));
               int second_tex_index = stoi(splitcomment[2].substr(splitcomment[2].find('/')+1,splitcomment[2].length()));
               int third_tex_index = stoi(splitcomment[3].substr(splitcomment[3].find('/')+1,splitcomment[3].length()));
-              
               vec2 first_tex_point = vec2(texpoints[first_tex_index-1].x,texpoints[first_tex_index-1].y);
               vec2 second_tex_point = vec2(texpoints[second_tex_index-1].x,texpoints[second_tex_index-1].y);
               vec2 third_tex_point = vec2(texpoints[third_tex_index-1].x,texpoints[third_tex_index-1].y);
               ModelTriangle tri = ModelTriangle(vertic[first_vert-1], vertic[second_vert-1], vertic[third_vert-1], Colour(255,255,255,0.0f), first_tex_point, second_tex_point, third_tex_point);
               tri.tag = "hackspace";
+              tris.push_back(tri);
+            }
+            else{break;}
+
+          }
+          if (fp.eof())
+            not_reach=false;
+        }
+    }
+  }
+  fp.close();
+  return tris;
+}
+
+vector<ModelTriangle> readGround (float scale,string objpath)
+{
+  vector<TexturePoint> texpoints;
+  vector <ModelTriangle> tris;
+  ifstream fp;
+  
+  vector<vec3> vertic;
+  fp.open(objpath);
+
+  if(fp.fail())
+    cout << "fails" << endl;
+
+  string newline;
+  getline(fp,newline);
+  getline(fp,newline);
+  getline(fp,newline);
+  getline(fp,newline);
+  while(!fp.eof())
+  {
+    string comment;
+    getline(fp, comment);
+
+    if (!comment.empty())
+    {
+      while(true)
+      {
+      
+        if (!comment.empty())
+        {
+          string *splitcomment = split(comment,' ');
+          if (splitcomment[0]=="v")
+          {
+            float x = stof(splitcomment[1]) * scale;
+            float y = stof(splitcomment[2]) * scale;
+            float z = stof(splitcomment[3]) * scale;
+            vec3 verts = vec3(x, y , z);
+            vertic.push_back(verts);
+          }
+          else
+          {
+            break;
+          }
+        }
+        getline(fp,comment);
+      }
+    }
+
+  fp.clear();
+  fp.seekg(0,ios::beg);
+  if(fp.fail())
+    cout << "fails" << endl;
+  getline(fp,newline);
+  getline(fp,newline);
+    
+  while(!fp.eof()){
+    string comment_new;
+      bool not_reach = true;
+        while (not_reach)
+        {
+          getline(fp,comment_new);
+          string *splitcomment = split(comment_new,' ');
+          if (!comment_new.empty())
+          {
+            if (splitcomment[0] == "vt"){
+                float x_tex = stof(splitcomment[1]);
+                float y_tex = stof(splitcomment[2]);
+                texpoints.push_back(TexturePoint(x_tex, y_tex));
+              }
+            else{break;}
+          }
+          if (fp.eof())
+            not_reach=false;
+        }
+  }
+
+  fp.clear();
+  fp.seekg(0,ios::beg);
+  if(fp.fail())
+    cout << "fails" << endl;
+  getline(fp,newline);
+  getline(fp,newline);
+
+  while(!fp.eof())
+  {
+    string comment_new;
+      bool not_reach = true;
+        while (not_reach)
+        {
+          getline(fp,comment_new);
+          string *splitcomment = split(comment_new,' ');
+          if (!comment_new.empty())
+          {
+            if (splitcomment[0]=="f")
+            {
+              int first_vert = stoi(splitcomment[1].substr(0, splitcomment[1].find('/')));
+              int second_vert = stoi(splitcomment[2].substr(0, splitcomment[2].find('/')));
+              int third_vert = stoi(splitcomment[3].substr(0, splitcomment[3].find('/')));
+              // int first_tex_index = stoi(splitcomment[1].substr((splitcomment[1].find('/')+1),splitcomment[1].length()));
+              // int second_tex_index = stoi(splitcomment[2].substr(splitcomment[2].find('/')+1,splitcomment[2].length()));
+              // int third_tex_index = stoi(splitcomment[3].substr(splitcomment[3].find('/')+1,splitcomment[3].length()));
+              vec2 first_tex_point = vec2(texpoints[first_vert-1].x,texpoints[first_vert-1].y);
+              vec2 second_tex_point = vec2(texpoints[second_vert-1].x,texpoints[second_vert-1].y);
+              vec2 third_tex_point = vec2(texpoints[third_vert-1].x,texpoints[third_vert-1].y);
+              // cout << vertic[first_vert-1].x << endl;
+              // cout << second_vert << endl;
+              ModelTriangle tri = ModelTriangle(vertic[first_vert-1], vertic[second_vert-1], vertic[third_vert-1], Colour(255,255,255,0.0f), first_tex_point, second_tex_point, third_tex_point);
+              tri.tag = "checker";
               tris.push_back(tri);
             }
             else{break;}
@@ -564,10 +713,10 @@ vector<ModelTriangle> readSphere(float scale)
   return tris;
 }
 
-vector<uint32_t> loadImage()
+vector<uint32_t> loadImage(string TexPath)
 {
   ifstream fp;
-  fp.open(TEXPATH);
+  fp.open(TexPath);
 
   string magicNum, comment, dimensions, byteSize;
   getline(fp, magicNum);
@@ -585,6 +734,48 @@ vector<uint32_t> loadImage()
 
   vector<Colour> pixelVals;
   for(int i = 0; i < (width * height); i++)
+  {
+    Colour c;
+    c.red = fp.get();
+    c.green = fp.get();
+    c.blue = fp.get();
+    pixelVals.push_back(c);
+  }
+
+  vector<uint32_t> converted;
+  for(size_t i = 0; i < pixelVals.size(); i++)
+  { 
+    Colour c = pixelVals[i];
+    uint32_t colour = (255<<24) + (int(c.red)<<16) + (int(c.green)<<8) + int(c.blue);
+    converted.push_back(colour);
+  }
+
+  return converted;
+
+}
+
+vector<uint32_t> loadCheckImage(string TexPath)
+{
+  cout << "entered" << endl;
+  ifstream fp;
+  fp.open(TexPath);
+
+  string magicNum, comment, dimensions, byteSize;
+  getline(fp, magicNum);
+  getline(fp, dimensions);
+  getline(fp, byteSize);
+
+  int whiteSpacePos = dimensions.find(" ");
+  int newLinePos = dimensions.find('\n');
+  cout << dimensions << endl;
+  int width = stoi(dimensions.substr(0, whiteSpacePos));
+  texWidth = width;
+  int height = stoi(dimensions.substr(whiteSpacePos, newLinePos));
+  cout << "made it" << endl;
+  texHeight = height;
+
+  vector<Colour> pixelVals;
+  for(int i = 0; i < (738 * 738); i++)
   {
     Colour c;
     c.red = fp.get();

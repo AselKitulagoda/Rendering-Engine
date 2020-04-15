@@ -249,14 +249,28 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
     {
       if(t < result.distanceFromCamera)
       {
+        if (curr.tag == "hackspace"){
+          texHeight = 300;
+          texWidth = 300;
+        }
+        else if(curr.tag == "checker") {
+          texWidth = 738;
+          texHeight = 738;
+        }
         vec3 point = curr.vertices[0] + (u * e0) + (v * e1);
         float brightness = calculateBrightness(point, curr, rayDirection, triangles);
 
-        vec2 e0_tex = curr.texturepoints[1]*300.0f - curr.texturepoints[0]*300.0f;
-        vec2 e1_tex = curr.texturepoints[2]*300.0f - curr.texturepoints[0]*300.0f;
-        vec2 tex_point_final = curr.texturepoints[0]*300.0f + (u * e0_tex) + (v * e1_tex);
+        vec2 e0_tex = curr.texturepoints[1]*float(texWidth) - curr.texturepoints[0]*float(texWidth);
+        vec2 e1_tex = curr.texturepoints[2]*float(texWidth) - curr.texturepoints[0]*float(texHeight);
+        vec2 tex_point_final = curr.texturepoints[0]*float(texWidth) + (u * e0_tex) + (v * e1_tex);
 
-        uint32_t intersection_col = pixelColours[round(tex_point_final.x) + round(tex_point_final.y) * texWidth];
+        uint32_t intersection_col=0;
+        if (curr.tag == "checker"){
+        intersection_col=checkcols[round(tex_point_final.x) + round(tex_point_final.y) * texWidth];
+        }
+        if (curr.tag == "hackspace"){
+        intersection_col=pixelColours[round(tex_point_final.x) + round(tex_point_final.y) * texWidth];
+        }
         
         Colour colour = Colour();
         vec3 newColour;
@@ -267,7 +281,7 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
           colour = Colour(newColour.x, newColour.y, newColour.z);
           colour.brightness = brightness;
         }
-        else if(curr.tag == "hackspace")
+        else if(curr.tag == "hackspace" || curr.tag == "checker")
         { 
           newColour = unpackColour(intersection_col);
           colour = Colour(newColour.x, newColour.y, newColour.z);
