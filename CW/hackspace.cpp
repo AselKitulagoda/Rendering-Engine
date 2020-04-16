@@ -93,6 +93,21 @@ mat3 rotateY(double theta, mat3 cameraOrien)
   return newCameraOrien;
 }
 
+mat3 rotateZ(double theta, mat3 cameraOrien) 
+{
+  mat3 newCameraOrien;
+  mat3 rotMatrix = mat3(1.0f);
+
+  theta = radians(theta);
+
+  rotMatrix[0] = vec3(cos(theta), -sin(theta), 0.0);
+  rotMatrix[1] = vec3(sin(theta), cos(theta), 0.0);
+  rotMatrix[2] = vec3(0.0, 0.0, 1.0);
+
+  newCameraOrien = rotMatrix * cameraOrien;
+  return newCameraOrien;
+}
+
 void resetCameraStuff()
 {
   cameraPos = vec3(CAMERA_X, CAMERA_Y, CAMERA_Z);
@@ -150,21 +165,25 @@ void handleEvent(SDL_Event event)
     {
       cout << "TRANSLATE UP" << endl;
       cameraPos.y -= 0.1;
+      printVec3("camera Pos", cameraPos);
     }
     else if(event.key.keysym.sym == SDLK_DOWN) // camera y translate
     {
       cout << "TRANSLATE DOWN" << endl;
       cameraPos.y += 0.1;
+      printVec3("camera Pos", cameraPos);
     }
     else if(event.key.keysym.sym == SDLK_z) // camera z translate
     {
       cout << "TRANSLATE Z" << endl;
       cameraPos.z += 0.1;
+      printVec3("camera Pos", cameraPos);
     }
     else if(event.key.keysym.sym == SDLK_x) // camera z translate
     {
       cout << "TRANSLATE Z" << endl;
       cameraPos.z -= 0.1;
+      printVec3("camera Pos", cameraPos);
     }
     else if(event.key.keysym.sym == SDLK_c) // clear screen
     {
@@ -192,6 +211,18 @@ void handleEvent(SDL_Event event)
       cout << "ROTATE Y OTHER" << endl;
       cameraOrientation = rotateY(-1.0, cameraOrientation);
     }
+    else if(event.key.keysym.sym == SDLK_f) // camera rotate Z
+    {
+      cout << "ROTATE Z" << endl;
+      cameraOrientation = rotateZ(1.0, cameraOrientation);
+      printMat3("camera orien", cameraOrientation);
+    }
+    else if(event.key.keysym.sym == SDLK_g) // camera rotate Z
+    {
+      cout << "ROTATE Z OTHER" << endl;
+      cameraOrientation = rotateZ(-1.0, cameraOrientation);
+      printMat3("camera orien", cameraOrientation);
+    }
     else if(event.key.keysym.sym == SDLK_o) // toggle hard shadow mode
     {
       hardShadowMode = !hardShadowMode;
@@ -201,6 +232,8 @@ void handleEvent(SDL_Event event)
     {
       cout << "RESET CAMERA POS" << endl;
       resetCameraStuff();
+      printVec3("camera Pos", cameraPos);
+      printMat3("camera orien", cameraOrientation);
     }
     else if(event.key.keysym.sym == SDLK_j) // wireframe
     {
@@ -226,7 +259,7 @@ void handleEvent(SDL_Event event)
     {
       cout << "DRAWING RAYTRACED ANTI ALIAS" << endl;
       window.clearPixels();
-      drawRaytraceAntiAlias(allTriangles);
+      drawRaytraceAntiAlias(combinedTriangles);
     }
     else if(event.key.keysym.sym == SDLK_q) // orbit
     {
@@ -245,7 +278,7 @@ void handleEvent(SDL_Event event)
       cout << "saved PPM, file num = " << filenum << endl;
       savePPM(filepath);
       filenum++;
-      filepath = "raytracer_frames/" + std::to_string(filenum) + ".ppm";
+      filepath = "frames/" + std::to_string(filenum) + ".ppm";
     }
     else if(event.key.keysym.sym == SDLK_b) // backface culling mode
     {

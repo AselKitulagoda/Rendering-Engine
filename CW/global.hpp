@@ -120,8 +120,8 @@ vector<uint32_t> checkcols = loadCheckImage("chessNEW.ppm");
 int texWidth;
 int texHeight;
 
-int filenum = 133;
-string filepath = "raytracer_frames/" + std::to_string(filenum) + ".ppm";
+int filenum = 0;
+string filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
 
 vector<ModelTriangle> combineTriangles(vector<ModelTriangle> triangles, vector<ModelTriangle> cornellTriangles)
 {
@@ -223,6 +223,13 @@ CanvasTriangle modelToCanvas(ModelTriangle modelTrig)
 void printVec3(string text, vec3 vector)
 {
   cout << text << " = " << "(" << vector.x << ", " << vector.y << ", " << vector.z << ")" << endl;
+}
+
+void printMat3(string text, mat3 matrix)
+{
+  cout << text << " = " << "[ [" << matrix[0][0] << ", " << matrix[0][1] << ", " << matrix[0][2] << "]" << endl;
+  cout << "[" << matrix[1][0] << ", " << matrix[1][1] << ", " << matrix[1][2] << "]" << endl;
+  cout << "[" << matrix[2][0] << ", " << matrix[2][1] << ", " << matrix[2][2] << "] ]" << endl;
 }
 
 bool inRange(float val, float v1, float v2)
@@ -757,7 +764,6 @@ vector<uint32_t> loadImage(string TexPath)
 
 vector<uint32_t> loadCheckImage(string TexPath)
 {
-  cout << "entered" << endl;
   ifstream fp;
   fp.open(TexPath);
 
@@ -768,11 +774,9 @@ vector<uint32_t> loadCheckImage(string TexPath)
 
   int whiteSpacePos = dimensions.find(" ");
   int newLinePos = dimensions.find('\n');
-  cout << dimensions << endl;
   int width = stoi(dimensions.substr(0, whiteSpacePos));
   texWidth = width;
   int height = stoi(dimensions.substr(whiteSpacePos, newLinePos));
-  cout << "made it" << endl;
   texHeight = height;
 
   vector<Colour> pixelVals;
