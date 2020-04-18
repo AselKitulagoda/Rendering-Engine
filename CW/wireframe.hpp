@@ -104,7 +104,7 @@ float roundNumber(float x)
 {
   return std::floor(x + 0.5);
 }
-
+ 
 float fPart(float x)
 {
   return x - std::floor(x);
@@ -118,7 +118,8 @@ float rfPart(float x)
 void drawPixel(int x, int y, Colour c, float brightness)
 {
   Colour newColour = Colour(c.red, c.green, c.blue, brightness);
-  window.setPixelColour(x, y, newColour.packWithBrightness());
+  if(x >= 0 && x < WIDTH && y >= 0 && y < HEIGHT)
+    window.setPixelColour(x, y, newColour.packWithBrightness());
 }
 
 void drawAALine(CanvasPoint p1, CanvasPoint p2, Colour c)

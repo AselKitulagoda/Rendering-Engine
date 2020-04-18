@@ -259,7 +259,7 @@ void handleEvent(SDL_Event event)
     {
       cout << "DRAWING RAYTRACED ANTI ALIAS" << endl;
       window.clearPixels();
-      drawRaytraceAntiAlias(combinedTriangles);
+      drawRaytraceAntiAlias(allTriangles);
     }
     else if(event.key.keysym.sym == SDLK_q) // orbit
     {
@@ -278,7 +278,7 @@ void handleEvent(SDL_Event event)
       cout << "saved PPM, file num = " << filenum << endl;
       savePPM(filepath);
       filenum++;
-      filepath = "frames/" + std::to_string(filenum) + ".ppm";
+      filepath = "fade_ray/" + std::to_string(filenum) + ".ppm";
     }
     else if(event.key.keysym.sym == SDLK_b) // backface culling mode
     {
@@ -309,6 +309,11 @@ void handleEvent(SDL_Event event)
     {
       wuMode = !wuMode;
       cout << "WU LINES MODE = " << wuMode << endl;
+    }
+    else if(event.key.keysym.sym == SDLK_6) // Wu Lines (Anti-aliasing)
+    {
+      stepDiff += 6;
+      cout << "STEP DIFF = " << stepDiff << endl;
     }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;

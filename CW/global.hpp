@@ -120,8 +120,10 @@ vector<uint32_t> checkcols = loadCheckImage("chessNEW.ppm");
 int texWidth;
 int texHeight;
 
+int stepDiff = 6;
+
 int filenum = 0;
-string filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
+string filepath = "fade_ray/" + std::to_string(filenum) + ".ppm";
 
 vector<ModelTriangle> combineTriangles(vector<ModelTriangle> triangles, vector<ModelTriangle> cornellTriangles)
 {
