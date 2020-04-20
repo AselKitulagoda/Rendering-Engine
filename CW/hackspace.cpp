@@ -14,9 +14,21 @@ mat3 lookAt(vec3 point);
 vec3 orbit(vec3 point, double orbitTheta);
 
 // Display and Event Stuff
+void draw();
 void update();
 vec3 unpack(uint32_t col);
 void handleEvent(SDL_Event event);
+
+// Animation
+void shiftVertices(vec3 direction, float amount);
+vec3 getMinY();
+void flattenVertices(float amount);
+void spin(vec3 point, double theta);
+void jump(float amount);
+void bounce();
+void squash(float amount);
+void jumpAndSquash();
+void fadeIn();
 
 int main(int argc, char* argv[])
 {
@@ -29,9 +41,15 @@ int main(int argc, char* argv[])
   {
     if(allTriangles.at(i).colour.name == "Grey")
     {
-      allTriangles.at(i).colour.reflectivity = 1.0f;
+      allTriangles.at(i).colour.reflectivity = true;
+    }
+    if(allTriangles.at(i).colour.name == "Red")
+    {
+      allTriangles.at(i).colour.refractivity = true;
     }
   }
+
+  draw();
 
   while(true)
   {
@@ -39,23 +57,164 @@ int main(int argc, char* argv[])
     if(window.pollForInputEvents(&event))
     {
       handleEvent(event);
-      if(event.type == SDL_KEYDOWN)
-      {
-        if (bool_flag == 0){
-          window.clearPixels();
-          drawWireframe(allTriangles);
-        }
-        else if (bool_flag == 1){
-          window.clearPixels();
-          drawRasterised(combinedTriangles);
-        }
-      }
     }
     update();
 
     // Need to render the frame at the end, or nothing actually gets shown on the screen !
     window.renderFrame();
   }
+}
+
+void draw()
+{
+  window.clearPixels();
+  if(drawMode == 0) drawWireframe(allTriangles);
+  else if(drawMode == 1) drawRasterised(allTriangles);
+  else if(drawMode == 2) drawRaytraced(allTriangles);
+  else if(drawMode == 3) drawRaytraceAntiAlias(allTriangles);
+}
+
+void shiftVertices(vec3 direction, float amount)
+{ 
+  vec3 shift = amount * direction;
+  for(size_t i = 0; i < allTriangles.size(); i++)
+  {
+    for(int j = 0; j < 3; j++)
+    {
+      vec3 vert = allTriangles.at(i).vertices[j];
+      vert += shift;
+      allTriangles.at(i).vertices[j] = vert;
+    }
+  }
+}
+
+void spin(vec3 point, double theta)
+{
+  for(int i = 0; i < 120; i++)
+  {
+    cameraPos = orbit(cameraPos, 3.0);
+    cameraOrientation = lookAt(cameraPos);
+    draw();
+    window.renderFrame();
+  }
+}
+
+void jump(float amount)
+{
+  float u = sqrt(amount * (2 * 9.8f));
+  float time = (u / 9.8f) * 2;
+
+  for(float t = 0; t < time; t += 0.02f)
+  {
+    float s = ((u * t) + (0.5 * t * t * (-9.8f))) * (float) SCALE_CORNELL;
+    shiftVertices(vec3(0, 1.f, 0), s);
+    draw();
+    window.renderFrame();
+    shiftVertices(vec3(0, -1.f, 0), s);
+  }
+}
+
+void bounce()
+{
+  for(float a = 5; a >= 0; a -= 0.5)
+  {
+    jump(a);
+  }
+}
+
+vec3 getMinY()
+{ // 0,1,2 is the averaged vertices of the scene 3 is the lowest y in that process
+  vec3 avg = vec3(0, 0, 0);
+  float lowestPoint = INFINITY;
+
+  for(size_t i = 0; i < allTriangles.size(); i++)
+  {
+    for(int j = 0; j < 3; j++)
+    {
+      avg += allTriangles.at(i).vertices[j];
+      if(allTriangles.at(i).vertices[j].y < lowestPoint)
+        lowestPoint = allTriangles.at(i).vertices[j].y;
+    }
+  }
+  avg = avg / (3 * (float) allTriangles.size());
+  vec3 result = vec3(avg.x, lowestPoint, avg.z);
+  return result;
+}
+
+void flattenVertices(float amount)
+{
+  vec3 pointOfRef = getMinY();
+
+  for(size_t i = 0; i < allTriangles.size(); i++)
+  {
+    for(int j = 0; j < 3; j++)
+    {
+      vec3 dir = allTriangles.at(i).vertices[j] - pointOfRef;
+      vec3 adjustedVert = allTriangles.at(i).vertices[j] + (amount * dir);
+      adjustedVert.y = allTriangles.at(i).vertices[j].y - (amount * dir.y);
+      allTriangles.at(i).vertices[j] = adjustedVert;
+    }
+  }
+}
+
+void squash(float amount)
+{
+  vector<ModelTriangle> originalTriangles = allTriangles;
+  for(float t = 0; t < 10; t++)
+  {
+    float a = (4 * amount) / 100;
+    float b = a * 10;
+    float squashAmount = -(a * t * t) + (b * t);
+    flattenVertices(squashAmount);
+    draw();
+    window.renderFrame();
+    allTriangles = originalTriangles;
+  }
+}
+
+void fadeIn()
+{
+  vector<vec2> points;
+  for(int y = 0; y < HEIGHT; y++)
+  {
+    for(int x = 0; x < WIDTH; x++)
+    {
+      vec3 col = unpackColour(window.getPixelColour(x, y));
+      if(col != vec3(0, 0, 0))
+      {
+        points.push_back(vec2(x, y));
+      }
+    }
+  }
+
+  float yDiff = points[(int) points.size() - 1].y - points[0].y;
+  int stepTracker = 0;
+
+  for(int step = 0; step <= yDiff; step += 5)
+  { 
+    stepTracker = step;
+    draw();
+    for(int y = points[0].y; y <= points[(int) points.size() - 1].y - step; y++)
+    {
+      for(int x = points[0].x; x <= points[(int) points.size() - 1].x; x++)
+      {
+        Colour c = Colour(0, 0, 0);
+        window.setPixelColour(x, y, c.pack());
+      }
+    }
+    window.renderFrame();
+  }
+  if(stepTracker != yDiff)
+  {
+    draw();
+  }
+}
+
+void jumpAndSquash()
+{
+  jump(8); squash(1.6); jump(5); squash(1.2);
+  jump(3); squash(0.8); jump(2); squash(0.4);
+  jump(1); squash(0);
 }
 
 void update()
@@ -155,73 +314,79 @@ void handleEvent(SDL_Event event)
     {
       cout << "TRANSLATE LEFT" << endl;
       cameraPos.x += 0.1;
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_RIGHT) // camera x translate
     {
       cout << "TRANSLATE RIGHT" << endl;
       cameraPos.x -= 0.1;
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_UP) // camera y translate
     {
       cout << "TRANSLATE UP" << endl;
       cameraPos.y -= 0.1;
-      printVec3("camera Pos", cameraPos);
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_DOWN) // camera y translate
     {
       cout << "TRANSLATE DOWN" << endl;
       cameraPos.y += 0.1;
-      printVec3("camera Pos", cameraPos);
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_z) // camera z translate
     {
       cout << "TRANSLATE Z" << endl;
       cameraPos.z += 0.1;
-      printVec3("camera Pos", cameraPos);
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_x) // camera z translate
     {
       cout << "TRANSLATE Z" << endl;
       cameraPos.z -= 0.1;
-      printVec3("camera Pos", cameraPos);
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_c) // clear screen
     {
       cout << "CLEAR SCREEN" << endl;
       window.clearPixels();
-      bool_flag = -2;
+      drawMode = -1;
     }
     else if(event.key.keysym.sym == SDLK_w) // camera rotate X
     {
       cout << "ROTATE X" << endl;
       cameraOrientation = rotateX(1.0, cameraOrientation);
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_s) // camera rotate X
     {
       cout << "ROTATE X OTHER" << endl;
       cameraOrientation = rotateX(-1.0, cameraOrientation);
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_d) // camera rotate Y
     {
       cout << "ROTATE Y" << endl;
       cameraOrientation = rotateY(1.0, cameraOrientation);
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_a) // camera rotate Y
     {
       cout << "ROTATE Y OTHER" << endl;
       cameraOrientation = rotateY(-1.0, cameraOrientation);
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_f) // camera rotate Z
     {
       cout << "ROTATE Z" << endl;
       cameraOrientation = rotateZ(1.0, cameraOrientation);
-      printMat3("camera orien", cameraOrientation);
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_g) // camera rotate Z
     {
       cout << "ROTATE Z OTHER" << endl;
       cameraOrientation = rotateZ(-1.0, cameraOrientation);
-      printMat3("camera orien", cameraOrientation);
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_o) // toggle hard shadow mode
     {
@@ -232,58 +397,60 @@ void handleEvent(SDL_Event event)
     {
       cout << "RESET CAMERA POS" << endl;
       resetCameraStuff();
-      printVec3("camera Pos", cameraPos);
-      printMat3("camera orien", cameraOrientation);
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_j) // wireframe
     {
       cout << "DRAWING WIREFRAME" << endl;
       window.clearPixels();
-      drawWireframe(allTriangles);
-      bool_flag = 0;
+      drawMode = 0;
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_k) // rasterised
     {
       cout << "DRAWING RASTERISED" << endl;
       window.clearPixels();
-      drawRasterised(combinedTriangles);
-      bool_flag = 1;
+      drawMode = 1;
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_l) // raytraced
     {
       cout << "DRAWING RAYTRACED" << endl;
       window.clearPixels();
-      drawRaytraced(allTriangles);
+      drawMode = 2;
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_m) // raytraced anti alias
     {
       cout << "DRAWING RAYTRACED ANTI ALIAS" << endl;
       window.clearPixels();
-      drawRaytraceAntiAlias(allTriangles);
+      drawMode = 3;
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_q) // orbit
     {
-      cout << "ORBIT" << endl;
-      cameraPos = orbit(cameraPos, 3.0);
-      cameraOrientation = lookAt(cameraPos);
+      cout << "SPIN" << endl;
+      spin(cameraPos, -3.0);
     }
     else if(event.key.keysym.sym == SDLK_e) // orbit
     {
       cout << "ORBIT" << endl;
       cameraPos = orbit(cameraPos, -3.0);
       cameraOrientation = lookAt(cameraPos);
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_p) // save image
     {
       cout << "saved PPM, file num = " << filenum << endl;
       savePPM(filepath);
       filenum++;
-      filepath = "fade_ray/" + std::to_string(filenum) + ".ppm";
+      filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
     }
     else if(event.key.keysym.sym == SDLK_b) // backface culling mode
     {
       cullingMode = !cullingMode;
       cout << "CULLING MODE = " << cullingMode << endl;
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_1) // toggle soft shadow mode
     {
@@ -309,11 +476,27 @@ void handleEvent(SDL_Event event)
     {
       wuMode = !wuMode;
       cout << "WU LINES MODE = " << wuMode << endl;
+      draw();
     }
-    else if(event.key.keysym.sym == SDLK_6) // Wu Lines (Anti-aliasing)
+    else if(event.key.keysym.sym == SDLK_6) // Refraction mode
     {
-      stepDiff += 6;
-      cout << "STEP DIFF = " << stepDiff << endl;
+      refractiveMode = !refractiveMode;
+      cout << "REFRACTION MODE = " << refractiveMode << endl;
+    }
+    else if(event.key.keysym.sym == SDLK_7) // Jump mode
+    {
+      cout << "BOUNCE" << endl;
+      bounce();
+    }
+    else if(event.key.keysym.sym == SDLK_8) // Squash mode
+    {
+      cout << "JUMP AND SQUASH" << endl;
+      jumpAndSquash();
+    }
+    else if(event.key.keysym.sym == SDLK_9) // Fade in
+    {
+      cout << "FADE IN" << endl;
+      fadeIn();
     }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;

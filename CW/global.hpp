@@ -78,7 +78,7 @@ vector<vec3> getTriangleVertexNormals(ModelTriangle t, vector<pair<ModelTriangle
 
 // Defining the Global Variables
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
-int bool_flag = -1;
+int drawMode = -1;
 vec3 cameraPos(CAMERA_X, CAMERA_Y, CAMERA_Z);
 mat3 cameraOrientation = mat3(1.0f);
 
@@ -86,13 +86,13 @@ mat3 cameraOrientation = mat3(1.0f);
 vector<Colour> cornellColours = readMaterial(MTL_CORNELL);
 
 // Loading Triangles
+vector<ModelTriangle> cornellTriangles = combineTriangles(readGround(SCALE_CORNELL,"ground.obj"),readCornellBox(SCALE_CORNELL));
 vector<ModelTriangle> sphereTriangles = readSphere(SCALE_SPHERE);
-vector <ModelTriangle> allTriangles = combineTriangles(combineTriangles(sphereTriangles,readObj(SCALE_FACTOR,"logo.obj")),combineTriangles(readGround(SCALE_CORNELL,"ground.obj"),readCornellBox(SCALE_CORNELL)));
-vector <ModelTriangle> combinedTriangles = combineTriangles(combineTriangles(readObj(SCALE_FACTOR,"logo.obj"),sphereTriangles),combineTriangles(readGround(SCALE_CORNELL,"ground.obj"),readCornellBox(SCALE_CORNELL)));
+vector<ModelTriangle> allTriangles = combineTriangles(combineTriangles(sphereTriangles,readObj(SCALE_FACTOR,"logo.obj")),combineTriangles(readGround(SCALE_CORNELL,"ground.obj"),readCornellBox(SCALE_CORNELL)));
+vector<ModelTriangle> combinedTriangles = combineTriangles(combineTriangles(readObj(SCALE_FACTOR,"logo.obj"),sphereTriangles),combineTriangles(readGround(SCALE_CORNELL,"ground.obj"),readCornellBox(SCALE_CORNELL)));
 
 vector<pair<ModelTriangle, vector<vec3>>> triangleVertexNormals;
 vec3 unpackColour(uint32_t col);
-
 
 vec3 lightSource = vec3(-0.0315915, 1.20455, -0.6108);
 vector<vec3> lightSources = { vec3(lightSource.x - 0.12f, lightSource.y, lightSource.z),
@@ -108,22 +108,23 @@ vector<vec3> lightSources = { vec3(lightSource.x - 0.12f, lightSource.y, lightSo
                               vec3(lightSource.x + 0.08f, lightSource.y, lightSource.z),
                               vec3(lightSource.x + 0.1f, lightSource.y, lightSource.z),
                               vec3(lightSource.x + 0.12f, lightSource.y, lightSource.z) };
-int hardShadowMode = 0;
-int softShadowMode = 0;
-int gouraudMode = 0;
-int phongMode = 0;
-bool cullingMode = 0;
-int wuMode = 0;
+
+bool hardShadowMode = false;
+bool softShadowMode = false;
+bool gouraudMode = false;
+bool phongMode = false;
+bool cullingMode = false;
+bool wuMode = false;
 bool reflectiveMode = false;
+bool refractiveMode = false;
+
 vector<uint32_t> pixelColours = loadImage("texture.ppm");
 vector<uint32_t> checkcols = loadCheckImage("chessNEW.ppm");
 int texWidth;
 int texHeight;
 
-int stepDiff = 6;
-
 int filenum = 0;
-string filepath = "fade_ray/" + std::to_string(filenum) + ".ppm";
+string filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
 
 vector<ModelTriangle> combineTriangles(vector<ModelTriangle> triangles, vector<ModelTriangle> cornellTriangles)
 {
@@ -275,7 +276,7 @@ vector<Colour> readMaterial(string fname)
     int g = stof(splitColourInfo[2]) * 255;
     int b = stof(splitColourInfo[3]) * 255;
 
-    Colour c = Colour(splitName[1], r, g, b, 0.0f);
+    Colour c = Colour(splitName[1], r, g, b);
 
     getline(fp, newline);
     colours.push_back(c);
@@ -362,7 +363,8 @@ vector<ModelTriangle> readCornellBox(float scale)
           tricolour = getColourFromName(mat,cornellColours);
         } 
         tricolour.name = mat;
-        tricolour.reflectivity = 0.0f;
+        tricolour.reflectivity = false;
+        tricolour.refractivity = false;
 
         while(true){
           getline(fp,comment_new);

@@ -9,6 +9,7 @@ class Colour
     int blue;
     float brightness;
     float reflectivity;
+    float refractivity;
 
     Colour()
     {
@@ -22,6 +23,7 @@ class Colour
       blue = b;
       brightness = 1.0f;
       reflectivity = 0.0f;
+      refractivity = 0.0f;
     }
 
     Colour(std::string n, int r, int g, int b)
@@ -32,16 +34,7 @@ class Colour
       blue = b;
       brightness = 1.0f;
       reflectivity = 0.0f;
-    }
-
-    Colour(std::string n, int r, int g, int b, float ref)
-    {
-      name = n;
-      red = r;
-      green = g;
-      blue = b;
-      brightness = 1.0f;
-      reflectivity = ref;
+      refractivity = 0.0f;
     }
 
     Colour(int r, int g, int b, float bright)
@@ -52,6 +45,7 @@ class Colour
       blue = b;
       brightness = bright;
       reflectivity = 0.0f;
+      refractivity = 0.0f;
     }
 
     uint32_t pack()
@@ -72,3 +66,4 @@ std::ostream& operator<<(std::ostream& os, const Colour& colour)
     os << colour.name << " [" << colour.red << ", " << colour.green << ", " << colour.blue << "]" << std::endl;
     return os;
 }
+
