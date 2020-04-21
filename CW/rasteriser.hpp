@@ -127,7 +127,7 @@ void drawTextureLine(CanvasPoint to, CanvasPoint from, vector<uint32_t> pixelCol
   }
 }
 
-void drawTextureMap(CanvasTriangle currentTri,float depthBuffer[WIDTH][HEIGHT],vector<uint32_t> pixelColours,int TexSize)
+void drawTextureMap(CanvasTriangle currentTri,float depthBuffer[WIDTH][HEIGHT],vector<uint32_t> pixelColours, int TexSize)
 { 
   // Sorts each vertex in the Canvas Triangle to find out which point has the highest,middle and smallest points according to y to find extra point
   CanvasPoint largest = currentTri.vertices[0];
@@ -227,11 +227,11 @@ void drawRasterised(vector<ModelTriangle> triangles)
       {
         // calls Draw Texture map on hackspace canvas triangles
       if (triangles.at(i).tag == "checker"){
-          drawTextureMap(projection,depthBuffer,checkcols,738);
+          drawTextureMap(projection,depthBuffer,checkcols, 738);
         }
-       if (triangles.at(i).tag == "hackspace"){
-          drawTextureMap(projection,depthBuffer,pixelColours,300);
-        }
+      if (triangles.at(i).tag == "hackspace"){
+        drawTextureMap(projection,depthBuffer,pixelColours, 300);
+      }
     }
   }
   }
