@@ -38,8 +38,6 @@ using namespace glm;
 #define CAMERA_Y 0.9
 #define CAMERA_Z 2
 
-#define SHADOW_SHIFT 0.1
-
 vector<float> interpolation(float from, float to, int numberOfValues);
 vector<CanvasPoint> interpolate(CanvasPoint from, CanvasPoint to, int numberOfValues);
 void printVec3(string text, vec3 vector);
@@ -674,7 +672,7 @@ vector<ModelTriangle> readSphere(float scale)
             float x = stof(splitcomment[1]) * scale;
             float y = stof(splitcomment[2]) * scale;
             float z = stof(splitcomment[3]) * scale;
-            vec3 verts = vec3(x + 0.18, y + 0.55, z - 0.5);
+            vec3 verts = vec3(x + 0.18, y + 0.55, z - 0.5); // original
             vertic.push_back(verts);
           }
           else

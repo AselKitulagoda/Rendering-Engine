@@ -49,6 +49,18 @@ int main(int argc, char* argv[])
     }
   }
 
+  //   for(size_t i = 0; i < cornellTriangles.size(); i++)
+  // {
+  //   if(cornellTriangles.at(i).colour.name == "Grey")
+  //   {
+  //     cornellTriangles.at(i).colour.reflectivity = true;
+  //   }
+  //   if(cornellTriangles.at(i).colour.name == "Red")
+  //   {
+  //     cornellTriangles.at(i).colour.refractivity = true;
+  //   }
+  // }
+
   draw();
 
   while(true)
@@ -160,10 +172,10 @@ void flattenVertices(float amount)
 void squash(float amount)
 {
   vector<ModelTriangle> originalTriangles = allTriangles;
-  for(float t = 0; t < 10; t++)
+  for(float t = 0; t < 40; t++)
   {
-    float a = (4 * amount) / 100;
-    float b = a * 10;
+    float a = (4 * amount) / 1600;
+    float b = a * 40;
     float squashAmount = -(a * t * t) + (b * t);
     flattenVertices(squashAmount);
     draw();
