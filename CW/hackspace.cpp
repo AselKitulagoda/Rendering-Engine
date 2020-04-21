@@ -113,12 +113,12 @@ void spin(vec3 point, double theta)
 
 void jump(float amount)
 {
-  float u = sqrt(amount * (2 * 9.8f));
-  float time = (u / 9.8f) * 2;
+  float u = sqrt(2 * G * amount);
+  float time = 2 * (u / G);
 
   for(float t = 0; t < time; t += 0.02f)
   {
-    float s = ((u * t) + (0.5 * t * t * (-9.8f))) * (float) SCALE_CORNELL;
+    float s = ((u * t) + (t * t * -G / 2)) * (float) SCALE_CORNELL;
     shiftVertices(vec3(0, 1.f, 0), s);
     draw();
     window.renderFrame();
@@ -174,9 +174,9 @@ void squash(float amount)
   vector<ModelTriangle> originalTriangles = allTriangles;
   for(float t = 0; t < 40; t++)
   {
-    float a = (4 * amount) / 1600;
+    float a = amount * 0.0025f;
     float b = a * 40;
-    float squashAmount = -(a * t * t) + (b * t);
+    float squashAmount = (b * t) - (a * t * t);
     flattenVertices(squashAmount);
     draw();
     window.renderFrame();
