@@ -23,7 +23,7 @@ void handleEvent(SDL_Event event);
 void shiftVertices(vec3 direction, float amount);
 vec3 getMinY();
 void flattenVertices(float amount);
-void spin(vec3 point, double theta);
+void spin(vec3 point);
 void jump(float amount);
 void bounce();
 void squash(float amount);
@@ -37,27 +37,15 @@ int main(int argc, char* argv[])
   triangleVertexNormals = updateVertexNormals(allTriangles);
   
   // Updating the reflectivity
-  // for(size_t i = 0; i < allTriangles.size(); i++)
-  // {
-  //   if(allTriangles.at(i).colour.name == "Grey")
-  //   {
-  //     allTriangles.at(i).colour.reflectivity = true;
-  //   }
-  //   if(allTriangles.at(i).colour.name == "Red")
-  //   {
-  //     allTriangles.at(i).colour.refractivity = true;
-  //   }
-  // }
-
-    for(size_t i = 0; i < cornellTriangles.size(); i++)
+  for(size_t i = 0; i < allTriangles.size(); i++)
   {
-    if(cornellTriangles.at(i).colour.name == "Grey")
+    if(allTriangles.at(i).colour.name == "Grey")
     {
-      cornellTriangles.at(i).colour.reflectivity = true;
+      allTriangles.at(i).colour.reflectivity = true;
     }
-    if(cornellTriangles.at(i).colour.name == "Red")
+    if(allTriangles.at(i).colour.name == "Red")
     {
-      cornellTriangles.at(i).colour.refractivity = true;
+      allTriangles.at(i).colour.refractivity = true;
     }
   }
 
@@ -82,7 +70,7 @@ void draw()
   window.clearPixels();
   if(drawMode == 0) drawWireframe(allTriangles);
   else if(drawMode == 1) drawRasterised(allTriangles);
-  else if(drawMode == 2) drawRaytraced(cornellTriangles);
+  else if(drawMode == 2) drawRaytraced(allTriangles);
   else if(drawMode == 3) drawRaytraceAntiAlias(allTriangles);
 }
 
@@ -100,14 +88,42 @@ void shiftVertices(vec3 direction, float amount)
   }
 }
 
-void spin(vec3 point, double theta)
+void spin(vec3 point)
 {
-  for(int i = 0; i < 120; i++)
+  for(int i = 0; i < 23; i++)
   {
-    cameraPos = orbit(cameraPos, 3.0);
+    cameraPos = orbit(cameraPos, 1.0);
     cameraOrientation = lookAt(cameraPos);
     draw();
     window.renderFrame();
+    // cout << "saved PPM, file num = " << filenum << endl;
+    // savePPM(filepath);
+    // filenum++;
+    // filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
+  }
+
+  for(int i = 0; i < 46; i++)
+  {
+    cameraPos = orbit(cameraPos, -1.0);
+    cameraOrientation = lookAt(cameraPos);
+    draw();
+    window.renderFrame();
+    // cout << "saved PPM, file num = " << filenum << endl;
+    // savePPM(filepath);
+    // filenum++;
+    // filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
+  }
+
+  for(int i = 0; i < 23; i++)
+  {
+    cameraPos = orbit(cameraPos, 1.0);
+    cameraOrientation = lookAt(cameraPos);
+    draw();
+    window.renderFrame();
+    // cout << "saved PPM, file num = " << filenum << endl;
+    // savePPM(filepath);
+    // filenum++;
+    // filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
   }
 }
 
@@ -116,12 +132,16 @@ void jump(float amount)
   float u = sqrt(2 * G * amount);
   float time = 2 * (u / G);
 
-  for(float t = 0; t < time; t += 0.02f)
+  for(float t = 0; t < time; t += 0.06f)
   {
     float s = ((u * t) + (t * t * -G / 2)) * (float) SCALE_CORNELL;
     shiftVertices(vec3(0, 1.f, 0), s);
     draw();
     window.renderFrame();
+    // cout << "saved PPM, file num = " << filenum << endl;
+    // savePPM(filepath);
+    // filenum++;
+    // filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
     shiftVertices(vec3(0, -1.f, 0), s);
   }
 }
@@ -172,14 +192,18 @@ void flattenVertices(float amount)
 void squash(float amount)
 {
   vector<ModelTriangle> originalTriangles = allTriangles;
-  for(float t = 0; t < 40; t++)
+  for(float t = 0; t < 30; t++)
   {
-    float a = amount * 0.0025f;
-    float b = a * 40;
+    float a = (2 * amount) / 900;
+    float b = a * 30;
     float squashAmount = (b * t) - (a * t * t);
     flattenVertices(squashAmount);
     draw();
     window.renderFrame();
+    // cout << "saved PPM, file num = " << filenum << endl;
+    // savePPM(filepath);
+    // filenum++;
+    // filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
     allTriangles = originalTriangles;
   }
 }
@@ -215,6 +239,10 @@ void fadeIn()
       }
     }
     window.renderFrame();
+    // cout << "saved PPM, file num = " << filenum << endl;
+    // savePPM(filepath);
+    // filenum++;
+    // filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
   }
   if(stepTracker != yDiff)
   {
@@ -224,9 +252,13 @@ void fadeIn()
 
 void jumpAndSquash()
 {
-  jump(8); squash(1.6); jump(5); squash(1.2);
-  jump(3); squash(0.8); jump(2); squash(0.4);
-  jump(1); squash(0);
+  jump(5); squash(1.2); jump(3); squash(0.8);
+  jump(2); squash(0.4); jump(1); squash(0.1);
+  draw(); window.renderFrame();
+  // cout << "saved PPM, file num = " << filenum << endl;
+  // savePPM(filepath);
+  // filenum++;
+  // filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
 }
 
 void update()
@@ -442,12 +474,12 @@ void handleEvent(SDL_Event event)
     else if(event.key.keysym.sym == SDLK_q) // orbit
     {
       cout << "SPIN" << endl;
-      spin(cameraPos, -3.0);
+      spin(cameraPos);
     }
     else if(event.key.keysym.sym == SDLK_e) // orbit
     {
       cout << "ORBIT" << endl;
-      cameraPos = orbit(cameraPos, -3.0);
+      cameraPos = orbit(cameraPos, -1.0);
       cameraOrientation = lookAt(cameraPos);
       draw();
     }

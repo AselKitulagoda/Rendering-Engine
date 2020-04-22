@@ -222,6 +222,7 @@ void drawRasterised(vector<ModelTriangle> triangles)
       {
         //calls Draw Filled for all Cornell box canvas triangles, takes in depth buffer 
         drawFilled(projection, depthBuffer);
+        drawStroke(projection, depthBuffer);
       }
       else
       {
@@ -244,6 +245,7 @@ void drawRasterised(vector<ModelTriangle> triangles)
       if(triangles.at(i).tag == "cornell" || triangles.at(i).tag == "sphere")     
       {
         drawFilled(projection, depthBuffer);
+        drawStroke(projection, depthBuffer);
       }
       else
       {
