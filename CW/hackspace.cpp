@@ -37,29 +37,29 @@ int main(int argc, char* argv[])
   triangleVertexNormals = updateVertexNormals(allTriangles);
   
   // Updating the reflectivity
-  // for(size_t i = 0; i < allTriangles.size(); i++)
-  // {
-  //   if(allTriangles.at(i).colour.name == "Grey")
-  //   {
-  //     allTriangles.at(i).colour.reflectivity = true;
-  //   }
-  //   if(allTriangles.at(i).colour.name == "Red")
-  //   {
-  //     allTriangles.at(i).colour.refractivity = true;
-  //   }
-  // }
-
-    for(size_t i = 0; i < cornellTriangles.size(); i++)
+  for(size_t i = 0; i < allTriangles.size(); i++)
   {
-    if(cornellTriangles.at(i).colour.name == "Grey")
+    if(allTriangles.at(i).colour.name == "Grey")
     {
-      cornellTriangles.at(i).colour.reflectivity = true;
+      allTriangles.at(i).colour.reflectivity = true;
     }
-    if(cornellTriangles.at(i).colour.name == "Red")
+    if(allTriangles.at(i).colour.name == "Red")
     {
-      cornellTriangles.at(i).colour.refractivity = true;
+      allTriangles.at(i).colour.refractivity = true;
     }
   }
+
+  //   for(size_t i = 0; i < cornellTriangles.size(); i++)
+  // {
+  //   if(cornellTriangles.at(i).colour.name == "Grey")
+  //   {
+  //     cornellTriangles.at(i).colour.reflectivity = true;
+  //   }
+  //   if(cornellTriangles.at(i).colour.name == "Red")
+  //   {
+  //     cornellTriangles.at(i).colour.refractivity = true;
+  //   }
+  // }
 
   draw();
 
@@ -82,7 +82,7 @@ void draw()
   window.clearPixels();
   if(drawMode == 0) drawWireframe(allTriangles);
   else if(drawMode == 1) drawRasterised(allTriangles);
-  else if(drawMode == 2) drawRaytraced(cornellTriangles);
+  else if(drawMode == 2) drawRaytraced(allTriangles);
   else if(drawMode == 3) drawRaytraceAntiAlias(allTriangles);
 }
 

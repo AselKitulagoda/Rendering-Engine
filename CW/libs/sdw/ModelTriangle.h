@@ -45,14 +45,14 @@ class ModelTriangle
       bumppoints[2] = glm::vec3(-1,-1,-1);
     }
 
-    ModelTriangle(glm::vec3 v0, glm::vec3 v1, glm::vec3 v2, Colour trigColour, glm::vec3 b0, glm::vec3 b1, glm::vec3 b2)
+    ModelTriangle(glm::vec3 v0, glm::vec3 v1, glm::vec3 v2, Colour trigColour, glm::vec2 t0, glm::vec2 t1, glm::vec2 t2, glm::vec3 b0, glm::vec3 b1, glm::vec3 b2)
     {
       vertices[0] = v0;
       vertices[1] = v1;
       vertices[2] = v2;
-      texturepoints[0] = glm::vec2(-1,-1);
-      texturepoints[1] = glm::vec2(-1,-1);
-      texturepoints[2] = glm::vec2(-1,-1);
+      texturepoints[0] = t0;
+      texturepoints[1] = t1;
+      texturepoints[2] = t2;
       colour = trigColour;
       tag = "";
       bumppoints[0] = b0;
