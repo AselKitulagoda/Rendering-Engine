@@ -115,13 +115,13 @@ void drawTextureLine(CanvasPoint to, CanvasPoint from, vector<uint32_t> pixelCol
     tp.x = (from.texturePoint.x+ (i * numberOfTextureValues.x/numberOfValues))*z*TexSize;
 
     //Check if x,y and texture point co-ords are within limits
-    if(x >= 0 && x < WIDTH && y >= 0 && y < HEIGHT && tp.x > 0 && tp.x < TexSize && tp.y > 0 && tp.y < TexSize)
+    if(x >= 0 && x <= WIDTH && y >= 0 && y <= HEIGHT && tp.x >= 0 && tp.x <= TexSize && tp.y >= 0 && tp.y <= TexSize)
     {
       //set
       if(oneOverZ < depthBuffer[(int) x][(int) y])
       {
         depthBuffer[(int) x][(int) y] = oneOverZ;
-        window.setPixelColour((int)x, (int)y, pixelColours[round(tp.x) + round(tp.y) * TexSize]);
+        window.setPixelColour((int)x, (int)y, pixelColours[int(tp.x-1) + int(tp.y-1) * TexSize]);
       }
     }
   }
