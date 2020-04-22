@@ -37,29 +37,29 @@ int main(int argc, char* argv[])
   triangleVertexNormals = updateVertexNormals(allTriangles);
   
   // Updating the reflectivity
-  for(size_t i = 0; i < allTriangles.size(); i++)
-  {
-    if(allTriangles.at(i).colour.name == "Grey")
-    {
-      allTriangles.at(i).colour.reflectivity = true;
-    }
-    if(allTriangles.at(i).colour.name == "Red")
-    {
-      allTriangles.at(i).colour.refractivity = true;
-    }
-  }
-
-  //   for(size_t i = 0; i < cornellTriangles.size(); i++)
+  // for(size_t i = 0; i < allTriangles.size(); i++)
   // {
-  //   if(cornellTriangles.at(i).colour.name == "Grey")
+  //   if(allTriangles.at(i).colour.name == "Grey")
   //   {
-  //     cornellTriangles.at(i).colour.reflectivity = true;
+  //     allTriangles.at(i).colour.reflectivity = true;
   //   }
-  //   if(cornellTriangles.at(i).colour.name == "Red")
+  //   if(allTriangles.at(i).colour.name == "Red")
   //   {
-  //     cornellTriangles.at(i).colour.refractivity = true;
+  //     allTriangles.at(i).colour.refractivity = true;
   //   }
   // }
+
+    for(size_t i = 0; i < cornellTriangles.size(); i++)
+  {
+    if(cornellTriangles.at(i).colour.name == "Grey")
+    {
+      cornellTriangles.at(i).colour.reflectivity = true;
+    }
+    if(cornellTriangles.at(i).colour.name == "Red")
+    {
+      cornellTriangles.at(i).colour.refractivity = true;
+    }
+  }
 
   draw();
 
@@ -82,7 +82,7 @@ void draw()
   window.clearPixels();
   if(drawMode == 0) drawWireframe(allTriangles);
   else if(drawMode == 1) drawRasterised(allTriangles);
-  else if(drawMode == 2) drawRaytraced(allTriangles);
+  else if(drawMode == 2) drawRaytraced(cornellTriangles);
   else if(drawMode == 3) drawRaytraceAntiAlias(allTriangles);
 }
 
@@ -113,12 +113,12 @@ void spin(vec3 point, double theta)
 
 void jump(float amount)
 {
-  float u = sqrt(amount * (2 * 9.8f));
-  float time = (u / 9.8f) * 2;
+  float u = sqrt(2 * G * amount);
+  float time = 2 * (u / G);
 
   for(float t = 0; t < time; t += 0.02f)
   {
-    float s = ((u * t) + (0.5 * t * t * (-9.8f))) * (float) SCALE_CORNELL;
+    float s = ((u * t) + (t * t * -G / 2)) * (float) SCALE_CORNELL;
     shiftVertices(vec3(0, 1.f, 0), s);
     draw();
     window.renderFrame();
@@ -174,9 +174,9 @@ void squash(float amount)
   vector<ModelTriangle> originalTriangles = allTriangles;
   for(float t = 0; t < 40; t++)
   {
-    float a = (4 * amount) / 1600;
+    float a = amount * 0.0025f;
     float b = a * 40;
-    float squashAmount = -(a * t * t) + (b * t);
+    float squashAmount = (b * t) - (a * t * t);
     flattenVertices(squashAmount);
     draw();
     window.renderFrame();

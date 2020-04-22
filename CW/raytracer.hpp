@@ -290,7 +290,7 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
             vec3 incidentRay = glm::normalize(point - cameraPos);
             vec3 reflectedRay = computeReflectedRay(incidentRay, curr);
             RayTriangleIntersection mirrorIntersect = getClosestIntersection(point, reflectedRay, reflectionTriangles, depth - 1);
-            if(mirrorIntersect.distanceFromCamera == -INFINITY) colour = Colour(0, 0, 0);
+            if(mirrorIntersect.distanceFromCamera >= INFINITY) colour = Colour(0, 0, 0);
             else colour = mirrorIntersect.colour;
           }
           else if(refractiveMode && curr.colour.refractivity && depth > 0)
@@ -338,10 +338,6 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
       }
     }
   }
-  if(result.distanceFromCamera == INFINITY)
-  {
-    result.distanceFromCamera = -INFINITY;
-  }
   return result;
 }
 
@@ -356,7 +352,7 @@ void drawRaytraced(vector<ModelTriangle> triangles)
       vec3 ray = computeRayDirection((float) x, (float) y);
       RayTriangleIntersection closestIntersect = getClosestIntersection(cameraPos, ray, triangles, 7);
       
-      if(closestIntersect.distanceFromCamera != -INFINITY)
+      if(closestIntersect.distanceFromCamera < INFINITY)
       {
         window.setPixelColour(x, y, closestIntersect.colour.packWithBrightness());
       }
@@ -468,7 +464,7 @@ vec3 computeInternalReflectedRay(vec3 incidentRay, ModelTriangle t)
 // Refraction/Glass stuff
 vec3 refract(vec3 incidentRay, vec3 surfaceNormal, float ior)
 {
-  float cosi = glm::dot(incidentRay, surfaceNormal);
+  float cosi = clamp(-1.0f, 1.0f, glm::dot(incidentRay, surfaceNormal)); 
   float etai = 1, etat = ior;
 
   if(cosi < 0.f)
@@ -517,7 +513,7 @@ Colour calculateGlassColour(vector<ModelTriangle> triangles, vec3 rayDirection, 
   vec3 diff1 = t.vertices[1] - t.vertices[0];
   vec3 diff2 = t.vertices[2] - t.vertices[0];
 
-  vec3 surfaceNormal = glm::normalize(glm::cross(diff1, diff2));
+  vec3 surfaceNormal = (glm::cross(diff1, diff2));
 
   // Do reflection
   vector<ModelTriangle> filteredTriangles = removeIntersectedTriangle(triangles, t);

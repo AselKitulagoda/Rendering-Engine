@@ -24,6 +24,7 @@ using namespace glm;
 #define AMBIENCE 0.2
 #define FRACTION_VAL 0.5
 #define SHADOW_THRESH 0.1
+#define G 9.8f
 #define MTLPATH "materials.mtl"
 #define OBJPATH "logo.obj"
 #define TEXPATH "texture.ppm"
