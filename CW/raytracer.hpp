@@ -275,8 +275,8 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
           intersection_col=checkcols[round(tex_point_final.x) + round(tex_point_final.y) * texWidth];
         }
         if (curr.tag == "hackspace"){
-          if (round(tex_point_final.x)<300 && round(tex_point_final.x)>0 && round(tex_point_final.y)<300 && round(tex_point_final.y)>0)
-            intersection_col=pixelColours[round(tex_point_final.x) + round(tex_point_final.y) * texWidth];
+          if (int(tex_point_final.x)<=300 && int(tex_point_final.x)>=0 && int(tex_point_final.y)<=300 && int(tex_point_final.y)>=0)
+            intersection_col=pixelColours[(int(tex_point_final.x)-1) + (int(tex_point_final.y)-1) * texWidth];
         }
         
         Colour colour = Colour();
