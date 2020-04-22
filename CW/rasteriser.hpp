@@ -225,6 +225,7 @@ void drawRasterised(vector<ModelTriangle> triangles)
       {
         //calls Draw Filled for all Cornell box canvas triangles, takes in depth buffer 
         drawFilled(projection, depthBuffer);
+        drawStroke(projection, depthBuffer);
       }
       else
       {
@@ -248,6 +249,7 @@ void drawRasterised(vector<ModelTriangle> triangles)
       {
 
         drawFilled(projection, depthBuffer);
+        drawStroke(projection, depthBuffer);
       }
       else
       {

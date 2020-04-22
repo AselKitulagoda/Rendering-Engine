@@ -18,7 +18,7 @@ using namespace glm;
 #define HEIGHT 480
 #define SCALE_FACTOR 0.001
 #define SCALE_CORNELL 0.3
-#define SCALE_SPHERE 0.1
+#define SCALE_SPHERE 0.05
 #define FOCAL_LENGTH -500
 #define INTENSITY 1
 #define AMBIENCE 0.2
@@ -33,11 +33,11 @@ using namespace glm;
 #define OBJ_CORNELL "bump-cornell-box.obj"
 
 
-#define OBJ_SPHERE "sphere-smaller.obj"
+#define OBJ_SPHERE "sphere.obj"
 
 #define CAMERA_X 0
-#define CAMERA_Y 0.9
-#define CAMERA_Z 2
+#define CAMERA_Y 0.7
+#define CAMERA_Z 2.3
 
 vector<float> interpolation(float from, float to, int numberOfValues);
 vector<CanvasPoint> interpolate(CanvasPoint from, CanvasPoint to, int numberOfValues);
@@ -526,13 +526,6 @@ vector<ModelTriangle> readObj(float scale,string objpath)
     }
   }
   fp.close();
-  for (size_t i=0;i<tris.size();i++){
-      for (int j=0;j<3;j++){
-        if (tris.at(i).texturepoints[j].x == -1 || tris.at(i).texturepoints[j].y == -1 || tris.at(i).tag != "hackspace"){
-          cout <<"fucked" << endl;
-        }
-      }
-  }
   return tris;
 }
 
