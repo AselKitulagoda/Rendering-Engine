@@ -121,7 +121,7 @@ void drawTextureLine(CanvasPoint to, CanvasPoint from, vector<uint32_t> pixelCol
       if(oneOverZ < depthBuffer[(int) x][(int) y])
       {
         depthBuffer[(int) x][(int) y] = oneOverZ;
-        window.setPixelColour((int)x-1, (int)y-1, pixelColours[int(tp.x-1) + int(tp.y-1) * TexSize]);
+        window.setPixelColour((int)x, (int)y, pixelColours[int(tp.x-1) + int(tp.y-1) * TexSize]);
       }
     }
   }
