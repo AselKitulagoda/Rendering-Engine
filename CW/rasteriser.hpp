@@ -115,18 +115,18 @@ void drawTextureLine(CanvasPoint to, CanvasPoint from, vector<uint32_t> pixelCol
     tp.x = (from.texturePoint.x+ (i * numberOfTextureValues.x/numberOfValues))*z*TexSize;
 
     //Check if x,y and texture point co-ords are within limits
-    if(x >= 0 && x <= WIDTH && y >= 0 && y <= HEIGHT && int(tp.x) >= 0 )
-    {
-      if (int(tp.x) <= TexSize && int(tp.y) >= 0 && int(tp.y) <= TexSize){
-      //set
-      if(oneOverZ < depthBuffer[(int) x][(int) y])
+    if(x >= 0 && x <= WIDTH && y >= 0 && y <= HEIGHT)
+    { 
+      if(int(tp.x) >= 0 && int(tp.x) <= TexSize && int(tp.y) >= 0 && int(tp.y) <= TexSize)
       {
-        depthBuffer[(int) x][(int) y] = oneOverZ;
-        window.setPixelColour((int)x, (int)y, pixelColours[int(tp.x-1) + int(tp.y-1) * TexSize]);
-      }
+        //set
+        if(oneOverZ < depthBuffer[(int) x][(int) y])
+        {
+          depthBuffer[(int) x][(int) y] = oneOverZ;
+          window.setPixelColour((int)x, (int)y, pixelColours[int(tp.x-1) + int(tp.y-1) * TexSize]);
+        }
       }
     }
-    // else {cout<<"fucked"<<endl;}
   }
 }
 
@@ -221,7 +221,7 @@ void drawRasterised(vector<ModelTriangle> triangles)
       //convert all model triangles to a canvas triangle
       CanvasTriangle projection = modelToCanvas(filteredTriangles.at(i));
       
-      if(filteredTriangles.at(i).tag == "cornell" || filteredTriangles.at(i).tag == "sphere"|| filteredTriangles.at(i).tag == "bump")
+      if(filteredTriangles.at(i).tag == "cornell" || filteredTriangles.at(i).tag == "sphere" || filteredTriangles.at(i).tag == "bump")
       {
         //calls Draw Filled for all Cornell box canvas triangles, takes in depth buffer 
         drawFilled(projection, depthBuffer);
@@ -247,7 +247,6 @@ void drawRasterised(vector<ModelTriangle> triangles)
       
       if(triangles.at(i).tag == "cornell" || triangles.at(i).tag == "sphere" || triangles.at(i).tag == "bump")     
       {
-
         drawFilled(projection, depthBuffer);
         drawStroke(projection, depthBuffer);
       }

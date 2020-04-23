@@ -22,17 +22,15 @@ using namespace glm;
 #define FOCAL_LENGTH -500
 #define INTENSITY 1
 #define AMBIENCE 0.2
-#define FRACTION_VAL 0.2
+// #define FRACTION_VAL 0.5      // normal
+#define FRACTION_VAL 0.2      // bump map
 #define SHADOW_THRESH 0.1
 #define G 9.8f
 #define MTLPATH "materials.mtl"
 #define OBJPATH "logo.obj"
 #define TEXPATH "texture.ppm"
-
 #define MTL_CORNELL "cornell-box.mtl"
 #define OBJ_CORNELL "bump-cornell-box.obj"
-
-
 #define OBJ_SPHERE "sphere.obj"
 
 #define CAMERA_X 0
@@ -52,8 +50,7 @@ Colour getColourFromName(string mat, vector<Colour> colours);
 vector<ModelTriangle> readCornellBox(float scale);
 vector<ModelTriangle> readSphere(float scale);
 vector<vec3> loadBumpMap(string TexPath);
-vector<ModelTriangle> readBumpWall(float scale,string objpath);
-
+vector<ModelTriangle> readBumpWall(float scale, string objpath);
 
 // Texturing Stuff
 vector<uint32_t> loadImage(string texPath);
@@ -86,20 +83,18 @@ mat3 cameraOrientation = mat3(1.0f);
 
 // Cornell Box Material
 vector<Colour> cornellColours = readMaterial(MTL_CORNELL);
-vector <vec3> bumpNormals = loadBumpMap("bump.ppm");
+vector<vec3> bumpNormals = loadBumpMap("bump.ppm");
 
 // Loading Triangles
 vector<ModelTriangle> cornellTriangles = combineTriangles(readGround(SCALE_CORNELL,"ground.obj"),readCornellBox(SCALE_CORNELL));
 vector<ModelTriangle> sphereTriangles = readSphere(SCALE_SPHERE);
-vector<ModelTriangle> bumpTriangles = readBumpWall(SCALE_CORNELL,"bumpwall.obj");
-vector<ModelTriangle> allTriangles = combineTriangles(combineTriangles(combineTriangles(cornellTriangles,bumpTriangles),readObj(SCALE_FACTOR,"logo.obj")),sphereTriangles);
-// vector<ModelTriangle> allTriangles = combineTriangles(combineTriangles(sphereTriangles,readObj(SCALE_FACTOR,"logo.obj")),combineTriangles(readGround(SCALE_CORNELL,"ground.obj"),allTriangle));
-// vector<ModelTriangle> combinedTriangles = combineTriangles(bumpTriangles,combineTriangles(combineTriangles(sphereTriangles,readObj(SCALE_FACTOR,"logo.obj")),combineTriangles(readGround(SCALE_CORNELL,"ground.obj"),readCornellBox(SCALE_CORNELL))));
-
+vector<ModelTriangle> bumpTriangles = readBumpWall(SCALE_CORNELL, "bumpwall.obj");
+vector<ModelTriangle> allTriangles = combineTriangles(combineTriangles(combineTriangles(cornellTriangles, bumpTriangles), readObj(SCALE_FACTOR, "logo.obj")), sphereTriangles);
 vector<pair<ModelTriangle, vector<vec3>>> triangleVertexNormals;
 vec3 unpackColour(uint32_t col);
 
-vec3 lightSource = vec3(-0.0315915, 1.20455, -0.1108);
+// vec3 lightSource = vec3(-0.0315915, 1.20455, -0.6108);      // normal
+vec3 lightSource = vec3(-0.0315915, 1.20455, -0.1108);      // bump map
 vector<vec3> lightSources = { vec3(lightSource.x - 0.12f, lightSource.y, lightSource.z),
                               vec3(lightSource.x - 0.1f, lightSource.y, lightSource.z), 
                               vec3(lightSource.x - 0.08f, lightSource.y, lightSource.z),
@@ -127,8 +122,6 @@ vector<uint32_t> pixelColours = loadImage("texture.ppm");
 vector<uint32_t> checkcols = loadCheckImage("chessNEW.ppm");
 int texWidth;
 int texHeight;
-int bumpWidth;
-int bumpHeight;
 
 int filenum = 0;
 string filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
@@ -289,7 +282,6 @@ vector<Colour> readMaterial(string fname)
     colours.push_back(c);
   }
   fp.close();
-    // cout << "finished mat"<<endl;
   return colours;
 }
 
@@ -364,7 +356,6 @@ vector<ModelTriangle> readCornellBox(float scale)
       {
         mat = splitcomment[1];
         Colour tricolour = getColourFromName(mat,cornellColours);
-        
         if(mat == "Yellow" || mat == "Magenta")
         {
           mat = "Red";
@@ -626,14 +617,11 @@ vector<ModelTriangle> readGround (float scale,string objpath)
               int first_vert = stoi(splitcomment[1].substr(0, splitcomment[1].find('/')));
               int second_vert = stoi(splitcomment[2].substr(0, splitcomment[2].find('/')));
               int third_vert = stoi(splitcomment[3].substr(0, splitcomment[3].find('/')));
-              // int first_tex_index = stoi(splitcomment[1].substr((splitcomment[1].find('/')+1),splitcomment[1].length()));
-              // int second_tex_index = stoi(splitcomment[2].substr(splitcomment[2].find('/')+1,splitcomment[2].length()));
-              // int third_tex_index = stoi(splitcomment[3].substr(splitcomment[3].find('/')+1,splitcomment[3].length()));
+
               vec2 first_tex_point = vec2(texpoints[first_vert-1].x,texpoints[first_vert-1].y);
               vec2 second_tex_point = vec2(texpoints[second_vert-1].x,texpoints[second_vert-1].y);
               vec2 third_tex_point = vec2(texpoints[third_vert-1].x,texpoints[third_vert-1].y);
-              // cout << vertic[first_vert-1].x << endl;
-              // cout << second_vert << endl;
+
               ModelTriangle tri = ModelTriangle(vertic[first_vert-1], vertic[second_vert-1], vertic[third_vert-1], Colour(255,255,255,0.0f), first_tex_point, second_tex_point, third_tex_point);
               tri.tag = "checker";
               tris.push_back(tri);
@@ -650,12 +638,12 @@ vector<ModelTriangle> readGround (float scale,string objpath)
   return tris;
 }
 
-vector<ModelTriangle> readBumpWall(float scale,string objpath)
+vector<ModelTriangle> readBumpWall(float scale, string objpath)
 {
   vector<TexturePoint> texpoints;
-  vector <ModelTriangle> tris;
+  vector<ModelTriangle> tris;
   ifstream fp;
-  
+
   vector<vec3> vertic;
   fp.open(objpath);
 
@@ -663,29 +651,29 @@ vector<ModelTriangle> readBumpWall(float scale,string objpath)
     cout << "fails" << endl;
 
   string newline;
-  getline(fp,newline);
-  getline(fp,newline);
-  getline(fp,newline);
-  getline(fp,newline);
+  getline(fp, newline);
+  getline(fp, newline);
+  getline(fp, newline);
+  getline(fp, newline);
   while(!fp.eof())
   {
     string comment;
     getline(fp, comment);
 
-    if (!comment.empty())
+    if(!comment.empty())
     {
       while(true)
       {
-      
-        if (!comment.empty())
+
+        if(!comment.empty())
         {
-          string *splitcomment = split(comment,' ');
-          if (splitcomment[0]=="v")
+          string *splitcomment = split(comment, ' ');
+          if(splitcomment[0] == "v")
           {
             float x = stof(splitcomment[1]) * scale;
             float y = stof(splitcomment[2]) * scale;
             float z = stof(splitcomment[3]) * scale;
-            vec3 verts = vec3(x, y , z);
+            vec3 verts = vec3(x, y, z);
             vertic.push_back(verts);
           }
           else
@@ -693,45 +681,49 @@ vector<ModelTriangle> readBumpWall(float scale,string objpath)
             break;
           }
         }
-        getline(fp,comment);
+        getline(fp, comment);
       }
     }
-
   fp.clear();
-  fp.seekg(0,ios::beg);
+  fp.seekg(0, ios::beg);
   if(fp.fail())
     cout << "fails" << endl;
-  getline(fp,newline);
-  getline(fp,newline);
-    
-  while(!fp.eof()){
+  getline(fp, newline);
+  getline(fp, newline);
+
+  while(!fp.eof())
+  {
     string comment_new;
-      bool not_reach = true;
-        while (not_reach)
+    bool not_reach = true;
+    while (not_reach)
+    {
+      getline(fp, comment_new);
+      string *splitcomment = split(comment_new, ' ');
+      if (!comment_new.empty())
+      {
+        if (splitcomment[0] == "vt")
         {
-          getline(fp,comment_new);
-          string *splitcomment = split(comment_new,' ');
-          if (!comment_new.empty())
-          {
-            if (splitcomment[0] == "vt"){
-                float x_tex = stof(splitcomment[1]);
-                float y_tex = stof(splitcomment[2]);
-                texpoints.push_back(TexturePoint(x_tex, y_tex));
-              }
-            else{break;}
-          }
-          if (fp.eof())
-            not_reach=false;
+          float x_tex = stof(splitcomment[1]);
+          float y_tex = stof(splitcomment[2]);
+          texpoints.push_back(TexturePoint(x_tex, y_tex));
         }
+        else
+        {
+          break;
+        }
+      }
+      if (fp.eof())
+        not_reach = false;
+    }
   }
 
   fp.clear();
-  fp.seekg(0,ios::beg);
+  fp.seekg(0, ios::beg);
   if(fp.fail())
     cout << "fails" << endl;
-  getline(fp,newline);
-  getline(fp,newline);
-  int counter =0;
+  getline(fp, newline);
+  getline(fp, newline);
+
   while(!fp.eof())
   {
     string comment_new;
@@ -747,22 +739,13 @@ vector<ModelTriangle> readBumpWall(float scale,string objpath)
               int first_vert = stoi(splitcomment[1].substr(0, splitcomment[1].find('/')));
               int second_vert = stoi(splitcomment[2].substr(0, splitcomment[2].find('/')));
               int third_vert = stoi(splitcomment[3].substr(0, splitcomment[3].find('/')));
-              // int first_tex_index = stoi(splitcomment[1].substr((splitcomment[1].find('/')+1),splitcomment[1].length()));
-              // int second_tex_index = stoi(splitcomment[2].substr(splitcomment[2].find('/')+1,splitcomment[2].length()));
-              // int third_tex_index = stoi(splitcomment[3].substr(splitcomment[3].find('/')+1,splitcomment[3].length()));
+
               vec2 first_tex_point = vec2(texpoints[first_vert-1].x,texpoints[first_vert-1].y);
               vec2 second_tex_point = vec2(texpoints[second_vert-1].x,texpoints[second_vert-1].y);
               vec2 third_tex_point = vec2(texpoints[third_vert-1].x,texpoints[third_vert-1].y);
 
-              vec3 first_bump_point = bumpNormals[first_tex_point.x+first_tex_point.y*bumpWidth];
-              vec3 second_bump_point = bumpNormals[second_tex_point.x+second_tex_point.y*bumpWidth];
-              vec3 third_bump_point = bumpNormals[third_tex_point.x+third_tex_point.y*bumpWidth];
-
-              // cout << vertic[first_vert-1].x << endl;
-              // cout << second_vert << endl;
-              ModelTriangle tri = ModelTriangle(vertic[first_vert-1], vertic[second_vert-1], vertic[third_vert-1], Colour(187,84,231,0.0f), first_tex_point, second_tex_point, third_tex_point,first_bump_point,second_bump_point,third_bump_point);
+              ModelTriangle tri = ModelTriangle(vertic[first_vert-1], vertic[second_vert-1], vertic[third_vert-1], Colour(187,84,231,0.0f), first_tex_point, second_tex_point, third_tex_point);
               tri.tag = "bump";
-              
               tris.push_back(tri);
             }
             else{break;}
@@ -774,7 +757,6 @@ vector<ModelTriangle> readBumpWall(float scale,string objpath)
     }
   }
   fp.close();
-  cout << "finished " << endl;
   return tris;
 }
 
@@ -916,31 +898,17 @@ vector<vec3> loadBumpMap(string TexPath)
   int newLinePos = dimensions.find('\n');
 
   int width = stoi(dimensions.substr(0, whiteSpacePos));
-  bumpWidth = width;
   int height = stoi(dimensions.substr(whiteSpacePos, newLinePos));
-  bumpHeight = height;
 
   vector<vec3> pixelVals;
   for(int i = 0; i < (width * height); i++)
   {
-    vec3 c;
-    c.x = fp.get();
-    c.y = fp.get();
-    c.z = fp.get();
-    // printVec3("string",c);
-    pixelVals.push_back(glm::normalize(c));
+    float x = fp.get();
+    float y = fp.get();
+    float z = fp.get();
+    pixelVals.push_back(glm::normalize(vec3(x, y, z)));
   }
-
-  // vector<uint32_t> converted;
-  // for(size_t i = 0; i < pixelVals.size(); i++)
-  // { 
-  //   Colour c = pixelVals[i];
-  //   uint32_t colour = (255<<24) + (int(c.red)<<16) + (int(c.green)<<8) + int(c.blue);
-  //   converted.push_back(colour);
-  // }
-
   return pixelVals;
-
 }
 
 vector<uint32_t> loadCheckImage(string TexPath)

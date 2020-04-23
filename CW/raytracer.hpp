@@ -28,6 +28,9 @@ vector<float> calculateVertexBrightness(vector<ModelTriangle> triangles, ModelTr
 float calculateGouraudBrightness(vector<ModelTriangle> triangles, vec3 point, ModelTriangle t, float u, float v, vec3 rayDirection);
 float calculatePhongBrightness(vector<ModelTriangle> triangles, vec3 point, ModelTriangle t, float u, float v, vec3 rayDirection);
 
+// Bump Mapping
+float calculateBumpBrightness(vec3 point, ModelTriangle t, vec3 rayDirection, vector<ModelTriangle> triangles, vec3 triangleNormal);
+
 // Reflection/Mirror
 vec3 computeReflectedRay(vec3 incidentRay, ModelTriangle t);
 
@@ -44,7 +47,6 @@ float calculateBrightness(vec3 point, ModelTriangle t, vec3 rayDirection, vector
 
   vec3 surfaceNormal = glm::normalize(glm::cross(diff1, diff2));
 
-
   vec3 pointToLight = lightSource - point;
   float distance = glm::length(pointToLight);
 
@@ -90,61 +92,6 @@ float calculateBrightness(vec3 point, ModelTriangle t, vec3 rayDirection, vector
 
   return brightness;
 }
-
-float calculateBumpBrightness(vec3 point, ModelTriangle t, vec3 rayDirection, vector<ModelTriangle> triangles, vec3 surfaceNormal)
-{ 
-  // vec3 diff1 = t.vertices[1] - t.vertices[0];
-  // vec3 diff2 = t.vertices[2] - t.vertices[0];
-
-  // vec3 surfaceNormal = glm::normalize(glm::cross(diff1, diff2));
-
-
-  vec3 pointToLight = lightSource - point;
-  float distance = glm::length(pointToLight);
-
-  float brightness = INTENSITY / (FRACTION_VAL * M_PI * distance * distance);
-
-  float dotProduct = std::max(0.0f, (float) glm::dot(surfaceNormal, glm::normalize(pointToLight)));
-  brightness *= pow(dotProduct, 1.0f);
-
-  // Specular Highlighting
-  if(reflectiveMode)
-  {
-    vec3 flipped = -1.0f * rayDirection;
-    vec3 reflected = pointToLight - (2.0f * point * glm::dot(pointToLight, point));
-    float angle = std::max(0.0f, glm::dot(glm::normalize(flipped), glm::normalize(reflected)));
-    brightness += pow(angle, 1.0f);
-  }
-
-  if(brightness < (float) AMBIENCE)
-  {
-    brightness = (float) AMBIENCE;
-  }
-
-  if(hardShadowMode)
-  {
-    vector<ModelTriangle> alteredTriangles = removeIntersectedTriangle(triangles, t);
-    bool hardShadow = checkHardShadow(point, pointToLight, alteredTriangles);
-    if(hardShadow)
-      brightness = 0.15f;
-  } 
-
-  if(softShadowMode)
-  {
-    vector<ModelTriangle> alteredTriangles = removeIntersectedTriangle(triangles, t);
-    float penumbra = checkSoftShadow(point, alteredTriangles);
-    brightness *= (1 - penumbra);
-    if(brightness < 0.15f) brightness = 0.15f;
-  }
-
-  if(brightness > 1.0f)
-  {
-    brightness = 1.0f;
-  }
-
-  return brightness;
-}
-
 
 vector<float> calculateVertexBrightness(vector<ModelTriangle> triangles, ModelTriangle t, vec3 rayDirection)
 {
@@ -234,6 +181,53 @@ float calculatePhongBrightness(vector<ModelTriangle> triangles, vec3 point, Mode
   return brightness;
 }
 
+float calculateBumpBrightness(vec3 point, ModelTriangle t, vec3 rayDirection, vector<ModelTriangle> triangles, vec3 triangleNormal)
+{
+  vec3 pointToLight = lightSource - point;
+  float distance = glm::length(pointToLight);
+
+  float brightness = INTENSITY / (FRACTION_VAL * M_PI * distance * distance);
+
+  float dotProduct = std::max(0.0f, (float) glm::dot(triangleNormal, glm::normalize(pointToLight)));
+  brightness *= pow(dotProduct, 1.0f);
+
+  // Specular Highlighting
+  if(reflectiveMode)
+  {
+    vec3 flipped = -1.0f * rayDirection;
+    vec3 reflected = pointToLight - (2.0f * point * glm::dot(pointToLight, point));
+    float angle = std::max(0.0f, glm::dot(glm::normalize(flipped), glm::normalize(reflected)));
+    brightness += pow(angle, 1.0f);
+  }
+
+  if(brightness < (float) AMBIENCE)
+  {
+    brightness = (float) AMBIENCE;
+  }
+
+  if(hardShadowMode)
+  {
+    vector<ModelTriangle> alteredTriangles = removeIntersectedTriangle(triangles, t);
+    bool hardShadow = checkHardShadow(point, pointToLight, alteredTriangles);
+    if(hardShadow)
+      brightness = 0.15f;
+  } 
+
+  if(softShadowMode)
+  {
+    vector<ModelTriangle> alteredTriangles = removeIntersectedTriangle(triangles, t);
+    float penumbra = checkSoftShadow(point, alteredTriangles);
+    brightness *= (1 - penumbra);
+    if(brightness < 0.15f) brightness = 0.15f;
+  }
+
+  if(brightness > 1.0f)
+  {
+    brightness = 1.0f;
+  }
+  return brightness;
+}
+
 vec3 computeRayDirection(float x, float y)
 {
   vec3 rayDirection = glm::normalize((vec3((x - WIDTH/2), (-(y - HEIGHT/2)), FOCAL_LENGTH) - cameraPos) * cameraOrientation);
@@ -311,50 +305,29 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
     {
       if(t < result.distanceFromCamera)
       {
-        if (curr.tag == "hackspace"){
-          texHeight = 300;
-          texWidth = 300;
-        }
-        else if(curr.tag == "checker") {
-          texWidth = 738;
-          texHeight = 738;
-        }
-        else if(curr.tag == "bump") {
-          texWidth = bumpWidth;
-          texHeight = bumpHeight;
-        }
         vec3 point = curr.vertices[0] + (u * e0) + (v * e1);
         float brightness = calculateBrightness(point, curr, rayDirection, triangles);
 
-        vec2 e0_tex = curr.texturepoints[1]*float(texWidth) - curr.texturepoints[0]*float(texWidth);
-        vec2 e1_tex = curr.texturepoints[2]*float(texWidth) - curr.texturepoints[0]*float(texHeight);
-        vec2 tex_point_final = curr.texturepoints[0]*float(texWidth) + (u * e0_tex) + (v * e1_tex);
-
-        // vec3 e0_bump = curr.bumppoints[1] - curr.bumppoints[0];
-        // vec3 e1_bump = curr.bumppoints[2] - curr.bumppoints[0];
-        // vec3 bump_point_final = curr.bumppoints[0]+ (u * e0_bump) + (v * e1_bump);
-        vec3 bump_point_final = bumpNormals[int(tex_point_final.x-1) + int(tex_point_final.y-1) * bumpHeight];
-        if (curr.tag == "bump"){
-          brightness = calculateBumpBrightness(point, curr, rayDirection, triangles,bump_point_final);
-        }
-
-
-
-        uint32_t intersection_col=0;
+        uint32_t intersection_col = 0;
         if (curr.tag == "checker"){
-          intersection_col=checkcols[round(tex_point_final.x) + round(tex_point_final.y) * texWidth];
+          vec2 e0_tex = curr.texturepoints[1] * 738.f - curr.texturepoints[0] * 738.f;
+          vec2 e1_tex = curr.texturepoints[2] * 738.f - curr.texturepoints[0] * 738.f;
+          vec2 tex_point_final = curr.texturepoints[0] * 738.f + (u * e0_tex) + (v * e1_tex);
+          intersection_col=checkcols[round(tex_point_final.x) + round(tex_point_final.y) * 738];
         }
         if (curr.tag == "hackspace"){
+          vec2 e0_tex = curr.texturepoints[1] * 300.f - curr.texturepoints[0] * 300.f;
+          vec2 e1_tex = curr.texturepoints[2] * 300.f - curr.texturepoints[0] * 300.f;
+          vec2 tex_point_final = curr.texturepoints[0] * 300.f + (u * e0_tex) + (v * e1_tex);
           if (int(tex_point_final.x)<=300 && int(tex_point_final.x)>=0 && int(tex_point_final.y)<=300 && int(tex_point_final.y)>=0)
-            intersection_col=pixelColours[(int(tex_point_final.x)-1) + (int(tex_point_final.y)-1) * texWidth];
+            intersection_col=pixelColours[(int(tex_point_final.x)-1) + (int(tex_point_final.y)-1) * 300];
         }
         
         Colour colour = Colour();
         vec3 newColour;
 
-        if(curr.tag == "cornell" || curr.tag == "bump")
+        if(curr.tag == "cornell")
         {
-          
           if(reflectiveMode && curr.colour.reflectivity && depth > 0)
           {
             vector<ModelTriangle> reflectionTriangles = removeIntersectedTriangle(triangles, curr);
@@ -402,8 +375,23 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
             newColour = vec3(curr.colour.red, curr.colour.green, curr.colour.blue);
             colour = Colour(newColour.x, newColour.y, newColour.z);
             colour.brightness = brightness;
-          }
+          }    
+        }
+        else if(curr.tag == "bump") 
+        {
+          newColour = vec3(curr.colour.red, curr.colour.green, curr.colour.blue);
+          colour = Colour(newColour.x, newColour.y, newColour.z);
           
+          vec2 e0_bump = curr.texturepoints[1] * 949.f - curr.texturepoints[0] * 949.f;
+          vec2 e1_bump = curr.texturepoints[2] * 949.f - curr.texturepoints[0] * 949.f;
+          vec2 bump_point = curr.texturepoints[0] * 949.f + (u * e0_bump) + (v * e1_bump);
+
+          if(int(bump_point.x) >= 0 && int(bump_point.x) <= 949 && int(bump_point.y) >= 0 && int(bump_point.y) <= 949)
+          {
+            vec3 bump_point_normal = bumpNormals[(int(bump_point.x)) + (int(bump_point.y)) * 949];
+            brightness = calculateBumpBrightness(point, curr, rayDirection, triangles, bump_point_normal);
+            colour.brightness = brightness;
+          }
         }
         result = RayTriangleIntersection(point, t, curr, colour);
       }

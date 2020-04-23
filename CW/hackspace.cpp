@@ -49,18 +49,6 @@ int main(int argc, char* argv[])
     }
   }
 
-  //   for(size_t i = 0; i < cornellTriangles.size(); i++)
-  // {
-  //   if(cornellTriangles.at(i).colour.name == "Grey")
-  //   {
-  //     cornellTriangles.at(i).colour.reflectivity = true;
-  //   }
-  //   if(cornellTriangles.at(i).colour.name == "Red")
-  //   {
-  //     cornellTriangles.at(i).colour.refractivity = true;
-  //   }
-  // }
-
   draw();
 
   while(true)
