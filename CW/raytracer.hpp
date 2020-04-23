@@ -315,7 +315,7 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
           vec2 tex_point_final = curr.texturepoints[0] * 738.f + (u * e0_tex) + (v * e1_tex);
           intersection_col=checkcols[round(tex_point_final.x) + round(tex_point_final.y) * 738];
         }
-        if (curr.tag == "hackspace"){
+        else if (curr.tag == "hackspace"){
           vec2 e0_tex = curr.texturepoints[1] * 300.f - curr.texturepoints[0] * 300.f;
           vec2 e1_tex = curr.texturepoints[2] * 300.f - curr.texturepoints[0] * 300.f;
           vec2 tex_point_final = curr.texturepoints[0] * 300.f + (u * e0_tex) + (v * e1_tex);
@@ -516,7 +516,7 @@ vec3 computeInternalReflectedRay(vec3 incidentRay, ModelTriangle t)
   {
     incidentRay = -1.0f * incidentRay;
   }
-  vec3 reflected = glm::normalize(incidentRay - 2.f * (glm::dot(surfaceNormal, incidentRay) * surfaceNormal));
+  vec3 reflected = glm::normalize(incidentRay + 2.f * (glm::dot(surfaceNormal, incidentRay) * surfaceNormal));
   return reflected;
 }
 

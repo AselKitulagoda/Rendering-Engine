@@ -116,7 +116,7 @@ bool phongMode = false;
 bool cullingMode = false;
 bool wuMode = false;
 bool reflectiveMode = false;
-bool refractiveMode = false;
+bool refractiveMode = true;
 
 vector<uint32_t> pixelColours = loadImage("texture.ppm");
 vector<uint32_t> checkcols = loadCheckImage("chessNEW.ppm");
@@ -304,7 +304,6 @@ vector<ModelTriangle> readCornellBox(float scale)
   {
     string light;
     string comment;
-    string mat;
     getline(fp, comment);
 
     if (!comment.empty())
@@ -312,7 +311,6 @@ vector<ModelTriangle> readCornellBox(float scale)
       string *splitcomment = split(comment,' ');
       if (splitcomment[0] == "usemtl")
       {
-        mat = splitcomment[1];
         while(true)
         {
           getline(fp,comment);
@@ -355,12 +353,11 @@ vector<ModelTriangle> readCornellBox(float scale)
       if (splitcomment[0] == "usemtl")
       {
         mat = splitcomment[1];
-        Colour tricolour = getColourFromName(mat,cornellColours);
-        if(mat == "Yellow" || mat == "Magenta")
+      if(mat != "Magenta" && mat != "Yellow")
         {
-          mat = "Red";
-          tricolour = getColourFromName(mat,cornellColours);
-        } 
+
+        Colour tricolour = getColourFromName(mat,cornellColours);
+
         tricolour.name = mat;
         tricolour.reflectivity = false;
         tricolour.refractivity = false;
@@ -393,7 +390,8 @@ vector<ModelTriangle> readCornellBox(float scale)
           getline(fp,comment_new);
           }
           else{not_reach=false;}
-
+        
+        }
         }
       }
     }
