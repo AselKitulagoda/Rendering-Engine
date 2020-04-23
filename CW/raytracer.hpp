@@ -495,7 +495,7 @@ vec3 computeReflectedRay(vec3 incidentRay, ModelTriangle t)
   vec3 diff1 = t.vertices[1] - t.vertices[0];
   vec3 diff2 = t.vertices[2] - t.vertices[0];
 
-  vec3 surfaceNormal = glm::normalize(glm::cross(diff1, diff2));
+  vec3 surfaceNormal = -glm::normalize(glm::cross(diff1, diff2));
 
   vec3 reflected = incidentRay- (2.0f * surfaceNormal * glm::dot(incidentRay, surfaceNormal));
   return reflected;
@@ -542,7 +542,7 @@ vec3 refract(vec3 incidentRay, vec3 surfaceNormal, float ior)
     return vec3(0, 0, 0);
   }
   vec3 refracted = ratio * incidentRay + (ratio * cosi - sqrtf(k)) * surfaceNormal;
-  return refracted;
+  return -refracted;
 }
 
 float fresnel(vec3 incidentRay, vec3 surfaceNormal, float ior)
