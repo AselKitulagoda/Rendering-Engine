@@ -497,7 +497,7 @@ vec3 computeReflectedRay(vec3 incidentRay, ModelTriangle t)
 
   vec3 surfaceNormal = -glm::normalize(glm::cross(diff1, diff2));
 
-  vec3 reflected = incidentRay- (2.0f * surfaceNormal * glm::dot(incidentRay, surfaceNormal));
+  vec3 reflected = incidentRay+ (2.0f * surfaceNormal * glm::dot(incidentRay, surfaceNormal));
   return reflected;
 }
 
@@ -533,7 +533,7 @@ vec3 refract(vec3 incidentRay, vec3 surfaceNormal, float ior)
   else
   {
     std::swap(etai, etat);
-    surfaceNormal = -surfaceNormal;
+    // surfaceNormal = -surfaceNormal;
   }
   float ratio = etai / etat;
   float k = 1 - ratio * ratio * (1 - cosi * cosi);
@@ -541,7 +541,7 @@ vec3 refract(vec3 incidentRay, vec3 surfaceNormal, float ior)
   {
     return vec3(0, 0, 0);
   }
-  vec3 refracted = ratio * incidentRay + (ratio * cosi - sqrtf(k)) * surfaceNormal;
+  vec3 refracted = ratio * incidentRay + (ratio * cosi - round(sqrtf(k))) * surfaceNormal;
   return -refracted;
 }
 
