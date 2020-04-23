@@ -99,7 +99,7 @@ void spin(vec3 point)
     // cout << "saved PPM, file num = " << filenum << endl;
     // savePPM(filepath);
     // filenum++;
-    // filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
+    // filepath = "raytracer_frames/" + std::to_string(filenum) + ".ppm";
   }
 
   for(int i = 0; i < 46; i++)
@@ -111,7 +111,7 @@ void spin(vec3 point)
     // cout << "saved PPM, file num = " << filenum << endl;
     // savePPM(filepath);
     // filenum++;
-    // filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
+    // filepath = "raytracer_frames/" + std::to_string(filenum) + ".ppm";
   }
 
   for(int i = 0; i < 23; i++)
@@ -123,7 +123,7 @@ void spin(vec3 point)
     // cout << "saved PPM, file num = " << filenum << endl;
     // savePPM(filepath);
     // filenum++;
-    // filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
+    // filepath = "raytracer_frames/" + std::to_string(filenum) + ".ppm";
   }
 }
 
@@ -141,7 +141,7 @@ void jump(float amount)
     // cout << "saved PPM, file num = " << filenum << endl;
     // savePPM(filepath);
     // filenum++;
-    // filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
+    // filepath = "raytracer_frames/" + std::to_string(filenum) + ".ppm";
     shiftVertices(vec3(0, -1.f, 0), s);
   }
 }
@@ -203,7 +203,7 @@ void squash(float amount)
     // cout << "saved PPM, file num = " << filenum << endl;
     // savePPM(filepath);
     // filenum++;
-    // filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
+    // filepath = "raytracer_frames/" + std::to_string(filenum) + ".ppm";
     allTriangles = originalTriangles;
   }
 }
@@ -242,7 +242,7 @@ void fadeIn()
     // cout << "saved PPM, file num = " << filenum << endl;
     // savePPM(filepath);
     // filenum++;
-    // filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
+    // filepath = "raytracer_frames/" + std::to_string(filenum) + ".ppm";
   }
   if(stepTracker != yDiff)
   {
@@ -255,10 +255,10 @@ void jumpAndSquash()
   jump(5); squash(1.2); jump(3); squash(0.8);
   jump(2); squash(0.4); jump(1); squash(0.1);
   draw(); window.renderFrame();
-  // cout << "saved PPM, file num = " << filenum << endl;
-  // savePPM(filepath);
-  // filenum++;
-  // filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
+    // cout << "saved PPM, file num = " << filenum << endl;
+    // savePPM(filepath);
+    // filenum++;
+    // filepath = "raytracer_frames/" + std::to_string(filenum) + ".ppm";
 }
 
 void update()
@@ -489,6 +489,7 @@ void handleEvent(SDL_Event event)
       savePPM(filepath);
       filenum++;
       filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
+      // filepath = "raytracer_frames/" + std::to_string(filenum) + ".ppm";
     }
     else if(event.key.keysym.sym == SDLK_b) // backface culling mode
     {
