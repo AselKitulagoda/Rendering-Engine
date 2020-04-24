@@ -495,9 +495,9 @@ vec3 computeReflectedRay(vec3 incidentRay, ModelTriangle t)
   vec3 diff1 = t.vertices[1] - t.vertices[0];
   vec3 diff2 = t.vertices[2] - t.vertices[0];
 
-  vec3 surfaceNormal = -glm::normalize(glm::cross(diff1, diff2));
+  vec3 surfaceNormal = glm::normalize(glm::cross(diff1, diff2));
 
-  vec3 reflected = incidentRay+ (2.0f * surfaceNormal * glm::dot(incidentRay, surfaceNormal));
+  vec3 reflected = incidentRay - (2.0f * surfaceNormal * glm::dot(incidentRay, surfaceNormal));
   return reflected;
 }
 
@@ -506,7 +506,7 @@ vec3 computeInternalReflectedRay(vec3 incidentRay, ModelTriangle t)
   vec3 diff1 = t.vertices[1] - t.vertices[0];
   vec3 diff2 = t.vertices[2] - t.vertices[0];
 
-  vec3 surfaceNormal = -glm::normalize(glm::cross(diff1, diff2));
+  vec3 surfaceNormal = glm::normalize(glm::cross(diff1, diff2));
 
   if(glm::dot(incidentRay, surfaceNormal) > 0.0f)
   {
@@ -516,7 +516,7 @@ vec3 computeInternalReflectedRay(vec3 incidentRay, ModelTriangle t)
   {
     incidentRay = -1.0f * incidentRay;
   }
-  vec3 reflected = incidentRay + 2.f * surfaceNormal*(glm::dot(surfaceNormal, incidentRay) );
+  vec3 reflected = incidentRay - 2.f * surfaceNormal*(glm::dot(surfaceNormal, incidentRay) );
   return reflected;
 }
 
@@ -533,16 +533,14 @@ vec3 refract(vec3 incidentRay, vec3 surfaceNormal, float ior)
   else
   {
     std::swap(etai, etat);
-    // surfaceNormal = -surfaceNormal;
+    surfaceNormal = -surfaceNormal;
   }
   float ratio = etai / etat;
   float k = 1 - ratio * ratio * (1 - cosi * cosi);
-  if(k < 0) 
-  {
-    return vec3(0, 0, 0);
-  }
+
   vec3 refracted = ratio * incidentRay + (ratio * cosi - round(sqrtf(k))) * surfaceNormal;
-  return -refracted;
+
+  if(k < 0) return vec3(0, 0, 0); else return refracted;
 }
 
 float fresnel(vec3 incidentRay, vec3 surfaceNormal, float ior)
@@ -572,7 +570,7 @@ Colour calculateGlassColour(vector<ModelTriangle> triangles, vec3 rayDirection, 
   vec3 diff1 = t.vertices[1] - t.vertices[0];
   vec3 diff2 = t.vertices[2] - t.vertices[0];
 
-  vec3 surfaceNormal = (glm::cross(diff1, diff2));
+  vec3 surfaceNormal = glm::normalize(glm::cross(diff1, diff2));
 
   // Do reflection
   vector<ModelTriangle> filteredTriangles = removeIntersectedTriangle(triangles, t);
@@ -583,7 +581,7 @@ Colour calculateGlassColour(vector<ModelTriangle> triangles, vec3 rayDirection, 
   // vec3 reflectionColour = vec3(reflectionIntersect.colour.red, reflectionIntersect.colour.green, reflectionIntersect.colour.blue);
 
   // Do refraction
-  vec3 refractedRay = refract(rayDirection, surfaceNormal, 1.5f);
+  vec3 refractedRay = -refract(rayDirection, surfaceNormal, 1.5f);
   if(refractedRay == vec3(0, 0, 0)) return reflectionIntersect.colour;
   RayTriangleIntersection refractionIntersect = getClosestIntersection(intersectionPoint, refractedRay, filteredTriangles, depth - 1);
 
