@@ -7,9 +7,6 @@
 using namespace std;
 using namespace glm;
 
-int TempTexHeight;
-int TempTexWidth;
-
 // Rasterising Stuff
 void drawFilled(CanvasTriangle t, float depthBuffer[WIDTH][HEIGHT]);
 void drawRasterised(vector<ModelTriangle> triangles);
@@ -212,54 +209,22 @@ void drawRasterised(vector<ModelTriangle> triangles)
     }
   }
 
-  vector<ModelTriangle> filteredTriangles = backfaceCulling(triangles);
-
-  if(cullingMode)
+  for(size_t i = 0; i < triangles.size(); i++)
   {
-    for(size_t i = 0; i < filteredTriangles.size(); i++)
+    CanvasTriangle projection = modelToCanvas(triangles.at(i));
+    
+    if(triangles.at(i).tag == "cornell" || triangles.at(i).tag == "sphere" || triangles.at(i).tag == "bump")     
     {
-      //convert all model triangles to a canvas triangle
-      CanvasTriangle projection = modelToCanvas(filteredTriangles.at(i));
-      
-      if(filteredTriangles.at(i).tag == "cornell" || filteredTriangles.at(i).tag == "sphere" || filteredTriangles.at(i).tag == "bump")
-      {
-        //calls Draw Filled for all Cornell box canvas triangles, takes in depth buffer 
-        drawFilled(projection, depthBuffer);
-        drawStroke(projection, depthBuffer);
-      }
-      else
-      {
-        // calls Draw Texture map on hackspace canvas triangles
-      if (triangles.at(i).tag == "checker"){
-          drawTextureMap(projection,depthBuffer,checkcols, 738);
-        }
-      if (triangles.at(i).tag == "hackspace"){
-        drawTextureMap(projection,depthBuffer,pixelColours, 300);
-      }
+      drawFilled(projection, depthBuffer);
+      drawStroke(projection, depthBuffer);
     }
-  }
-  }
-  else 
-  {
-    for(size_t i = 0; i < triangles.size(); i++)
+    else
     {
-      CanvasTriangle projection = modelToCanvas(triangles.at(i));
-      
-      if(triangles.at(i).tag == "cornell" || triangles.at(i).tag == "sphere" || triangles.at(i).tag == "bump")     
-      {
-        drawFilled(projection, depthBuffer);
-        drawStroke(projection, depthBuffer);
+    if (triangles.at(i).tag == "checker"){
+        drawTextureMap(projection,depthBuffer,checkcols,738);
       }
-      else
-      {
-      if (triangles.at(i).tag == "checker"){
-          drawTextureMap(projection,depthBuffer,checkcols,738);
-        }
-      if (triangles.at(i).tag == "hackspace"){
-          TempTexWidth=300;
-          TempTexHeight=300;
-          drawTextureMap(projection,depthBuffer,pixelColours,300);
-        }
+    if (triangles.at(i).tag == "hackspace"){
+        drawTextureMap(projection,depthBuffer,pixelColours,300);
       }
     }
   }

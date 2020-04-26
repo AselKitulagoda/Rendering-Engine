@@ -11,6 +11,9 @@ void drawLine(CanvasPoint p1, CanvasPoint p2, Colour c, float depthBuffer[WIDTH]
 void drawStroke(CanvasTriangle t, float depthBuffer[WIDTH][HEIGHT]);
 void drawWireframe(vector<ModelTriangle> triangles);
 
+// Bounding Box Clipping Version
+void drawWireframeObj(vector<Object> objects);
+
 // Wu Line (Anti aliasing stuff)
 float roundNumber(float x);
 float fPart(float x);
@@ -57,8 +60,6 @@ void drawStroke(CanvasTriangle t, float depthBuffer[WIDTH][HEIGHT])
 
 void drawWireframe(vector<ModelTriangle> triangles) 
 {
-  // window.clearPixels();
-  
   float depthBuffer[WIDTH][HEIGHT];
   for(int i = 0; i < WIDTH; i++) 
   {
@@ -67,32 +68,61 @@ void drawWireframe(vector<ModelTriangle> triangles)
       depthBuffer[i][j] = (float) INFINITY;
     }
   }
-  vector<ModelTriangle> filteredTriangles = backfaceCulling(triangles);
 
-  if(cullingMode)
+  if(wuMode)
   {
-    for(size_t i = 0; i < filteredTriangles.size(); i++)
+    for(size_t i = 0; i < triangles.size(); i++)
     {
-      CanvasTriangle projection = modelToCanvas(filteredTriangles.at(i));
+      CanvasTriangle projection = modelToCanvas(triangles.at(i));
+      drawAAStroke(projection);
+    }
+  }
+  else
+  {
+    for(size_t i = 0; i < triangles.size(); i++)
+    {
+      CanvasTriangle projection = modelToCanvas(triangles.at(i));
       drawStroke(projection, depthBuffer);
     }
   }
-  else 
+}
+
+void drawWireframeObj(vector<Object> objects) 
+{
+  float depthBuffer[WIDTH][HEIGHT];
+  for(int i = 0; i < WIDTH; i++) 
   {
-    if(wuMode)
+    for(int j = 0; j < HEIGHT; j++) 
     {
-      for(size_t i = 0; i < triangles.size(); i++)
+      depthBuffer[i][j] = (float) INFINITY;
+    }
+  }
+
+  if(wuMode)
+  {
+    for(size_t i = 0; i < objects.size(); i++)
+    {
+      if(objects.at(i).visible)
       {
-        CanvasTriangle projection = modelToCanvas(triangles.at(i));
-        drawAAStroke(projection);
+        for(size_t j = 0; j < objects.at(i).triangles.size(); j++)
+        {
+          CanvasTriangle projection = modelToCanvas(objects.at(i).triangles.at(j));
+          drawAAStroke(projection);
+        }
       }
     }
-    else
-    {
-      for(size_t i = 0; i < triangles.size(); i++)
+  }
+  else
+  {
+    for(size_t i = 0; i < objects.size(); i++)
+    { 
+      if(objects.at(i).visible)
       {
-        CanvasTriangle projection = modelToCanvas(triangles.at(i));
-        drawStroke(projection, depthBuffer);
+        for(size_t j = 0; j < objects.at(i).triangles.size(); j++)
+        {
+          CanvasTriangle projection = modelToCanvas(objects.at(i).triangles.at(j));
+          drawStroke(projection, depthBuffer);
+        }
       }
     }
   }

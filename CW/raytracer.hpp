@@ -10,7 +10,7 @@ using namespace glm;
 
 // Raytracing Stuff
 vec3 computeRayDirection(float x, float y);
-RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles, int depth);
+RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles, int depth, float ior);
 void drawRaytraced(vector<ModelTriangle> triangles);
 Colour getAverageColour(vector<Colour> finalColours);
 void drawRaytraceAntiAlias(vector<ModelTriangle> triangles);
@@ -36,7 +36,7 @@ vec3 computeReflectedRay(vec3 incidentRay, ModelTriangle t);
 
 // Refraction/Glass
 vec3 computeInternalReflectedRay(vec3 incidentRay, ModelTriangle t);
-vec3 refract(vec3 incidentRay, vec3 surfaceNormal, float ior);
+vec4 refract(vec3 incidentRay, vec3 surfaceNormal, float ior);
 float fresnel(vec3 incidentRay, vec3 surfaceNormal, float ior);
 Colour calculateGlassColour(vector<ModelTriangle> triangles, vec3 rayDirection, vec3 intersectionPoint, ModelTriangle t, int depth);
 
@@ -280,7 +280,7 @@ float checkSoftShadow(vec3 point, vector<ModelTriangle> alteredTriangles)
   return penumbra;
 }
 
-RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles, int depth)
+RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection, vector<ModelTriangle> triangles, int depth, float ior)
 { 
   RayTriangleIntersection result;
   result.distanceFromCamera = INFINITY;
@@ -333,7 +333,7 @@ RayTriangleIntersection getClosestIntersection(vec3 cameraPos, vec3 rayDirection
             vector<ModelTriangle> reflectionTriangles = removeIntersectedTriangle(triangles, curr);
             vec3 incidentRay = glm::normalize(point - cameraPos);
             vec3 reflectedRay = computeReflectedRay(incidentRay, curr);
-            RayTriangleIntersection mirrorIntersect = getClosestIntersection(point, reflectedRay, reflectionTriangles, depth - 1);
+            RayTriangleIntersection mirrorIntersect = getClosestIntersection(point, reflectedRay, reflectionTriangles, depth - 1, ior);
             if(mirrorIntersect.distanceFromCamera >= INFINITY) colour = Colour(0, 0, 0);
             else colour = mirrorIntersect.colour;
           }
@@ -409,7 +409,7 @@ void drawRaytraced(vector<ModelTriangle> triangles)
     for(int x = 0; x < WIDTH; x++)
     {
       vec3 ray = computeRayDirection((float) x, (float) y);
-      RayTriangleIntersection closestIntersect = getClosestIntersection(cameraPos, ray, triangles, 7);
+      RayTriangleIntersection closestIntersect = getClosestIntersection(cameraPos, ray, triangles, 7, 1.0f);
       
       if(closestIntersect.distanceFromCamera < INFINITY)
       {
@@ -458,23 +458,9 @@ void drawRaytraceAntiAlias(vector<ModelTriangle> triangles)
       for(size_t i = 0; i < quincunx.size(); i++)
       {
         vec3 ray = computeRayDirection(x + quincunx.at(i).x, y + quincunx.at(i).y);
-        RayTriangleIntersection closestIntersect = getClosestIntersection(cameraPos, ray, triangles, 1);
+        RayTriangleIntersection closestIntersect = getClosestIntersection(cameraPos, ray, triangles, 1, 1.f);
 
-        // Do reflection
-        if(reflectiveMode)
-        {
-          if(closestIntersect.intersectedTriangle.colour.reflectivity)
-          { 
-            vector<ModelTriangle> reflectionTriangles = removeIntersectedTriangle(triangles, closestIntersect.intersectedTriangle);
-            vec3 incidentRay = glm::normalize(closestIntersect.intersectionPoint - cameraPos);
-            vec3 reflectedRay = computeReflectedRay(incidentRay, closestIntersect.intersectedTriangle);
-            RayTriangleIntersection mirrorIntersect = getClosestIntersection(closestIntersect.intersectionPoint, reflectedRay, reflectionTriangles,1);
-            if(mirrorIntersect.distanceFromCamera == -INFINITY) closestIntersect.colour = Colour(0, 0, 0);
-            else closestIntersect.colour = mirrorIntersect.colour;
-          }
-        }
-
-        if(closestIntersect.distanceFromCamera != -INFINITY)
+        if(closestIntersect.distanceFromCamera < INFINITY)
         {
           finalColours.push_back(closestIntersect.colour);
         }
@@ -507,40 +493,53 @@ vec3 computeInternalReflectedRay(vec3 incidentRay, ModelTriangle t)
   vec3 diff2 = t.vertices[2] - t.vertices[0];
 
   vec3 surfaceNormal = glm::normalize(glm::cross(diff1, diff2));
-
-  if(glm::dot(incidentRay, surfaceNormal) > 0.0f)
-  {
-    surfaceNormal = -1.0f * surfaceNormal;
-  }
-  else
-  {
-    incidentRay = -1.0f * incidentRay;
-  }
-  vec3 reflected = incidentRay - 2.f * surfaceNormal*(glm::dot(surfaceNormal, incidentRay) );
+  
+  vec3 reflected = glm::normalize(incidentRay - 2.f * surfaceNormal*(glm::dot(surfaceNormal, incidentRay)));
   return reflected;
 }
 
 // Refraction/Glass stuff
-vec3 refract(vec3 incidentRay, vec3 surfaceNormal, float ior)
+// vec3 refract(vec3 incidentRay, vec3 surfaceNormal, float ior)
+// {
+//   float cosi = clamp(-1.0f, 1.0f, glm::dot(incidentRay, surfaceNormal)); 
+//   float etai = 1, etat = ior;
+
+//   if(cosi < 0.f)
+//   {
+//     cosi = -cosi;
+//   }
+//   else
+//   {
+//     std::swap(etai, etat);
+//     surfaceNormal = -surfaceNormal;
+//   }
+//   float ratio = etai / etat;
+//   float k = 1 - ratio * ratio * (1 - cosi * cosi);
+
+//   vec3 refracted = ratio * incidentRay + (ratio * cosi - round(sqrtf(k))) * surfaceNormal;
+
+//   if(k < 0) return vec3(0, 0, 0); else return refracted;
+// }
+
+vec4 refract(vec3 incidentRay, vec3 surfaceNormal, float ior)
 {
   float cosi = clamp(-1.0f, 1.0f, glm::dot(incidentRay, surfaceNormal)); 
   float etai = 1, etat = ior;
+  float ratio = etai / etat;
 
-  if(cosi < 0.f)
+  if(cosi > 0) 
   {
-    cosi = -cosi;
-  }
-  else
-  {
-    std::swap(etai, etat);
+    ratio = 1 / ratio;
     surfaceNormal = -surfaceNormal;
   }
-  float ratio = etai / etat;
-  float k = 1 - ratio * ratio * (1 - cosi * cosi);
+  
+  float cost = abs(cosi);
 
-  vec3 refracted = ratio * incidentRay + (ratio * cosi - round(sqrtf(k))) * surfaceNormal;
+  float k = 1 - ratio * ratio * (1 - cost * cost);
+  if(k < 0) return vec4(0, 0, 0, 0);
 
-  if(k < 0) return vec3(0, 0, 0); else return refracted;
+  vec3 refracted = glm::normalize(ratio * incidentRay + (ratio * cost - sqrtf(k)) * surfaceNormal);
+  return vec4(refracted.x, refracted.y, refracted.z, sign(cosi));
 }
 
 float fresnel(vec3 incidentRay, vec3 surfaceNormal, float ior)
@@ -572,26 +571,20 @@ Colour calculateGlassColour(vector<ModelTriangle> triangles, vec3 rayDirection, 
 
   vec3 surfaceNormal = glm::normalize(glm::cross(diff1, diff2));
 
-  // Do reflection
   vector<ModelTriangle> filteredTriangles = removeIntersectedTriangle(triangles, t);
 
+  // Do reflection
   vec3 reflectedRay = computeInternalReflectedRay(rayDirection, t);
-  RayTriangleIntersection reflectionIntersect = getClosestIntersection(intersectionPoint, reflectedRay, filteredTriangles, depth - 1);
-
-  // vec3 reflectionColour = vec3(reflectionIntersect.colour.red, reflectionIntersect.colour.green, reflectionIntersect.colour.blue);
+  RayTriangleIntersection reflectionIntersect = getClosestIntersection(intersectionPoint, reflectedRay, filteredTriangles, depth - 1, 1.f);
 
   // Do refraction
-  vec3 refractedRay = -refract(rayDirection, surfaceNormal, 1.5f);
+  vec4 refraction = refract(rayDirection, surfaceNormal, 1.3f);
+  vec3 refractedRay = vec3(refraction[0], refraction[1], refraction[2]);
   if(refractedRay == vec3(0, 0, 0)) return reflectionIntersect.colour;
-  RayTriangleIntersection refractionIntersect = getClosestIntersection(intersectionPoint, refractedRay, filteredTriangles, depth - 1);
 
-  // vec3 refractionColour = vec3(refractionIntersect.colour.red, refractionIntersect.colour.green, refractionIntersect.colour.blue);
+  if(refraction[3] == 1) refractedRay = -1.0f * refractedRay;
 
-  // // Do fresnel
-  // float kr = fresnel(rayDirection, surfaceNormal, 1.5f);
-  // vec3 combinedColour = reflectionColour * kr + refractionColour * (1 - kr);
-
-  // return Colour(combinedColour.x, combinedColour.y, combinedColour.z);
+  RayTriangleIntersection refractionIntersect = getClosestIntersection(intersectionPoint, refractedRay, filteredTriangles, depth - 1, 1.5f);
   return refractionIntersect.colour;
 }
 

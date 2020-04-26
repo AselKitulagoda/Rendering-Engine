@@ -49,6 +49,8 @@ int main(int argc, char* argv[])
     }
   }
 
+  allObjects = updateBoundingBox();
+
   draw();
 
   while(true)
@@ -68,6 +70,7 @@ int main(int argc, char* argv[])
 void draw()
 {
   window.clearPixels();
+  allObjects = updateVisibility();
   if(drawMode == 0) drawWireframe(allTriangles);
   else if(drawMode == 1) drawRasterised(allTriangles);
   else if(drawMode == 2) drawRaytraced(allTriangles);
@@ -489,12 +492,6 @@ void handleEvent(SDL_Event event)
       savePPM(filepath);
       filenum++;
       filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
-    }
-    else if(event.key.keysym.sym == SDLK_b) // backface culling mode
-    {
-      cullingMode = !cullingMode;
-      cout << "CULLING MODE = " << cullingMode << endl;
-      draw();
     }
     else if(event.key.keysym.sym == SDLK_1) // toggle soft shadow mode
     {

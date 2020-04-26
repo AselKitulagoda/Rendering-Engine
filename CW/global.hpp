@@ -9,7 +9,7 @@
 #include <glm/glm.hpp>
 #include <fstream>
 #include <vector>
-#include <glm/gtx/string_cast.hpp>
+#include <Object.h>
 
 using namespace std;
 using namespace glm;
@@ -75,6 +75,11 @@ vector<ModelTriangle> addSphereTriangles(vector<ModelTriangle> combined, vector<
 vector<pair<ModelTriangle, vector<vec3>>> updateVertexNormals(vector<ModelTriangle> triangles);
 vector<vec3> getTriangleVertexNormals(ModelTriangle t, vector<pair<ModelTriangle, vector<vec3>>> triangleVertexNormals);
 
+// Bounding Box Clipping
+vector<Object> initialiseObjects(vector<ModelTriangle> triangles);
+vector<Object> updateBoundingBox();
+vector<Object> updateVisibility();
+
 // Defining the Global Variables
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 int drawMode = -1;
@@ -90,6 +95,9 @@ vector<ModelTriangle> cornellTriangles = combineTriangles(readGround(SCALE_CORNE
 vector<ModelTriangle> sphereTriangles = readSphere(SCALE_SPHERE);
 vector<ModelTriangle> bumpTriangles = readBumpWall(SCALE_CORNELL, "bumpwall.obj");
 vector<ModelTriangle> allTriangles = combineTriangles(combineTriangles(combineTriangles(cornellTriangles, bumpTriangles), readObj(SCALE_FACTOR, "logo.obj")), sphereTriangles);
+
+vector<Object> allObjects = initialiseObjects(allTriangles);
+
 vector<pair<ModelTriangle, vector<vec3>>> triangleVertexNormals;
 vec3 unpackColour(uint32_t col);
 
@@ -113,10 +121,9 @@ bool hardShadowMode = false;
 bool softShadowMode = false;
 bool gouraudMode = false;
 bool phongMode = false;
-bool cullingMode = false;
 bool wuMode = false;
 bool reflectiveMode = false;
-bool refractiveMode = true;
+bool refractiveMode = false;
 
 vector<uint32_t> pixelColours = loadImage("texture.ppm");
 vector<uint32_t> checkcols = loadCheckImage("chessNEW.ppm");
@@ -125,6 +132,111 @@ int texHeight;
 
 int filenum = 0;
 string filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
+
+vector<Object> initialiseObjects(vector<ModelTriangle> triangles)
+{
+  vector<ModelTriangle> redTriangles, blueTriangles, hackTriangles, circleTriangles, bumpTriangles, checkTriangles, topTriangles, lightTriangles, floorTriangles, backTriangles;
+
+  for(size_t i = 0; i < triangles.size(); i++)
+  {
+    ModelTriangle t = triangles.at(i);
+    if(t.tag == "cornell")
+    {
+      if(t.colour.name == "Red") redTriangles.push_back(t);
+      else if(t.colour.name == "Blue") blueTriangles.push_back(t);
+      else if(t.colour.name == "Green") floorTriangles.push_back(t);
+      else if(t.colour.name == "Cyan") topTriangles.push_back(t);
+      else if(t.colour.name == "White") lightTriangles.push_back(t);
+      else if(t.colour.name == "Grey") backTriangles.push_back(t);
+    }
+    else if(t.tag == "bump") bumpTriangles.push_back(t);
+    else if(t.tag == "checker") checkTriangles.push_back(t);
+    else if(t.tag == "hackspace") hackTriangles.push_back(t);
+    else if(t.tag == "sphere") circleTriangles.push_back(t);
+  }
+
+  vector<Object> result = {Object("back", backTriangles), Object("top", topTriangles), Object("light", lightTriangles), Object("bump", bumpTriangles), 
+                           Object("floor", floorTriangles), Object("checker", checkTriangles), Object("blue", blueTriangles), Object("hack", hackTriangles), 
+                           Object("sphere", circleTriangles), Object("red", redTriangles)};
+
+  return result;
+}
+
+vector<Object> updateBoundingBox()
+{
+  vector<Object> objects = allObjects;
+
+  for(size_t t = 0; t < objects.size(); t++)
+  {
+    vec3 min = vec3(INFINITY, INFINITY, INFINITY);
+    vec3 max = vec3(-INFINITY, -INFINITY, -INFINITY);
+    
+    for(size_t i = 0; i < objects.at(t).triangles.size(); i++)
+    {
+      ModelTriangle tri = objects.at(t).triangles.at(i);
+      for(int j = 0; j < 3; j++)
+      {
+        vec3 vert = tri.vertices[j];
+
+        // do x
+        if(vert.x < min.x) min.x = vert.x;
+        if(vert.x > max.x) max.x = vert.x;
+
+        // do y
+        if(vert.y < min.y) min.y = vert.y;
+        if(vert.y > max.y) max.y = vert.y;
+
+        // do z
+        if(vert.z < min.z) min.z = vert.z;
+        if(vert.z > max.z) max.z = vert.z;
+      }
+    }
+
+    objects.at(t).boxVertices = {vec3(min.x, min.y, min.z), vec3(max.x, min.y, min.z),
+                      vec3(min.x, max.y, min.z), vec3(max.x, max.y, min.z),
+                      vec3(min.x, min.y, max.z), vec3(max.x, min.y, max.z),
+                      vec3(min.x, max.y, max.z), vec3(max.x, max.y, max.z)};
+  }
+  return objects;
+}
+
+vector<Object> updateVisibility()
+{
+  vector<Object> objects = allObjects;
+  // f here is focal length set it to -3 so it is behind the camera
+  float f = -3;
+
+  for(size_t i = 0; i < objects.size(); i++)
+  { 
+    int counter = 0;
+    for(size_t j = 0; j < objects.at(i).boxVertices.size(); j++)
+    {
+      //set for each vertices(x,y,z) to position relative to the camera position(0,0.9,2) at the moment
+      float xdistance = objects.at(i).boxVertices.at(j).x - cameraPos.x;
+      float ydistance = objects.at(i).boxVertices.at(j).y - cameraPos.y;
+      float zdistance = objects.at(i).boxVertices.at(j).z - cameraPos.z;
+      // this is the vertex position relate to the camera
+      vec3 cameraToVertex = vec3(xdistance, ydistance, zdistance);
+      //adjusted vector is the camera orientation initially mat3x3(1.0f) multipied by vertices by vertex position relative to camera gives vector from camera to image plane for the vertex
+      vec3 adjustedVector = cameraOrientation * cameraToVertex;
+      // pScreen is the depth relate to the camera since image is focal length away depth has to be adjusted to be on the image plane
+      float pScreen = f/adjustedVector.z;
+      // Scale up the x and y canvas coords to get a bigger image (rather than a big model loader scaling)
+      float canvasScaling = 150;
+      // this is x and y co-ord relative to canvas multiply by canvas scaling to get bigger image and add width+height so it ends up is centre screen 
+      float xProj = (adjustedVector.x * pScreen * canvasScaling) + WIDTH/2;
+      float yProj = (-adjustedVector.y * pScreen * canvasScaling) + HEIGHT/2;
+
+      if(xProj >= 0 && xProj < WIDTH && yProj >= 0 && yProj < HEIGHT)
+      {
+        counter += 1;
+      }
+    }
+    if(counter > 0) objects.at(i).visible = true;
+    else objects.at(i).visible = false; 
+  }
+  return objects;
+}
 
 vector<ModelTriangle> combineTriangles(vector<ModelTriangle> triangles, vector<ModelTriangle> cornellTriangles)
 {
