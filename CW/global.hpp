@@ -92,9 +92,9 @@ vector<vec3> bumpNormals = loadBumpMap("bump.ppm");
 
 // Loading Triangles
 vector<ModelTriangle> cornellTriangles = combineTriangles(readGround(SCALE_CORNELL,"ground.obj"),readCornellBox(SCALE_CORNELL));
-vector<ModelTriangle> sphereTriangles = readSphere(SCALE_SPHERE);
+// vector<ModelTriangle> sphereTriangles = readSphere(SCALE_SPHERE);
 vector<ModelTriangle> bumpTriangles = readBumpWall(SCALE_CORNELL, "bumpwall.obj");
-vector<ModelTriangle> allTriangles = combineTriangles(combineTriangles(combineTriangles(cornellTriangles, bumpTriangles), readObj(SCALE_FACTOR, "logo.obj")), sphereTriangles);
+vector<ModelTriangle> allTriangles = combineTriangles(combineTriangles(cornellTriangles, bumpTriangles), readObj(SCALE_FACTOR, "logo.obj"));
 
 vector<Object> allObjects = initialiseObjects(allTriangles);
 
@@ -123,7 +123,7 @@ bool gouraudMode = false;
 bool phongMode = false;
 bool wuMode = false;
 bool reflectiveMode = false;
-bool refractiveMode = false;
+bool refractiveMode = true;
 
 vector<uint32_t> pixelColours = loadImage("texture.ppm");
 vector<uint32_t> checkcols = loadCheckImage("chessNEW.ppm");
