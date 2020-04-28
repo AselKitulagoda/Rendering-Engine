@@ -56,7 +56,7 @@ float calculateBrightness(vec3 point, ModelTriangle t, vec3 rayDirection, vector
   brightness *= pow(dotProduct, 1.0f);
 
   // Specular Highlighting
-  if((reflectiveMode || metallicMode) && t.colour.name != "Green")
+  if(reflectiveMode || metallicMode)
   {
     vec3 flipped = -1.0f * rayDirection;
     vec3 reflected = pointToLight - (2.0f * point * glm::dot(pointToLight, point));
@@ -109,7 +109,7 @@ vector<float> calculateVertexBrightness(vector<ModelTriangle> triangles, ModelTr
     brightness *= pow(dotProduct, 1.0f);
 
     // Specular Highlighting
-    if((reflectiveMode || metallicMode) && t.colour.name != "Green")
+    if(reflectiveMode || metallicMode)
     {
       vec3 flipped = -1.0f * rayDirection;
       vec3 reflected = vertexToLight - (2.0f * vertex * glm::dot(vertexToLight, vertex));
@@ -160,7 +160,7 @@ float calculatePhongBrightness(vector<ModelTriangle> triangles, vec3 point, Mode
   brightness *= pow(dotProduct, 1.0f);
 
   // Specular Highlighting
-  if((reflectiveMode || metallicMode) && t.colour.name != "Green")
+  if(reflectiveMode || metallicMode)
   {
     vec3 flipped = -1.0f * rayDirection;
     vec3 reflected = pointToLight - (2.0f * point * glm::dot(pointToLight, point));
@@ -192,7 +192,7 @@ float calculateBumpBrightness(vec3 point, ModelTriangle t, vec3 rayDirection, ve
   brightness *= pow(dotProduct, 1.0f);
 
   // Specular Highlighting
-  if((reflectiveMode || metallicMode) && t.colour.name != "Green")
+  if(reflectiveMode || metallicMode)
   {
     vec3 flipped = -1.0f * rayDirection;
     vec3 reflected = pointToLight - (2.0f * point * glm::dot(pointToLight, point));
@@ -411,6 +411,8 @@ RayTriangleIntersection getClosestIntersection(vec3 viewPoint, vec3 rayDirection
     // Set base distance to inf
     float minDist = INFINITY;
 
+    #pragma omp parallel
+    #pragma omp for
     // Loop through all model triangles, find the closest intersection
     for(size_t i = 0; i < triangles.size(); i++)
     {
@@ -499,9 +501,9 @@ RayTriangleIntersection getClosestIntersection(vec3 viewPoint, vec3 rayDirection
         if(metalIntersect.distanceFromCamera == INFINITY) newColour = Colour(0, 0, 0);
         else
         {
-          int mRed = (metalIntersect.colour.red * 0.3 + curr.colour.red * 1.2) / 2;
-          int mGreen = (metalIntersect.colour.green * 0.3 + curr.colour.green * 1.2) / 2;
-          int mBlue = (metalIntersect.colour.blue * 0.3 + curr.colour.blue * 1.2) / 2;
+          int mRed = (metalIntersect.colour.red * 0.2 + curr.colour.red * 1.3) / 2;
+          int mGreen = (metalIntersect.colour.green * 0.2 + curr.colour.green * 1.3) / 2;
+          int mBlue = (metalIntersect.colour.blue * 0.2 + curr.colour.blue * 1.3) / 2;
 
           newColour = Colour(mRed, mGreen, mBlue);
         }
@@ -601,6 +603,8 @@ RayTriangleIntersection getClosestIntersection(vec3 viewPoint, vec3 rayDirection
 
 void drawRaytraced(vector<ModelTriangle> triangles)
 {
+  #pragma omp parallel
+  #pragma omp for
   for(int x = 0; x < WIDTH; x++)
   {
     for(int y = 0; y < HEIGHT; y++)
