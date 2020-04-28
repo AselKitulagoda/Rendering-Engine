@@ -11,9 +11,6 @@ void drawLine(CanvasPoint p1, CanvasPoint p2, Colour c, float depthBuffer[WIDTH]
 void drawStroke(CanvasTriangle t, float depthBuffer[WIDTH][HEIGHT]);
 void drawWireframe(vector<ModelTriangle> triangles);
 
-// Bounding Box Clipping Version
-void drawWireframeObj(vector<Object> objects);
-
 // Wu Line (Anti aliasing stuff)
 float roundNumber(float x);
 float fPart(float x);
@@ -72,58 +69,23 @@ void drawWireframe(vector<ModelTriangle> triangles)
   if(wuMode)
   {
     for(size_t i = 0; i < triangles.size(); i++)
-    {
-      CanvasTriangle projection = modelToCanvas(triangles.at(i));
-      drawAAStroke(projection);
-    }
-  }
-  else
-  {
-    for(size_t i = 0; i < triangles.size(); i++)
-    {
-      CanvasTriangle projection = modelToCanvas(triangles.at(i));
-      drawStroke(projection, depthBuffer);
-    }
-  }
-}
-
-void drawWireframeObj(vector<Object> objects) 
-{
-  float depthBuffer[WIDTH][HEIGHT];
-  for(int i = 0; i < WIDTH; i++) 
-  {
-    for(int j = 0; j < HEIGHT; j++) 
-    {
-      depthBuffer[i][j] = (float) INFINITY;
-    }
-  }
-
-  if(wuMode)
-  {
-    for(size_t i = 0; i < objects.size(); i++)
-    {
-      if(objects.at(i).visible)
-      {
-        for(size_t j = 0; j < objects.at(i).triangles.size(); j++)
-        {
-          CanvasTriangle projection = modelToCanvas(objects.at(i).triangles.at(j));
-          drawAAStroke(projection);
-        }
-      }
-    }
-  }
-  else
-  {
-    for(size_t i = 0; i < objects.size(); i++)
     { 
-      if(objects.at(i).visible)
+      if(triangles.at(i).boundingBoxVisible)
       {
-        for(size_t j = 0; j < objects.at(i).triangles.size(); j++)
-        {
-          CanvasTriangle projection = modelToCanvas(objects.at(i).triangles.at(j));
-          drawStroke(projection, depthBuffer);
-        }
-      }
+        CanvasTriangle projection = modelToCanvas(triangles.at(i));
+        drawAAStroke(projection);
+      } 
+    }
+  }
+  else
+  { 
+    for(size_t i = 0; i < triangles.size(); i++)
+    { 
+      if(triangles.at(i).boundingBoxVisible)
+      { 
+        CanvasTriangle projection = modelToCanvas(triangles.at(i));
+        drawStroke(projection, depthBuffer);
+      } 
     }
   }
 }

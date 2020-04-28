@@ -78,7 +78,7 @@ vector<vec3> getTriangleVertexNormals(ModelTriangle t, vector<pair<ModelTriangle
 // Bounding Box Clipping
 vector<Object> initialiseObjects(vector<ModelTriangle> triangles);
 vector<Object> updateBoundingBox();
-vector<Object> updateVisibility();
+vector<Object> updateObjectVisibility();
 
 // Defining the Global Variables
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
@@ -92,11 +92,11 @@ vector<vec3> bumpNormals = loadBumpMap("bump.ppm");
 
 // Loading Triangles
 vector<ModelTriangle> cornellTriangles = combineTriangles(readGround(SCALE_CORNELL,"ground.obj"),readCornellBox(SCALE_CORNELL));
-// vector<ModelTriangle> sphereTriangles = readSphere(SCALE_SPHERE);
+vector<ModelTriangle> sphereTriangles = readSphere(SCALE_SPHERE);
 vector<ModelTriangle> bumpTriangles = readBumpWall(SCALE_CORNELL, "bumpwall.obj");
-vector<ModelTriangle> allTriangles = combineTriangles(combineTriangles(cornellTriangles, bumpTriangles), readObj(SCALE_FACTOR, "logo.obj"));
+vector<ModelTriangle> allTriangles = combineTriangles(combineTriangles(combineTriangles(cornellTriangles, bumpTriangles), readObj(SCALE_FACTOR, "logo.obj")), sphereTriangles);
 
-vector<Object> allObjects = initialiseObjects(allTriangles);
+vector<Object> allObjects;
 
 vector<pair<ModelTriangle, vector<vec3>>> triangleVertexNormals;
 vec3 unpackColour(uint32_t col);
@@ -123,7 +123,8 @@ bool gouraudMode = false;
 bool phongMode = false;
 bool wuMode = false;
 bool reflectiveMode = false;
-bool refractiveMode = true;
+bool refractiveMode = false;
+bool metallicMode = false;
 
 vector<uint32_t> pixelColours = loadImage("texture.ppm");
 vector<uint32_t> checkcols = loadCheckImage("chessNEW.ppm");
@@ -132,6 +133,18 @@ int texHeight;
 
 int filenum = 0;
 string filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
+
+vector<ModelTriangle> updateTriangleIndices(vector<ModelTriangle> triangles)
+{
+  vector<ModelTriangle> result;
+  for(size_t i = 0; i < triangles.size(); i++)
+  {
+    ModelTriangle t = triangles.at(i);
+    t.triangleIndex = i;
+    result.push_back(t);
+  }
+  return result;
+}
 
 vector<Object> initialiseObjects(vector<ModelTriangle> triangles)
 {
@@ -200,7 +213,7 @@ vector<Object> updateBoundingBox()
   return objects;
 }
 
-vector<Object> updateVisibility()
+vector<Object> updateObjectVisibility()
 {
   vector<Object> objects = allObjects;
   // f here is focal length set it to -3 so it is behind the camera
@@ -236,6 +249,21 @@ vector<Object> updateVisibility()
     else objects.at(i).visible = false; 
   }
   return objects;
+}
+
+vector<ModelTriangle> updateTriangleVisibility()
+{
+  vector<ModelTriangle> result = allTriangles;
+
+  for(size_t i = 0; i < allObjects.size(); i++)
+  {
+    for(size_t j = 0; j < allObjects.at(i).triangles.size(); j++)
+    {
+      int index = allObjects.at(i).triangles.at(j).triangleIndex;
+      result.at(index).boundingBoxVisible = allObjects.at(i).visible;
+    }
+  }
+  return result;
 }
 
 vector<ModelTriangle> combineTriangles(vector<ModelTriangle> triangles, vector<ModelTriangle> cornellTriangles)
@@ -471,8 +499,6 @@ vector<ModelTriangle> readCornellBox(float scale)
         Colour tricolour = getColourFromName(mat,cornellColours);
 
         tricolour.name = mat;
-        tricolour.reflectivity = false;
-        tricolour.refractivity = false;
 
         while(true){
           getline(fp,comment_new);

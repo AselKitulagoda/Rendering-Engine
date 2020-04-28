@@ -33,22 +33,34 @@ void fadeIn();
 int main(int argc, char* argv[])
 {
   SDL_Event event;
-
-  triangleVertexNormals = updateVertexNormals(allTriangles);
   
-  // Updating the reflectivity
+  // Updating triangle indices
+  allTriangles = updateTriangleIndices(allTriangles);
+
+  // Updating the triangle vertex normals
+  triangleVertexNormals = updateVertexNormals(allTriangles);
+
+  // Updating the triangle textures
   for(size_t i = 0; i < allTriangles.size(); i++)
   {
     if(allTriangles.at(i).colour.name == "Grey")
     {
-      allTriangles.at(i).colour.reflectivity = true;
+      allTriangles.at(i).reflective = true;
     }
     if(allTriangles.at(i).colour.name == "Red")
     {
-      allTriangles.at(i).colour.refractivity = true;
+      allTriangles.at(i).refractive = true;
+    }
+    if(allTriangles.at(i).colour.name == "Cyan")
+    {
+      allTriangles.at(i).metallic = true;
     }
   }
 
+  // Separating into objects
+  allObjects = initialiseObjects(allTriangles);
+
+  // Updating the bounding boxes
   allObjects = updateBoundingBox();
 
   draw();
@@ -69,8 +81,16 @@ int main(int argc, char* argv[])
 
 void draw()
 {
+  // Clear screen before drawing
   window.clearPixels();
-  allObjects = updateVisibility();
+
+  // Update the Bounding box visibilities of the objects
+  allObjects = updateObjectVisibility();
+
+  // Update the triangles visibilities
+  allTriangles = updateTriangleVisibility();
+
+  // Check drawing mode and render
   if(drawMode == 0) drawWireframe(allTriangles);
   else if(drawMode == 1) drawRasterised(allTriangles);
   else if(drawMode == 2) drawRaytraced(allTriangles);
@@ -132,12 +152,12 @@ void spin(vec3 point)
 
 void jump(float amount)
 {
-  float u = sqrt(2 * G * amount);
-  float time = 2 * (u / G);
+  float u = sqrt(2 * G * amount); // v = 0, u^2 = 2as
+  float time = 2 * (u / G); // t = 2u/g
 
   for(float t = 0; t < time; t += 0.06f)
   {
-    float s = ((u * t) + (t * t * -G / 2)) * (float) SCALE_CORNELL;
+    float s = ((u * t) + (t * t * -G / 2)) * (float) SCALE_CORNELL; // s = ut + at*2/2
     shiftVertices(vec3(0, 1.f, 0), s);
     draw();
     window.renderFrame();
@@ -492,6 +512,11 @@ void handleEvent(SDL_Event event)
       savePPM(filepath);
       filenum++;
       filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
+    }
+    else if(event.key.keysym.sym == SDLK_b) // Metallic Mode
+    {
+      metallicMode = !metallicMode;
+      cout << "METALLIC MODE = " << metallicMode << endl;
     }
     else if(event.key.keysym.sym == SDLK_1) // toggle soft shadow mode
     {

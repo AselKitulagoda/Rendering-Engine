@@ -8,8 +8,6 @@ class Colour
     int green;
     int blue;
     float brightness;
-    bool reflectivity;
-    bool refractivity;
 
     Colour()
     {
@@ -22,8 +20,6 @@ class Colour
       green = g;
       blue = b;
       brightness = 1.0f;
-      reflectivity = false;
-      refractivity = false;
     }
 
     Colour(std::string n, int r, int g, int b)
@@ -33,8 +29,6 @@ class Colour
       green = g;
       blue = b;
       brightness = 1.0f;
-      reflectivity = false;
-      refractivity = false;
     }
 
     Colour(int r, int g, int b, float bright)
@@ -44,8 +38,6 @@ class Colour
       green = g;
       blue = b;
       brightness = bright;
-      reflectivity = false;
-      refractivity = false;
     }
 
     uint32_t pack()

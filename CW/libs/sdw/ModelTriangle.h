@@ -9,6 +9,13 @@ class ModelTriangle
     Colour colour;
     glm::vec2 texturepoints[3];
     std::string tag;
+    bool boundingBoxVisible;
+    int triangleIndex;
+
+    // properties
+    bool refractive;
+    bool reflective;
+    bool metallic;
 
     ModelTriangle()
     {
@@ -24,6 +31,10 @@ class ModelTriangle
       texturepoints[2] = glm::vec2(-1,-1);
       colour = trigColour;
       tag = "";
+      boundingBoxVisible = false;
+      refractive = false;
+      reflective = false;
+      metallic = false;
     }
 
     ModelTriangle(glm::vec3 v0, glm::vec3 v1, glm::vec3 v2, Colour trigColour, glm::vec2 t0, glm::vec2 t1, glm::vec2 t2)
@@ -36,6 +47,10 @@ class ModelTriangle
       texturepoints[2] = t2;
       colour = trigColour;
       tag = "";
+      boundingBoxVisible = false;
+      refractive = false;
+      reflective = false;
+      metallic = false;
     }
 
 };

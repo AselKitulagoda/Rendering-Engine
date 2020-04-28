@@ -9,6 +9,8 @@ class RayTriangleIntersection
     float distanceFromCamera;
     ModelTriangle intersectedTriangle;
     Colour colour;
+    float u;
+    float v;
 
     RayTriangleIntersection()
     {
@@ -20,6 +22,8 @@ class RayTriangleIntersection
         distanceFromCamera = distance;
         intersectedTriangle = triangle;
         colour = Colour(255, 255, 255);
+        u = -1;
+        v = -1;
     }
 
     RayTriangleIntersection(glm::vec3 point, float distance, ModelTriangle triangle, Colour c)
@@ -28,6 +32,18 @@ class RayTriangleIntersection
         distanceFromCamera = distance;
         intersectedTriangle = triangle;
         colour = c;
+        u = -1;
+        v = -1;
+    }
+
+    RayTriangleIntersection(glm::vec3 point, float distance, ModelTriangle triangle, Colour c, float uVal, float vVal)
+    {
+        intersectionPoint = point;
+        distanceFromCamera = distance;
+        intersectedTriangle = triangle;
+        colour = c;
+        u = uVal;
+        v = vVal;
     }
 };
 

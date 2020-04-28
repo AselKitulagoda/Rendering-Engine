@@ -211,20 +211,23 @@ void drawRasterised(vector<ModelTriangle> triangles)
 
   for(size_t i = 0; i < triangles.size(); i++)
   {
-    CanvasTriangle projection = modelToCanvas(triangles.at(i));
+    if(triangles.at(i).boundingBoxVisible)
+    {
+      CanvasTriangle projection = modelToCanvas(triangles.at(i));
     
-    if(triangles.at(i).tag == "cornell" || triangles.at(i).tag == "sphere" || triangles.at(i).tag == "bump")     
-    {
-      drawFilled(projection, depthBuffer);
-      drawStroke(projection, depthBuffer);
-    }
-    else
-    {
-    if (triangles.at(i).tag == "checker"){
-        drawTextureMap(projection,depthBuffer,checkcols,738);
+      if(triangles.at(i).tag == "cornell" || triangles.at(i).tag == "sphere" || triangles.at(i).tag == "bump")     
+      {
+        drawFilled(projection, depthBuffer);
+        drawStroke(projection, depthBuffer);
       }
-    if (triangles.at(i).tag == "hackspace"){
-        drawTextureMap(projection,depthBuffer,pixelColours,300);
+      else
+      {
+      if (triangles.at(i).tag == "checker"){
+          drawTextureMap(projection,depthBuffer,checkcols,738);
+        }
+      if (triangles.at(i).tag == "hackspace"){
+          drawTextureMap(projection,depthBuffer,pixelColours,300);
+        }
       }
     }
   }
