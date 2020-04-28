@@ -43,8 +43,9 @@ int main(int argc, char* argv[])
   // Updating the triangle textures
   for(size_t i = 0; i < allTriangles.size(); i++)
   {
-    if(allTriangles.at(i).colour.name == "Grey")
+    if(allTriangles.at(i).colour.name == "Green")
     {
+      cout << "found";
       allTriangles.at(i).reflective = true;
     }
     if(allTriangles.at(i).colour.name == "Red")

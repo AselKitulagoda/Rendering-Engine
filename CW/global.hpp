@@ -156,7 +156,7 @@ vector<Object> initialiseObjects(vector<ModelTriangle> triangles)
       else if(t.colour.name == "Yellow") floorTriangles.push_back(t);
       else if(t.colour.name == "Cyan") topTriangles.push_back(t);
       else if(t.colour.name == "White") lightTriangles.push_back(t);
-      else if(t.colour.name == "Grey") backTriangles.push_back(t);
+      else if(t.colour.name == "Green"){ cout<<"happened";backTriangles.push_back(t);}
     }
     else if(t.tag == "bump") bumpTriangles.push_back(t);
     else if(t.tag == "checker") checkTriangles.push_back(t);
@@ -489,7 +489,7 @@ vector<ModelTriangle> readCornellBox(float scale)
       if (splitcomment[0] == "usemtl")
       {
         mat = splitcomment[1];
-      if(mat != "Green" && mat != "Magenta")
+      if(mat != "Grey")
         {
 
         Colour tricolour = getColourFromName(mat,cornellColours);
