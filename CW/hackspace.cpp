@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
     {
       allTriangles.at(i).refractive = true;
     }
-    if(allTriangles.at(i).colour.name == "Cyan")
+    if(allTriangles.at(i).colour.name == "Yellow")
     {
       allTriangles.at(i).metallic = true;
     }

@@ -157,7 +157,7 @@ vector<Object> initialiseObjects(vector<ModelTriangle> triangles)
     {
       if(t.colour.name == "Red") redTriangles.push_back(t);
       else if(t.colour.name == "Blue") blueTriangles.push_back(t);
-      else if(t.colour.name == "Green") floorTriangles.push_back(t);
+      else if(t.colour.name == "Yellow") floorTriangles.push_back(t);
       else if(t.colour.name == "Cyan") topTriangles.push_back(t);
       else if(t.colour.name == "White") lightTriangles.push_back(t);
       else if(t.colour.name == "Grey") backTriangles.push_back(t);
@@ -493,7 +493,7 @@ vector<ModelTriangle> readCornellBox(float scale)
       if (splitcomment[0] == "usemtl")
       {
         mat = splitcomment[1];
-      if(mat != "Magenta" && mat != "Yellow")
+      if(mat != "Green" && mat != "Magenta")
         {
 
         Colour tricolour = getColourFromName(mat,cornellColours);
