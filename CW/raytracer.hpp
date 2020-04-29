@@ -61,7 +61,7 @@ float calculateBrightness(vec3 point, ModelTriangle t, vec3 rayDirection, vector
     vec3 flipped = -1.0f * rayDirection;
     vec3 reflected = pointToLight - (2.0f * point * glm::dot(pointToLight, point));
     float angle = std::max(0.0f, glm::dot(glm::normalize(flipped), glm::normalize(reflected)));
-    brightness += pow(angle, 1.0f);
+    brightness += pow(angle, 10.0f);
   }
 
   if(brightness < (float) AMBIENCE)
@@ -109,13 +109,10 @@ vector<float> calculateVertexBrightness(vector<ModelTriangle> triangles, ModelTr
     brightness *= pow(dotProduct, 1.0f);
 
     // Specular Highlighting
-    if(reflectiveMode || metallicMode)
-    {
-      vec3 flipped = -1.0f * rayDirection;
-      vec3 reflected = vertexToLight - (2.0f * vertex * glm::dot(vertexToLight, vertex));
-      float angle = std::max(0.0f, glm::dot(glm::normalize(flipped), glm::normalize(reflected)));
-      brightness += pow(angle, 1.0f);
-    }
+    vec3 surfaceNormal = calculateSurfaceNormal(t);
+    vec3 reflected = calculateReflectedRay(rayDirection, t);
+    float angle = std::max(0.0f, glm::dot(reflected, surfaceNormal));
+    brightness += pow(angle, 10.0f);
 
     if(brightness < (float) AMBIENCE)
     {
@@ -160,13 +157,9 @@ float calculatePhongBrightness(vector<ModelTriangle> triangles, vec3 point, Mode
   brightness *= pow(dotProduct, 1.0f);
 
   // Specular Highlighting
-  if(reflectiveMode || metallicMode)
-  {
-    vec3 flipped = -1.0f * rayDirection;
-    vec3 reflected = pointToLight - (2.0f * point * glm::dot(pointToLight, point));
-    float angle = std::max(0.0f, glm::dot(glm::normalize(flipped), glm::normalize(reflected)));
-    brightness += pow(angle, 1.0f);
-  }
+  vec3 reflected = calculateReflectedRay(rayDirection, t);
+  float angle = std::max(0.0f, glm::dot(reflected, adjustedNormal));
+  brightness += pow(angle, 10.0f);
 
   if(brightness < (float) AMBIENCE)
   {
@@ -192,13 +185,9 @@ float calculateBumpBrightness(vec3 point, ModelTriangle t, vec3 rayDirection, ve
   brightness *= pow(dotProduct, 1.0f);
 
   // Specular Highlighting
-  if(reflectiveMode || metallicMode)
-  {
-    vec3 flipped = -1.0f * rayDirection;
-    vec3 reflected = pointToLight - (2.0f * point * glm::dot(pointToLight, point));
-    float angle = std::max(0.0f, glm::dot(glm::normalize(flipped), glm::normalize(reflected)));
-    brightness += pow(angle, 1.0f);
-  }
+  vec3 reflected = calculateReflectedRay(rayDirection, t);
+  float angle = std::max(0.0f, glm::dot(reflected, triangleNormal));
+  brightness += pow(angle, 10.0f);
 
   if(brightness < (float) AMBIENCE)
   {
@@ -299,11 +288,10 @@ vec3 calculateReflectedRay(vec3 incidentRay, ModelTriangle t)
 
 vec3 calculateMetalRay(vec3 incidentRay, ModelTriangle t)
 {
-  vec3 reflectedRay = calculateReflectedRay(incidentRay, t);
-  vec3 randomness = vec3(1, 1, 1);
-  vec3 result = reflectedRay * randomness;
-  // printVec3("metal ray", result);
-  return result;
+  vec3 surfaceNormal = calculateSurfaceNormal(t);
+  float roughness = generateRandomNum(-0.1f, 0.1f);
+  vec3 reflectedRay = incidentRay - (2.0f + roughness) * (surfaceNormal * glm::dot(incidentRay, surfaceNormal));
+  return glm::normalize(reflectedRay);
 }
 
 vec3 calculateRefractedRay(vec3 rayDirection, vec3 surfaceNormal, float ior)
@@ -501,9 +489,9 @@ RayTriangleIntersection getClosestIntersection(vec3 viewPoint, vec3 rayDirection
         if(metalIntersect.distanceFromCamera == INFINITY) newColour = Colour(0, 0, 0);
         else
         {
-          int mRed = (metalIntersect.colour.red * 0.2 + curr.colour.red * 1.3) / 2;
-          int mGreen = (metalIntersect.colour.green * 0.2 + curr.colour.green * 1.3) / 2;
-          int mBlue = (metalIntersect.colour.blue * 0.2 + curr.colour.blue * 1.3) / 2;
+          int mRed = (metalIntersect.colour.red * 0.3 + curr.colour.red * 0.7);
+          int mGreen = (metalIntersect.colour.green * 0.3 + curr.colour.green * 0.7);
+          int mBlue = (metalIntersect.colour.blue * 0.3 + curr.colour.blue * 0.7);
 
           newColour = Colour(mRed, mGreen, mBlue);
         }

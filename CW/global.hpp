@@ -97,8 +97,8 @@ vector<Object> allObjects;
 vector<pair<ModelTriangle, vector<vec3>>> triangleVertexNormals;
 vec3 unpackColour(uint32_t col);
 
-// vec3 lightSource = vec3(-0.0315915, 1.20455, -0.6108);      // normal
-vec3 lightSource = vec3(-0.0315915, 1.20455, -0.1108);      // bump map
+vec3 lightSource = vec3(-0.0315915, 1.20455, -0.3108);      // normal
+// vec3 lightSource = vec3(-0.0315915, 1.20455, -0.1108);      // bump map
 vector<vec3> lightSources = { vec3(lightSource.x - 0.12f, lightSource.y, lightSource.z),
                               vec3(lightSource.x - 0.1f, lightSource.y, lightSource.z), 
                               vec3(lightSource.x - 0.08f, lightSource.y, lightSource.z),
@@ -130,6 +130,14 @@ int texHeight;
 int filenum = 0;
 string filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
 
+float generateRandomNum(float a, float b)
+{
+  float random = ((float) rand()) / (float) RAND_MAX;
+  float diff = b - a;
+  float r = random * diff;
+  return a + r;
+}
+
 vector<ModelTriangle> updateTriangleIndices(vector<ModelTriangle> triangles)
 {
   vector<ModelTriangle> result;
@@ -156,7 +164,7 @@ vector<Object> initialiseObjects(vector<ModelTriangle> triangles)
       else if(t.colour.name == "Yellow") floorTriangles.push_back(t);
       else if(t.colour.name == "Cyan") topTriangles.push_back(t);
       else if(t.colour.name == "White") lightTriangles.push_back(t);
-      else if(t.colour.name == "Green"){ cout<<"happened";backTriangles.push_back(t);}
+      else if(t.colour.name == "Green") backTriangles.push_back(t);
     }
     else if(t.tag == "bump") bumpTriangles.push_back(t);
     else if(t.tag == "checker") checkTriangles.push_back(t);

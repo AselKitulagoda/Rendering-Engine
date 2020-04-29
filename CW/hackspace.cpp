@@ -45,7 +45,6 @@ int main(int argc, char* argv[])
   {
     if(allTriangles.at(i).colour.name == "Green")
     {
-      cout << "found";
       allTriangles.at(i).reflective = true;
     }
     if(allTriangles.at(i).colour.name == "Red")
