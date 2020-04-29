@@ -196,7 +196,7 @@ float calculateBumpBrightness(vec3 point, ModelTriangle t, vec3 rayDirection, ve
 
 vec3 computeRayDirection(float x, float y)
 {
-  vec3 rayDirection = glm::normalize(cameraPos - (vec3((WIDTH/2 - x), (y - HEIGHT/2), FOCAL_LENGTH)) * glm::inverse(cameraOrientation));
+  vec3 rayDirection = glm::normalize((vec3((x - WIDTH/2), (-(y - HEIGHT/2)), FOCAL_LENGTH) - cameraPos) * cameraOrientation);
   return rayDirection;
 }
 
@@ -266,8 +266,10 @@ vec3 calculateReflectedRay(vec3 incidentRay, ModelTriangle t)
 vec3 calculateMetalRay(vec3 incidentRay, ModelTriangle t)
 {
   vec3 surfaceNormal = calculateSurfaceNormal(t);
-  float roughness = generateRandomNum(-0.15f, 0.15f);
-  vec3 reflectedRay = incidentRay - (2.0f + roughness) * (surfaceNormal * glm::dot(incidentRay, surfaceNormal));
+  float roughness = generateRandomNum(-0.1f, 0.1f);
+  float randomness = generateRandomNum(-0.05f, 0.05f);
+  vec3 adjusted = incidentRay + vec3(randomness, randomness, randomness);
+  vec3 reflectedRay = adjusted - (2.0f + roughness) * (surfaceNormal * glm::dot(adjusted, surfaceNormal));
   return glm::normalize(reflectedRay);
 }
 

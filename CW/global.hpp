@@ -19,7 +19,7 @@ using namespace glm;
 #define SCALE_FACTOR 0.001
 #define SCALE_CORNELL 0.3
 #define SCALE_SPHERE 0.05
-#define FOCAL_LENGTH 500
+#define FOCAL_LENGTH -500
 #define INTENSITY 1
 #define AMBIENCE 0.2
 // #define FRACTION_VAL 0.5      // normal
