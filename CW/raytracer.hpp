@@ -61,14 +61,6 @@ float calculateBrightness(vec3 point, ModelTriangle t, vec3 rayDirection, vector
   float dotProduct = std::max(0.0f, (float) glm::dot(surfaceNormal, glm::normalize(pointToLight)));
   brightness *= pow(dotProduct, 1.0f);
 
-  // Specular Highlighting
-  if(reflectiveMode || metallicMode)
-  {
-    vec3 reflected = pointToLight - (2.0f * surfaceNormal * glm::dot(pointToLight, surfaceNormal));
-    float angle = std::max(0.0f, glm::dot(glm::normalize(rayDirection), glm::normalize(reflected)));
-    brightness += pow(angle, 12.0f);
-  }
-
   if(brightness < (float) AMBIENCE)
   {
     brightness = (float) AMBIENCE;
@@ -175,14 +167,6 @@ float calculateBumpBrightness(vec3 point, ModelTriangle t, vec3 rayDirection, ve
 
   float dotProduct = std::max(0.0f, (float) glm::dot(triangleNormal, glm::normalize(pointToLight)));
   brightness *= pow(dotProduct, 1.0f);
-
-  // Specular Highlighting
-  if(reflectiveMode || metallicMode)
-  {
-    vec3 reflected = pointToLight - (2.0f * triangleNormal * glm::dot(pointToLight, triangleNormal));
-    float angle = std::max(0.0f, glm::dot(glm::normalize(rayDirection), glm::normalize(reflected)));
-    brightness += pow(angle, 12.0f);
-  }
 
   if(brightness < (float) AMBIENCE)
   {
