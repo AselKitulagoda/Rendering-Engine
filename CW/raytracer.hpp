@@ -109,10 +109,9 @@ vector<float> calculateVertexBrightness(vector<ModelTriangle> triangles, ModelTr
     brightness *= pow(dotProduct, 1.0f);
 
     // Specular Highlighting
-    vec3 surfaceNormal = calculateSurfaceNormal(t);
-    vec3 reflected = calculateReflectedRay(rayDirection, t);
-    float angle = std::max(0.0f, glm::dot(reflected, surfaceNormal));
-    brightness += pow(angle, 10.0f);
+    // vec3 reflected = calculateReflectedRay(rayDirection, t);
+    // float angle = std::max(0.0f, glm::dot(reflected, vertex));
+    // brightness += pow(angle, 10.0f);
 
     if(brightness < (float) AMBIENCE)
     {
@@ -157,9 +156,9 @@ float calculatePhongBrightness(vector<ModelTriangle> triangles, vec3 point, Mode
   brightness *= pow(dotProduct, 1.0f);
 
   // Specular Highlighting
-  vec3 reflected = calculateReflectedRay(rayDirection, t);
-  float angle = std::max(0.0f, glm::dot(reflected, adjustedNormal));
-  brightness += pow(angle, 10.0f);
+  // vec3 reflected = calculateReflectedRay(rayDirection, t);
+  // float angle = std::max(0.0f, glm::dot(reflected, calculateSurfaceNormal(t)));
+  // brightness += pow(angle, 10.0f);
 
   if(brightness < (float) AMBIENCE)
   {
