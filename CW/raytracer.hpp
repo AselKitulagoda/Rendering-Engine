@@ -403,12 +403,8 @@ RayTriangleIntersection getClosestIntersection(vec3 viewPoint, vec3 rayDirection
     // Loop through all model triangles, find the closest intersection
     for(size_t i = 0; i < triangles.size(); i++)
     {
-      // Do culling only when reflective mode is off
-      bool cull;
-      if(!reflectiveMode) cull = checkBackface(rayDirection, triangles.at(i));
-
       // Backface culling and Bounding Box clipping
-      if(triangles.at(i).boundingBoxVisible || triangles.at(i).refractive)
+      if((triangles.at(i).boundingBoxVisible && checkBackface(rayDirection, triangles.at(i))) || triangles.at(i).refractive)
       {
         // Find the triangle intersection
         RayTriangleIntersection intersection = getTriangleIntersection(viewPoint, rayDirection, triangles.at(i));
