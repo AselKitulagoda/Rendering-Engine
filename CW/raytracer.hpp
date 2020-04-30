@@ -373,7 +373,7 @@ RayTriangleIntersection getClosestIntersection(vec3 viewPoint, vec3 rayDirection
   Colour newColour;
 
   // Recurse only upto 5 times
-  if(depth < 5)
+  if(depth < 7)
   {
     // Set base distance to inf
     float minDist = INFINITY;

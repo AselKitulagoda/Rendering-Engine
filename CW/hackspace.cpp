@@ -122,7 +122,7 @@ void spin()
     cout << "saved PPM, file num = " << filenum << endl;
     savePPM(filepath);
     filenum++;
-    filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
+    filepath = "raytracer_frames/" + std::to_string(filenum) + ".ppm";
   }
 }
 

@@ -132,7 +132,7 @@ int texWidth;
 int texHeight;
 
 
-string filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
+string filepath = "raytracer_frames/" + std::to_string(filenum) + ".ppm";
 
 float generateRandomNum(float a, float b)
 {
