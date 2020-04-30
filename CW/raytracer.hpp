@@ -266,8 +266,8 @@ vec3 calculateReflectedRay(vec3 incidentRay, ModelTriangle t)
 vec3 calculateMetalRay(vec3 incidentRay, ModelTriangle t)
 {
   vec3 surfaceNormal = calculateSurfaceNormal(t);
-  float roughness = generateRandomNum(-0.1f, 0.1f);
-  float randomness = generateRandomNum(-0.05f, 0.05f);
+  float roughness = generateRandomNum(-0.03f, 0.03f);
+  float randomness = generateRandomNum(-0.03f, 0.03f);
   vec3 adjusted = incidentRay + vec3(randomness, randomness, randomness);
   vec3 reflectedRay = adjusted - (2.0f + roughness) * (surfaceNormal * glm::dot(adjusted, surfaceNormal));
   return glm::normalize(reflectedRay);
@@ -589,6 +589,8 @@ RayTriangleIntersection getClosestIntersection(vec3 viewPoint, vec3 rayDirection
 
 void drawRaytraced(vector<ModelTriangle> triangles)
 {
+  auto start = high_resolution_clock::now();
+
   #pragma omp parallel
   #pragma omp for
   for(int x = 0; x < WIDTH; x++)
@@ -607,7 +609,10 @@ void drawRaytraced(vector<ModelTriangle> triangles)
       }
     }
   }
+  auto stop = high_resolution_clock::now();
   cout << "RAYTRACING DONE" << endl;
+  auto duration = duration_cast<seconds>(stop - start);
+  cout << "TOTAL TIME TAKEN = " << duration.count() << endl;
 }
 
 Colour getAverageColour(vector<Colour> finalColours)
@@ -637,6 +642,8 @@ void drawRaytraceAntiAlias(vector<ModelTriangle> triangles)
   quincunx.push_back(vec2(0.0f, 0.5f));
   quincunx.push_back(vec2(0.0f, -0.5f));
 
+  auto start = high_resolution_clock::now();
+
   #pragma omp parallel
   #pragma omp for
   for(int y = 0; y < HEIGHT; y++)
@@ -662,7 +669,10 @@ void drawRaytraceAntiAlias(vector<ModelTriangle> triangles)
       }
     }
   }
+  auto stop = high_resolution_clock::now();
   cout << "RAYTRACE ANTI-ALIAS DONE" << endl;
+  auto duration = duration_cast<minutes>(stop - start);
+  cout << "TOTAL TIME TAKEN = " << duration.count() << endl;
 }
 
 #endif

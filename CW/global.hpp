@@ -10,9 +10,11 @@
 #include <fstream>
 #include <vector>
 #include <Object.h>
+#include <chrono>
 
 using namespace std;
 using namespace glm;
+using namespace std::chrono;
 
 #define WIDTH 640
 #define HEIGHT 480
@@ -33,6 +35,8 @@ using namespace glm;
 #define OBJ_CORNELL "bump-cornell-box.obj"
 #define OBJ_SPHERE "sphere.obj"
 
+#define CHANGE 0.0f
+int filenum = 140;
 #define CAMERA_X 0
 #define CAMERA_Y 0.7
 #define CAMERA_Z 2.3
@@ -127,7 +131,7 @@ vector<uint32_t> checkcols = loadCheckImage("chessNEW.ppm");
 int texWidth;
 int texHeight;
 
-int filenum = 0;
+
 string filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
 
 float generateRandomNum(float a, float b)
@@ -575,7 +579,7 @@ vector<ModelTriangle> readObj(float scale,string objpath)
             float x = stof(splitcomment[1]) * scale;
             float y = stof(splitcomment[2]) * scale;
             float z = stof(splitcomment[3]) * scale;
-            vec3 verts = vec3(x- 0.7 , y- 0.1, z- 0.5);
+            vec3 verts = vec3(x - 0.7 , y - 0.1 + CHANGE, z - 0.5); // original
             vertic.push_back(verts);
           }
           else
@@ -932,7 +936,7 @@ vector<ModelTriangle> readSphere(float scale)
             float x = stof(splitcomment[1]) * scale;
             float y = stof(splitcomment[2]) * scale;
             float z = stof(splitcomment[3]) * scale;
-            vec3 verts = vec3(x + 0.18, y + 0.55, z - 0.5); // original
+            vec3 verts = vec3(x + 0.18, y + 0.55 + CHANGE, z - 0.5); // original
             vertic.push_back(verts);
           }
           else

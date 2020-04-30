@@ -150,21 +150,34 @@ void spin(vec3 point)
   }
 }
 
+void moveVertices(float amt)
+{
+  for(size_t i = 0; i < allTriangles.size(); i++)
+  {
+    if(allTriangles.at(i).tag == "sphere" || allTriangles.at(i).tag == "hackspace")
+    {
+      for(int j = 0; j < 3; j++)
+      {
+        allTriangles.at(i).vertices[j] += amt;
+      }
+    }
+  }
+}
+
 void jump(float amount)
 {
   float u = sqrt(2 * G * amount); // v = 0, u^2 = 2as
   float time = 2 * (u / G); // t = 2u/g
-
   for(float t = 0; t < time; t += 0.06f)
   {
-    float s = ((u * t) + (t * t * -G / 2)) * (float) SCALE_CORNELL; // s = ut + at*2/2
+    float s = ((u * t) + (t * t * -G / 2)); // s = ut + at*2/2
     shiftVertices(vec3(0, 1.f, 0), s);
     draw();
     window.renderFrame();
-    // cout << "saved PPM, file num = " << filenum << endl;
-    // savePPM(filepath);
-    // filenum++;
-    // filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
+    cout << "saved PPM, file num = " << filenum << endl;
+    savePPM(filepath);
+    filenum++;
+    filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
     shiftVertices(vec3(0, -1.f, 0), s);
   }
 }
@@ -226,8 +239,8 @@ void squash(float amount)
     // cout << "saved PPM, file num = " << filenum << endl;
     // savePPM(filepath);
     // filenum++;
-    // filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
-    allTriangles = originalTriangles;
+    // filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
+    // allTriangles = originalTriangles;
   }
 }
 
@@ -252,6 +265,15 @@ void fadeIn()
   for(int step = 0; step <= yDiff; step += 5)
   { 
     stepTracker = step;
+    // counter += 1;
+    // if(yDiff - step < 12)
+    // {
+    //   hardShadowMode = false;
+    //   softShadowMode = true;
+    //   gouraudMode = false;
+    //   phongMode = true;
+    // }
+
     draw();
     for(int y = points[0].y; y <= points[(int) points.size() - 1].y - step; y++)
     {
@@ -265,7 +287,7 @@ void fadeIn()
     // cout << "saved PPM, file num = " << filenum << endl;
     // savePPM(filepath);
     // filenum++;
-    // filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
+    // filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
   }
   if(stepTracker != yDiff)
   {
@@ -275,9 +297,11 @@ void fadeIn()
 
 void jumpAndSquash()
 {
-  jump(5); squash(1.2); jump(3); squash(0.8);
-  jump(2); squash(0.4); jump(1); squash(0.1);
-  draw(); window.renderFrame();
+  jump(3);
+  cout << "FIRST PART DONE!" << endl;
+  // jump(2);
+  // jump(1);
+  // draw(); window.renderFrame();
   // cout << "saved PPM, file num = " << filenum << endl;
   // savePPM(filepath);
   // filenum++;
@@ -392,13 +416,15 @@ void handleEvent(SDL_Event event)
     else if(event.key.keysym.sym == SDLK_UP) // camera y translate
     {
       cout << "TRANSLATE UP" << endl;
-      cameraPos.y -= 0.1;
+      // cameraPos.y -= 0.1;
+      cameraPos.y -= 0.05;
       draw();
     }
     else if(event.key.keysym.sym == SDLK_DOWN) // camera y translate
     {
       cout << "TRANSLATE DOWN" << endl;
-      cameraPos.y += 0.1;
+      // cameraPos.y += 0.1;
+      cameraPos.y += 0.05;
       draw();
     }
     else if(event.key.keysym.sym == SDLK_z) // camera z translate
@@ -509,9 +535,9 @@ void handleEvent(SDL_Event event)
     else if(event.key.keysym.sym == SDLK_p) // save image
     {
       cout << "saved PPM, file num = " << filenum << endl;
-      savePPM(filepath);
-      filenum++;
-      filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
+      // savePPM(filepath);
+      // filenum++;
+      // filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
     }
     else if(event.key.keysym.sym == SDLK_b) // Metallic Mode
     {
