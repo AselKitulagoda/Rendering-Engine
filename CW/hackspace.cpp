@@ -23,7 +23,7 @@ void handleEvent(SDL_Event event);
 void shiftVertices(vec3 direction, float amount);
 vec3 getMinY();
 void flattenVertices(float amount);
-void spin(vec3 point);
+void spin();
 void jump(float amount);
 void bounce();
 void squash(float amount);
@@ -111,42 +111,18 @@ void shiftVertices(vec3 direction, float amount)
   }
 }
 
-void spin(vec3 point)
+void spin()
 {
-  for(int i = 0; i < 23; i++)
+  for(int i = 0; i < 120; i++)
   {
-    cameraPos = orbit(cameraPos, 1.0);
+    cameraPos = orbit(cameraPos, 3.0);
     cameraOrientation = lookAt(cameraPos);
     draw();
     window.renderFrame();
-    // cout << "saved PPM, file num = " << filenum << endl;
-    // savePPM(filepath);
-    // filenum++;
-    // filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
-  }
-
-  for(int i = 0; i < 46; i++)
-  {
-    cameraPos = orbit(cameraPos, -1.0);
-    cameraOrientation = lookAt(cameraPos);
-    draw();
-    window.renderFrame();
-    // cout << "saved PPM, file num = " << filenum << endl;
-    // savePPM(filepath);
-    // filenum++;
-    // filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
-  }
-
-  for(int i = 0; i < 23; i++)
-  {
-    cameraPos = orbit(cameraPos, 1.0);
-    cameraOrientation = lookAt(cameraPos);
-    draw();
-    window.renderFrame();
-    // cout << "saved PPM, file num = " << filenum << endl;
-    // savePPM(filepath);
-    // filenum++;
-    // filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
+    cout << "saved PPM, file num = " << filenum << endl;
+    savePPM(filepath);
+    filenum++;
+    filepath = "wireframe_frames/" + std::to_string(filenum) + ".ppm";
   }
 }
 
@@ -523,7 +499,7 @@ void handleEvent(SDL_Event event)
     else if(event.key.keysym.sym == SDLK_q) // orbit
     {
       cout << "SPIN" << endl;
-      spin(cameraPos);
+      spin();
     }
     else if(event.key.keysym.sym == SDLK_e) // orbit
     {
