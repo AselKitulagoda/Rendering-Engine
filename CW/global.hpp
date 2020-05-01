@@ -36,7 +36,7 @@ using namespace std::chrono;
 #define OBJ_SPHERE "sphere.obj"
 
 #define CHANGE 0.0f
-int filenum = 159;
+int filenum = 294;
 #define CAMERA_X 0
 #define CAMERA_Y 0.7
 #define CAMERA_Z 2.3

@@ -412,8 +412,13 @@ void handleEvent(SDL_Event event)
     else if(event.key.keysym.sym == SDLK_x) // camera z translate
     {
       cout << "TRANSLATE Z" << endl;
+      filenum++;
       cameraPos.z -= 0.1;
       draw();
+      cout << "saved PPM, file num = " << filenum << endl;
+      savePPM(filepath);
+    
+    filepath = "raytracer_frames/" + std::to_string(filenum) + ".ppm";
     }
     else if(event.key.keysym.sym == SDLK_c) // clear screen
     {
@@ -511,9 +516,9 @@ void handleEvent(SDL_Event event)
     else if(event.key.keysym.sym == SDLK_p) // save image
     {
       cout << "saved PPM, file num = " << filenum << endl;
-      // savePPM(filepath);
-      // filenum++;
-      // filepath = "test_frames/" + std::to_string(filenum) + ".ppm";
+      savePPM(filepath);
+      filenum++;
+      filepath = "raytracer_frames/" + std::to_string(filenum) + ".ppm";
     }
     else if(event.key.keysym.sym == SDLK_b) // Metallic Mode
     {
