@@ -1,4 +1,4 @@
-PROJECT_NAME = hackspace
+PROJECT_NAME = main
 
 # Define the names of key files
 SOURCE_FILE = $(PROJECT_NAME).cpp
