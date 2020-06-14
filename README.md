@@ -37,3 +37,14 @@
 * Press **8** for *bounce and squash* animation
 * Press **9** for *fade in* animation
 * Press **P** to save the window frame into the **outputs/** folder
+
+All the ```.mp4``` rendered animations can be found in the ```animations/``` folder.
+
+## GIFs 
+Below are the converted GIFs of each animated render:
+*   **Wireframe**
+    *   ![](wireframe.gif)
+*   **Rasteriser**
+    *   ![](rasteriser.gif)
+*   **Raytracer**
+    *   ![](raytracer.gif)
